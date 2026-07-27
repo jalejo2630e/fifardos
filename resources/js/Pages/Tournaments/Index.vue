@@ -1,8 +1,9 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, Link } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import TournamentCard from '@/Components/TournamentCard.vue';
+import TournamentCardSkeleton from '@/Components/TournamentCardSkeleton.vue';
 
 const props = defineProps({
     tournaments: Array,
@@ -24,6 +25,21 @@ const filteredTournaments = computed(() => {
 
 const hasTournaments = computed(() => props.tournaments.length > 0);
 const hasFiltered = computed(() => filteredTournaments.value.length > 0);
+
+const isLoading = ref(false);
+let startFn, finishFn;
+
+onMounted(() => {
+    startFn = () => isLoading.value = true;
+    finishFn = () => isLoading.value = false;
+    router.on('start', startFn);
+    router.on('finish', finishFn);
+});
+
+onUnmounted(() => {
+    router.off('start', startFn);
+    router.off('finish', finishFn);
+});
 
 const emptyMessages = {
     todos: { emoji: '🏟️', title: 'Sin torneos aún', desc: 'Crea tu primer torneo, añade jugadores, configura las consolas y descubre al campeón.' },
@@ -85,8 +101,14 @@ const emptyMessages = {
                     </button>
                 </div>
 
+                <!-- Skeleton loader -->
+                <div v-if="isLoading"
+                     class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+                    <TournamentCardSkeleton v-for="n in 3" :key="n" :index="n - 1" />
+                </div>
+
                 <!-- Empty state (sin torneos en absoluto) -->
-                <div v-if="!hasTournaments"
+                <div v-else-if="!hasTournaments"
                      class="ucl-card p-10 sm:p-16 text-center animate-scale-in">
                     <div class="stars-overlay" />
                     <div class="relative">

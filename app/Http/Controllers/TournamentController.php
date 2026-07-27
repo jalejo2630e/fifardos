@@ -15,9 +15,23 @@ class TournamentController extends Controller
     public function index()
     {
         $tournaments = Tournament::where('user_id', auth()->id())
-            ->withCount('players', 'matches')
+            ->withCount(['players', 'matches', 'matches as matches_played' => fn($q) => $q->where('played', true)])
+            ->with(['players', 'matches' => fn($q) => $q->where('played', true)])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($tournament) {
+                $arr = $tournament->toArray();
+                unset($arr['players'], $arr['matches']);
+                $arr['leader'] = null;
+                if ($tournament->matches_played > 0) {
+                    $standings = $this->calculateStandings($tournament);
+                    $arr['leader'] = [
+                        'name' => $standings[0]['player_name'],
+                        'pts' => $standings[0]['pts'],
+                    ];
+                }
+                return $arr;
+            });
 
         return Inertia::render('Tournaments/Index', [
             'tournaments' => $tournaments,

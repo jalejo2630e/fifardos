@@ -54,6 +54,12 @@ const color = computed(() => props.tournament.color || '#00D4FF');
                     :max="totalMatches"
                     :detail="`${playedCount}/${totalMatches}`"
                 />
+                <div v-if="tournament.leader"
+                     class="mt-2 text-xs text-white/40 flex items-center gap-1.5">
+                    <span>🔥</span>
+                    <span class="font-condensed font-bold text-ucl-cyan">{{ tournament.leader.name }}</span>
+                    <span>{{ tournament.leader.pts }} pts</span>
+                </div>
             </div>
 
             <div class="relative mt-auto flex items-center justify-between pt-4 border-t border-white/5">
