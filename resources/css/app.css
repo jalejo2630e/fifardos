@@ -1,0 +1,167 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply bg-gaming-dark text-white font-sans;
+        background-image: radial-gradient(ellipse at 20% 50%, rgba(124, 58, 237, 0.05) 0%, transparent 50%),
+                          radial-gradient(ellipse at 80% 20%, rgba(0, 240, 255, 0.04) 0%, transparent 50%);
+        background-attachment: fixed;
+    }
+}
+
+@layer components {
+    .glass-card {
+        @apply bg-gaming-card/80 backdrop-blur-xl border border-gaming-border rounded-2xl shadow-lg;
+    }
+
+    .glass-card-hover {
+        @apply glass-card transition-all duration-300 hover:border-gaming-cyan/30 hover:shadow-glow;
+    }
+
+    .btn-gaming {
+        @apply relative overflow-hidden rounded-xl font-display font-bold text-sm uppercase tracking-wider
+               transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed;
+    }
+
+    .btn-gaming::before {
+        content: '';
+        @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+    }
+
+    .btn-gaming:hover::before {
+        @apply opacity-100;
+    }
+
+    .btn-primary {
+        @apply btn-gaming bg-gradient-to-r from-gaming-cyan to-cyan-600 text-black px-6 py-3
+               hover:shadow-glow hover:scale-[1.02] active:scale-[0.98];
+    }
+
+    .btn-success {
+        @apply btn-gaming bg-gradient-to-r from-gaming-green to-emerald-600 text-white px-5 py-2.5
+               hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
+    }
+
+    .btn-danger {
+        @apply btn-gaming bg-gradient-to-r from-gaming-red to-red-600 text-white px-5 py-2.5
+               hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
+    }
+
+    .btn-warning {
+        @apply btn-gaming bg-gradient-to-r from-gaming-gold to-amber-600 text-black px-5 py-2.5
+               hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
+    }
+
+    .btn-ghost {
+        @apply btn-gaming bg-white/5 text-white/70 border border-white/10 px-5 py-2.5
+               hover:bg-white/10 hover:text-white active:scale-[0.98];
+    }
+
+    .input-gaming {
+        @apply w-full rounded-xl bg-white/5 border border-white/10 text-white px-4 py-3
+               placeholder:text-white/30 outline-none transition-all duration-200
+               focus:border-gaming-cyan/50 focus:ring-1 focus:ring-gaming-cyan/30 focus:bg-white/10;
+    }
+
+    .match-card {
+        @apply glass-card p-5 transition-all duration-300;
+    }
+
+    .match-card.played {
+        @apply border-gaming-green/30 bg-gradient-to-br from-gaming-green/5 to-transparent;
+    }
+
+    .match-card.winner-highlight {
+        @apply border-gaming-gold/40 bg-gradient-to-br from-gaming-gold/10 to-transparent shadow-glow-gold;
+    }
+
+    .tab-gaming {
+        @apply relative px-6 py-3 font-display font-semibold text-sm uppercase tracking-wider
+               transition-all duration-300;
+    }
+
+    .tab-gaming.active {
+        @apply text-gaming-cyan;
+    }
+
+    .tab-gaming.active::after {
+        content: '';
+        @apply absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-gaming-cyan to-gaming-purple;
+    }
+
+    .standings-table th {
+        @apply px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white/40;
+    }
+
+    .standings-table td {
+        @apply px-4 py-3 text-sm;
+    }
+
+    .neon-text {
+        text-shadow: 0 0 10px rgba(0, 240, 255, 0.5), 0 0 30px rgba(0, 240, 255, 0.2);
+    }
+
+    .gold-text {
+        text-shadow: 0 0 10px rgba(245, 158, 11, 0.4), 0 0 30px rgba(245, 158, 11, 0.15);
+    }
+
+    .pulse-glow {
+        animation: pulseGlow 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
+        50% { box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); }
+    }
+
+    .score-input {
+        @apply w-16 h-14 text-center text-2xl font-bold rounded-xl bg-white/10 border border-white/20
+               text-white outline-none transition-all duration-200
+               focus:border-gaming-cyan/50 focus:ring-1 focus:ring-gaming-cyan/30;
+    }
+
+    .badge-tv {
+        @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
+               bg-gradient-to-r from-gaming-purple/30 to-gaming-cyan/20 text-gaming-cyan border border-gaming-cyan/20;
+    }
+
+    .player-tag {
+        @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
+               bg-white/5 border border-white/10 transition-all duration-200;
+    }
+
+    .player-tag:hover {
+        @apply border-gaming-cyan/30 bg-white/10;
+    }
+
+    .champion-banner {
+        @apply relative overflow-hidden rounded-2xl p-8 text-center;
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(124, 58, 237, 0.1));
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .champion-banner::before {
+        content: '';
+        @apply absolute inset-0;
+        background: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.1), transparent 70%);
+    }
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+    animation: fadeUp 0.5s ease forwards;
+}
+
+.animate-fade-up-delay-1 { animation-delay: 0.1s; }
+.animate-fade-up-delay-2 { animation-delay: 0.2s; }
+.animate-fade-up-delay-3 { animation-delay: 0.3s; }
+.animate-fade-up-delay-4 { animation-delay: 0.4s; }
