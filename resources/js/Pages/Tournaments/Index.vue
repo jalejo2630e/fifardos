@@ -55,7 +55,7 @@ const emptyMessages = {
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 class="ucl-title-lg text-white">
-                        Mis <span class="text-ucl-cyan">Torneos</span>
+                        Mis <span class="text-elite-secondary">Torneos</span>
                     </h1>
                     <p class="ucl-meta mt-1">Gestiona tus torneos FIFA Champions</p>
                 </div>
@@ -90,7 +90,7 @@ const emptyMessages = {
                         class="flex-1 min-h-touch whitespace-nowrap px-4 rounded-xl font-condensed text-xs sm:text-sm
                                uppercase tracking-[0.08em] transition-all duration-200"
                         :class="activeFilter === tab.key
-                            ? 'bg-ucl-cyan/10 text-ucl-cyan'
+                            ? 'bg-elite-secondary/10 text-elite-secondary'
                             : 'text-white/30 hover:text-white/60'"
                     >
                         {{ tab.label }}

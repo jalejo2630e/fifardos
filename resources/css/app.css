@@ -11,7 +11,7 @@
     }
 
     body {
-        @apply bg-ucl-navy text-white/90 font-sans;
+        @apply bg-elite-bg text-white/90 font-sans;
         background-image: linear-gradient(180deg, #0B1124 0%, #0A0F1E 50%, #080C18 100%);
         background-attachment: fixed;
         min-height: 100vh;
@@ -24,7 +24,7 @@
     ::-webkit-scrollbar-thumb:hover { @apply bg-white/20; }
 
     /* Selection */
-    ::selection { @apply bg-ucl-cyan/30 text-white; }
+    ::selection { @apply bg-elite-secondary/30 text-white; }
 }
 
 @layer components {
@@ -72,10 +72,10 @@
 
     .ucl-btn-primary {
         @apply ucl-btn text-black;
-        background: linear-gradient(135deg, #00D4FF, #0099CC);
-        box-shadow: 0 4px 16px rgba(0, 212, 255, 0.25);
+        background: linear-gradient(135deg, #F97316, #c2410c);
+        box-shadow: 0 4px 16px rgba(249, 115, 22, 0.25);
     }
-    .ucl-btn-primary:hover { box-shadow: 0 6px 24px rgba(0, 212, 255, 0.35); }
+    .ucl-btn-primary:hover { box-shadow: 0 6px 24px rgba(249, 115, 22, 0.35); }
 
     .ucl-btn-gold {
         @apply ucl-btn text-black;
@@ -115,7 +115,7 @@
     }
 
     .ucl-badge-live {
-        @apply ucl-badge text-ucl-cyan border-ucl-cyan/30 bg-ucl-cyan/10;
+        @apply ucl-badge text-elite-secondary border-elite-secondary/30 bg-elite-secondary/10;
         animation: pulseBorder 2s ease-in-out infinite;
     }
 
@@ -134,7 +134,7 @@
 
     .ucl-progress-bar {
         @apply h-full rounded-full transition-all duration-700 ease-out;
-        background: linear-gradient(90deg, #00D4FF, #0099CC, #FFD700);
+        background: linear-gradient(90deg, #F97316, #ea580c, #FFD700);
         background-size: 200% 100%;
         animation: shimmer 3s ease-in-out infinite;
     }
@@ -181,12 +181,12 @@
         @apply fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-ucl-glow
                flex items-center justify-center text-2xl text-black
                transition-all duration-200 ease-out;
-        background: linear-gradient(135deg, #00D4FF, #0099CC);
+        background: linear-gradient(135deg, #F97316, #c2410c);
     }
 
     .ucl-fab:hover {
         transform: scale(1.08);
-        box-shadow: 0 0 40px rgba(0, 212, 255, 0.25);
+        box-shadow: 0 0 40px rgba(249, 115, 22, 0.25);
     }
 
     .ucl-fab:active {
@@ -248,7 +248,7 @@
     }
 
     .ucl-step-active {
-        @apply ucl-step border-ucl-cyan text-ucl-cyan bg-ucl-cyan/10;
+        @apply ucl-step border-elite-secondary text-elite-secondary bg-elite-secondary/10;
     }
 
     .ucl-step-done {
@@ -275,8 +275,8 @@
 
 /* === Animations === */
 @keyframes pulseBorder {
-    0%, 100% { border-color: rgba(0, 212, 255, 0.3); }
-    50% { border-color: rgba(0, 212, 255, 0.6); }
+    0%, 100% { border-color: rgba(249, 115, 22, 0.3); }
+    50% { border-color: rgba(249, 115, 22, 0.6); }
 }
 
 @keyframes shimmer {
@@ -307,6 +307,45 @@
 .animate-fade-up-d4 { animation: fadeSlideUp 0.5s ease 0.32s forwards; opacity: 0; }
 .animate-scale-in { animation: scaleIn 0.4s ease forwards; }
 .animate-gold-pulse { animation: goldPulse 3s ease-in-out infinite; }
+
+/* === Elite League (FIFA Elite League) === */
+.glass-panel {
+    @apply rounded-2xl;
+    background: rgba(28, 27, 27, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(91, 65, 55, 0.3);
+}
+
+.glow-secondary {
+    box-shadow: 0 0 24px rgba(255, 95, 0, 0.15), 0 0 60px rgba(255, 95, 0, 0.06);
+}
+
+.scanline {
+    position: relative;
+    overflow: hidden;
+}
+
+.scanline::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(255, 255, 255, 0.015) 2px,
+        rgba(255, 255, 255, 0.015) 4px
+    );
+}
+
+.grid-bg {
+    background-image:
+        linear-gradient(rgba(91, 65, 55, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 65, 55, 0.08) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
 
 /* Mobile tap highlight */
 @media (max-width: 640px) {

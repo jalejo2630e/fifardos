@@ -7,13 +7,23 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
+    return Inertia::render('Public/Landing', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
     ]);
 });
+
+Route::get('/inscribirse', [App\Http\Controllers\PublicPlayerController::class, 'create'])->name('players.public.create');
+Route::post('/players/register', [App\Http\Controllers\PublicPlayerController::class, 'store'])->name('players.public.store');
+
+Route::get('/rules', function () {
+    $tournament = App\Models\Tournament::with('prizes')->latest()->first();
+    return Inertia::render('Public/Rules', [
+        'prizes' => $tournament?->prizes->sortBy('position')->values() ?? [],
+    ]);
+});
+
+Route::get('/torneos/{tournament}/bracket', [App\Http\Controllers\PublicBracketController::class, 'show'])->name('tournaments.public.bracket');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [TournamentController::class, 'index'])->name('dashboard');
@@ -25,6 +35,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/tournaments/{tournament}/matches/{match}/score', [TournamentController::class, 'updateScore'])->name('matches.score.update');
     Route::post('/tournaments/{tournament}/matches/{match}/edit-score', [TournamentController::class, 'editScore'])->name('matches.score.edit');
+
+    Route::get('/tournaments/{tournament}/prizes', [App\Http\Controllers\PrizeController::class, 'index'])->name('prizes.index');
+    Route::post('/tournaments/{tournament}/prizes', [App\Http\Controllers\PrizeController::class, 'store'])->name('prizes.store');
+    Route::put('/tournaments/{tournament}/prizes/{prize}', [App\Http\Controllers\PrizeController::class, 'update'])->name('prizes.update');
+    Route::delete('/tournaments/{tournament}/prizes/{prize}', [App\Http\Controllers\PrizeController::class, 'destroy'])->name('prizes.destroy');
 });
 
 Route::middleware('auth')->group(function () {

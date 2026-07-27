@@ -59,7 +59,7 @@ const canNext = computed(() => {
         <template #header>
             <div>
                 <h1 class="ucl-title-lg">
-                    Nuevo <span class="text-ucl-cyan">Torneo</span>
+                    Nuevo <span class="text-elite-secondary">Torneo</span>
                 </h1>
                 <p class="ucl-meta mt-1">Configura tu torneo FIFA Champions</p>
             </div>
@@ -80,7 +80,7 @@ const canNext = computed(() => {
                                 <span v-else>{{ s }}</span>
                             </div>
                             <span class="hidden sm:block font-condensed text-xs tracking-[0.1em] uppercase"
-                                  :class="step === s ? 'text-ucl-cyan' : 'text-white/20'">
+                                  :class="step === s ? 'text-elite-secondary' : 'text-white/20'">
                                 {{ s === 1 ? 'Nombre' : s === 2 ? 'TVs' : 'Jugadores' }}
                             </span>
                         </div>
@@ -121,8 +121,8 @@ const canNext = computed(() => {
                                         class="min-h-touch min-w-touch flex items-center justify-center rounded-xl bg-white/10 text-white font-bold text-xl hover:bg-white/20 transition-all">
                                     −
                                 </button>
-                                <div class="w-20 h-16 rounded-xl bg-ucl-cyan/10 border border-ucl-cyan/20
-                                            flex items-center justify-center font-condensed font-bold text-3xl text-ucl-cyan">
+                                <div class="w-20 h-16 rounded-xl bg-elite-secondary/10 border border-elite-secondary/20
+                                            flex items-center justify-center font-condensed font-bold text-3xl text-elite-secondary">
                                     {{ form.consoles_count }}
                                 </div>
                                 <button type="button" @click="form.consoles_count = Math.min(20, form.consoles_count + 1)"
@@ -134,9 +134,9 @@ const canNext = computed(() => {
                             <!-- TV indicators -->
                             <div class="flex justify-center gap-2 flex-wrap">
                                 <div v-for="i in Math.min(form.consoles_count, 12)" :key="i"
-                                     class="w-8 h-8 rounded-lg bg-gradient-to-br from-ucl-cyan/20 to-cyan-700/10
-                                            border border-ucl-cyan/20 flex items-center justify-center
-                                            font-condensed font-bold text-xs text-ucl-cyan">
+                                     class="w-8 h-8 rounded-lg bg-gradient-to-br from-elite-secondary/20 to-orange-700/10
+                                            border border-elite-secondary/20 flex items-center justify-center
+                                            font-condensed font-bold text-xs text-elite-secondary">
                                     {{ i }}
                                 </div>
                                 <div v-if="form.consoles_count > 12"
@@ -184,8 +184,8 @@ const canNext = computed(() => {
                                 <div v-for="(player, idx) in form.players" :key="idx"
                                      class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/5
                                             group/tag transition-all hover:border-white/10">
-                                    <span class="w-6 h-6 rounded-lg bg-ucl-cyan/10 flex items-center justify-center
-                                                 text-xs font-bold text-ucl-cyan shrink-0">
+                                    <span class="w-6 h-6 rounded-lg bg-elite-secondary/10 flex items-center justify-center
+                                                 text-xs font-bold text-elite-secondary shrink-0">
                                         {{ idx + 1 }}
                                     </span>
                                     <span class="text-sm font-medium text-white/80 truncate max-w-[120px]">{{ player }}</span>

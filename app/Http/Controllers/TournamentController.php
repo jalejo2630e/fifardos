@@ -10,13 +10,13 @@ use Inertia\Inertia;
 
 class TournamentController extends Controller
 {
-    const COLORS = ['#00D4FF', '#FFD700', '#FF6B9D', '#10B981', '#8B5CF6', '#F97316', '#EF4444', '#84CC16'];
+    const COLORS = ['#F97316', '#FFD700', '#FF6B9D', '#10B981', '#8B5CF6', '#00D4FF', '#EF4444', '#84CC16'];
 
     public function index()
     {
         $tournaments = Tournament::where('user_id', auth()->id())
-            ->withCount(['players', 'matches', 'matches as matches_played' => fn($q) => $q->where('played', true)])
-            ->with(['players', 'matches' => fn($q) => $q->where('played', true)])
+            ->withCount(['players', 'matches', 'matches as matches_played' => fn($q) => $q->where('status', 'finished')])
+            ->with(['players', 'matches' => fn($q) => $q->where('status', 'finished')])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($tournament) {
@@ -83,7 +83,7 @@ class TournamentController extends Controller
         }]);
 
         $standings = $this->calculateStandings($tournament);
-        $allPlayed = $tournament->matches->every->played;
+        $allPlayed = $tournament->matches->every(fn($m) => $m->status === 'finished');
 
         return Inertia::render('Tournaments/Show', [
             'tournament' => $tournament,
@@ -103,7 +103,7 @@ class TournamentController extends Controller
         $match->update([
             'score1' => $validated['score1'],
             'score2' => $validated['score2'],
-            'played' => true,
+            'status' => 'finished',
         ]);
 
         return redirect()->back();
@@ -114,7 +114,7 @@ class TournamentController extends Controller
         $match->update([
             'score1' => null,
             'score2' => null,
-            'played' => false,
+            'status' => 'pending',
         ]);
 
         return redirect()->back();
@@ -190,7 +190,7 @@ class TournamentController extends Controller
         }
 
         foreach ($tournament->matches as $match) {
-            if (!$match->played) continue;
+            if ($match->status !== 'finished') continue;
 
             $s1 = $standings[$match->player1_id];
             $s2 = $standings[$match->player2_id];

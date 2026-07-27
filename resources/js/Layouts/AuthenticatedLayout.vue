@@ -8,17 +8,17 @@ const showingNav = ref(false);
 </script>
 
 <template>
-    <div class="min-h-screen bg-ucl-navy">
+    <div class="min-h-screen bg-elite-bg">
         <!-- Header -->
-        <header class="sticky top-0 z-40 border-b border-white/5 bg-ucl-navy/80 backdrop-blur-xl">
+        <header class="sticky top-0 z-40 border-b border-white/5 bg-elite-bg/80 backdrop-blur-xl">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="flex h-14 sm:h-16 items-center justify-between">
                     <!-- Logo + Desktop Nav -->
                     <div class="flex items-center gap-6 sm:gap-10">
                         <Link :href="route('dashboard')" class="flex items-center gap-2.5 shrink-0">
-                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-ucl-cyan to-cyan-700
-                                        flex items-center justify-center text-black shadow-lg shadow-ucl-cyan/20">
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-elite-secondary to-orange-700
+                                        flex items-center justify-center text-black shadow-lg shadow-elite-secondary/20">
+                                <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <rect x="2" y="6" width="20" height="12" rx="3"/>
                                     <circle cx="8" cy="12" r="1.5"/>
                                     <circle cx="16" cy="12" r="1.5"/>
@@ -33,12 +33,12 @@ const showingNav = ref(false);
                         <nav class="hidden md:flex items-center gap-1">
                             <Link :href="route('dashboard')"
                                   class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                                  :class="route().current('dashboard') ? 'text-ucl-cyan bg-ucl-cyan/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
+                                  :class="route().current('dashboard') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
                                 TORNEOS
                             </Link>
                             <Link :href="route('tournaments.create')"
                                   class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
-                                  :class="route().current('tournaments.create*') ? 'text-ucl-cyan bg-ucl-cyan/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
+                                  :class="route().current('tournaments.create*') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
                                 NUEVO
                             </Link>
                         </nav>
@@ -49,7 +49,7 @@ const showingNav = ref(false);
                         <!-- Desktop User -->
                         <div class="hidden sm:flex items-center gap-3">
                             <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-white/5">
-                                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-ucl-cyan to-cyan-700 flex items-center justify-center text-xs font-bold text-black">
+                                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-elite-secondary to-orange-700 flex items-center justify-center text-xs font-bold text-black">
                                     {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
                                 </div>
                                 <span class="text-sm text-white/60 font-medium max-w-[100px] truncate">{{ $page.props.auth.user.name }}</span>
@@ -102,7 +102,7 @@ const showingNav = ref(false);
                 <div class="px-4 py-3 space-y-1">
                     <Link :href="route('dashboard')"
                           class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all"
-                          :class="route().current('dashboard') ? 'text-ucl-cyan bg-ucl-cyan/10' : 'text-white/60 hover:text-white hover:bg-white/5'"
+                          :class="route().current('dashboard') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/60 hover:text-white hover:bg-white/5'"
                           @click="showingNav = false">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -111,7 +111,7 @@ const showingNav = ref(false);
                     </Link>
                     <Link :href="route('tournaments.create')"
                           class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all"
-                          :class="route().current('tournaments.create*') ? 'text-ucl-cyan bg-ucl-cyan/10' : 'text-white/60 hover:text-white hover:bg-white/5'"
+                          :class="route().current('tournaments.create*') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/60 hover:text-white hover:bg-white/5'"
                           @click="showingNav = false">
                         <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -120,7 +120,7 @@ const showingNav = ref(false);
                     </Link>
                 </div>
                 <div class="border-t border-white/5 px-4 py-3 flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-ucl-cyan to-cyan-700 flex items-center justify-center text-sm font-bold text-black shrink-0">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-elite-secondary to-orange-700 flex items-center justify-center text-sm font-bold text-black shrink-0">
                         {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
                     </div>
                     <div class="flex-1 min-w-0">

@@ -32,9 +32,9 @@ function editMatch(match) {
     router.post(route('matches.score.edit', [props.tournament.id, match.id]));
 }
 
-const color = computed(() => props.tournament.color || '#00D4FF');
+const color = computed(() => props.tournament.color || '#F97316');
 const totalMatches = computed(() => props.rounds.reduce((a, r) => a + r.length, 0));
-const playedMatches = computed(() => props.rounds.reduce((a, r) => a + r.filter(m => m.played).length, 0));
+const playedMatches = computed(() => props.rounds.reduce((a, r) => a + r.filter(m => m.status === 'finished').length, 0));
 const progress = computed(() => totalMatches.value ? Math.round(playedMatches.value / totalMatches.value * 100) : 0);
 const champion = computed(() => props.allPlayed && props.standings.length > 0 ? props.standings[0] : null);
 
@@ -161,8 +161,8 @@ function hexToRgb(hex) {
                         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                             <div v-for="match in round" :key="match.id"
                                  class="ucl-match"
-                                 :class="{ 'played': match.played }"
-                                 :style="match.played ? { borderColor: `${color}33`, background: `linear-gradient(135deg, ${color}08, rgba(14,22,48,0.95))` } : {}">
+                                 :class="{ 'played': match.status === 'finished' }"
+                                 :style="match.status === 'finished' ? { borderColor: `${color}33`, background: `linear-gradient(135deg, ${color}08, rgba(14,22,48,0.95))` } : {}">
                                 <div class="stars-overlay" />
                                 <div class="relative space-y-3">
                                     <div class="flex items-center justify-between">
@@ -177,20 +177,20 @@ function hexToRgb(hex) {
                                             </svg>
                                             TV {{ match.tv_number }}
                                         </span>
-                                        <span v-if="match.played" class="text-[10px] font-condensed text-ucl-gold uppercase tracking-wider">✓ FINAL</span>
+                                        <span v-if="match.status === 'finished'" class="text-[10px] font-condensed text-ucl-gold uppercase tracking-wider">✓ FINAL</span>
                                         <span v-else class="text-[10px] font-condensed text-white/15 uppercase tracking-wider">PENDIENTE</span>
                                     </div>
 
                                     <div class="flex items-center justify-between gap-3 py-1">
                                         <div class="flex-1 text-right">
-                                            <div class="ucl-player"
-                                                 :class="match.played ? (match.score1 > match.score2 ? 'winner' : 'loser') : ''">
-                                                {{ match.player1.name }}
-                                            </div>
+                                             <div class="ucl-player"
+                                                  :class="match.status === 'finished' ? (match.score1 > match.score2 ? 'winner' : 'loser') : ''">
+                                                 {{ match.player1?.name }}
+                                             </div>
                                         </div>
 
                                         <div class="flex items-center gap-2 sm:gap-3 shrink-0">
-                                            <template v-if="!match.played">
+                                            <template v-if="match.status !== 'finished'">
                                                 <input type="number" min="0" class="score-input text-lg" v-model.number="match.score1" />
                                                 <span class="ucl-vs">VS</span>
                                                 <input type="number" min="0" class="score-input text-lg" v-model.number="match.score2" />
@@ -210,13 +210,13 @@ function hexToRgb(hex) {
 
                                         <div class="flex-1 text-left">
                                             <div class="ucl-player"
-                                                 :class="match.played ? (match.score2 > match.score1 ? 'winner' : 'loser') : ''">
-                                                {{ match.player2.name }}
+                                                 :class="match.status === 'finished' ? (match.score2 > match.score1 ? 'winner' : 'loser') : ''">
+                                                {{ match.player2?.name }}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div v-if="match.played" class="pt-2 border-t border-white/5">
+                                    <div v-if="match.status === 'finished'" class="pt-2 border-t border-white/5">
                                         <button @click="editMatch(match)"
                                                 class="w-full min-h-touch rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-white/10 font-condensed text-xs uppercase tracking-wider transition-all duration-200">
                                             EDITAR RESULTADO

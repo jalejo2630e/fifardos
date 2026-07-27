@@ -14,6 +14,7 @@ class Tournament extends Model
         'consoles_count',
         'status',
         'color',
+        'max_players',
     ];
 
     public function user(): BelongsTo
@@ -29,5 +30,10 @@ class Tournament extends Model
     public function matches(): HasMany
     {
         return $this->hasMany(GameMatch::class);
+    }
+
+    public function prizes(): HasMany
+    {
+        return $this->hasMany(TournamentPrize::class);
     }
 }

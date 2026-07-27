@@ -31,70 +31,77 @@ const submit = () => {
 
 <template>
     <GuestLayout>
-        <Head title="Log in" />
+        <Head title="Iniciar Sesión" />
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
+        <div class="text-center mb-6">
+            <h1 class="ucl-title-lg text-white text-xl">INICIAR SESIÓN</h1>
+            <p class="text-xs text-white/30 mt-1">Ingresa a tu cuenta FIFARDOS</p>
+        </div>
+
+        <div v-if="status" class="mb-4 text-sm font-medium text-elite-secondary">
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit">
+        <form @submit.prevent="submit" class="space-y-4">
             <div>
-                <InputLabel for="email" value="Email" />
-
+                <InputLabel for="email" value="Correo electrónico" />
                 <TextInput
                     id="email"
                     type="email"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full"
                     v-model="form.email"
                     required
                     autofocus
                     autocomplete="username"
                 />
-
                 <InputError class="mt-2" :message="form.errors.email" />
             </div>
 
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
+            <div>
+                <InputLabel for="password" value="Contraseña" />
                 <TextInput
                     id="password"
                     type="password"
-                    class="mt-1 block w-full"
+                    class="mt-1.5 block w-full"
                     v-model="form.password"
                     required
                     autocomplete="current-password"
                 />
-
                 <InputError class="mt-2" :message="form.errors.password" />
             </div>
 
-            <div class="mt-4 block">
-                <label class="flex items-center">
+            <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2 cursor-pointer">
                     <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600"
-                        >Remember me</span
-                    >
+                    <span class="text-sm text-white/50">Recordarme</span>
                 </label>
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
                 <Link
                     v-if="canResetPassword"
                     :href="route('password.request')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    class="text-sm text-elite-secondary hover:text-orange-300 transition-colors"
                 >
-                    Forgot your password?
+                    ¿Olvidaste tu contraseña?
                 </Link>
-
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Log in
-                </PrimaryButton>
             </div>
+
+            <PrimaryButton
+                class="w-full justify-center"
+                :class="{ 'opacity-50': form.processing }"
+                :disabled="form.processing"
+            >
+                <svg v-if="form.processing" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                Ingresar
+            </PrimaryButton>
+
+            <p class="text-center text-sm text-white/30">
+                ¿No tienes cuenta?
+                <Link :href="route('register')" class="text-elite-secondary hover:text-orange-300 transition-colors font-medium">
+                    Regístrate
+                </Link>
+            </p>
         </form>
     </GuestLayout>
 </template>

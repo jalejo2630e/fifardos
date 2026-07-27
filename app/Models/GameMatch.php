@@ -16,12 +16,12 @@ class GameMatch extends Model
         'player2_id',
         'score1',
         'score2',
-        'played',
+        'status',
         'tv_number',
     ];
 
     protected $casts = [
-        'played' => 'boolean',
+        'status' => 'string',
     ];
 
     public function tournament(): BelongsTo

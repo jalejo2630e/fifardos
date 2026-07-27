@@ -10,7 +10,7 @@ const props = defineProps({
 
 const playedCount = computed(() => props.tournament.matches_played || 0);
 const totalMatches = computed(() => props.tournament.matches_count || 0);
-const color = computed(() => props.tournament.color || '#00D4FF');
+const color = computed(() => props.tournament.color || '#F97316');
 </script>
 
 <template>
@@ -18,7 +18,7 @@ const color = computed(() => props.tournament.color || '#00D4FF');
         <div
             class="ucl-card p-5 sm:p-6 h-full flex flex-col transition-all duration-300 ease-out"
             :class="[
-                'hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]'
+                'hover:shadow-[0_0_20px_rgba(249,115,22,0.3)]'
             ]"
             :style="{
                 '--t-color': color,
@@ -57,7 +57,7 @@ const color = computed(() => props.tournament.color || '#00D4FF');
                 <div v-if="tournament.leader"
                      class="mt-2 text-xs text-white/40 flex items-center gap-1.5">
                     <span>🔥</span>
-                    <span class="font-condensed font-bold text-ucl-cyan">{{ tournament.leader.name }}</span>
+                    <span class="font-condensed font-bold text-elite-secondary">{{ tournament.leader.name }}</span>
                     <span>{{ tournament.leader.pts }} pts</span>
                 </div>
             </div>

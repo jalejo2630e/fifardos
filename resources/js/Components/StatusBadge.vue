@@ -20,8 +20,8 @@ const config = computed(() => {
 <template>
     <span :class="config.cls">
         <span v-if="config.dot" class="relative flex h-2 w-2">
-            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-ucl-cyan opacity-75" />
-            <span class="relative inline-flex h-2 w-2 rounded-full bg-ucl-cyan" />
+            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-elite-secondary opacity-75" />
+            <span class="relative inline-flex h-2 w-2 rounded-full bg-elite-secondary" />
         </span>
         <span>{{ config.icon }}</span>
         <span>{{ config.label }}</span>
