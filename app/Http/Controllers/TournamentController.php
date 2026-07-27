@@ -10,6 +10,8 @@ use Inertia\Inertia;
 
 class TournamentController extends Controller
 {
+    const COLORS = ['#00D4FF', '#FFD700', '#FF6B9D', '#10B981', '#8B5CF6', '#F97316', '#EF4444', '#84CC16'];
+
     public function index()
     {
         $tournaments = Tournament::where('user_id', auth()->id())
@@ -36,11 +38,16 @@ class TournamentController extends Controller
             'players.*' => 'required|string|max:255|distinct',
         ]);
 
+        $usedColors = Tournament::where('user_id', auth()->id())->pluck('color')->toArray();
+        $available = array_values(array_diff(self::COLORS, $usedColors));
+        $color = empty($available) ? self::COLORS[array_rand(self::COLORS)] : $available[array_rand($available)];
+
         $tournament = Tournament::create([
             'user_id' => auth()->id(),
             'name' => $validated['name'],
             'consoles_count' => $validated['consoles_count'],
             'status' => 'in_progress',
+            'color' => $color,
         ]);
 
         foreach ($validated['players'] as $playerName) {

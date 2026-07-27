@@ -13,6 +13,7 @@ class Tournament extends Model
         'name',
         'consoles_count',
         'status',
+        'color',
     ];
 
     public function user(): BelongsTo

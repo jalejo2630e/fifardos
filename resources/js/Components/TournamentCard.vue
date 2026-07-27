@@ -10,26 +10,32 @@ const props = defineProps({
 
 const playedCount = computed(() => props.tournament.matches_played || 0);
 const totalMatches = computed(() => props.tournament.matches_count || 0);
+const color = computed(() => props.tournament.color || '#00D4FF');
 </script>
 
 <template>
     <Link :href="route('tournaments.show', tournament.id)" class="block group">
-        <div class="ucl-card p-5 sm:p-6 h-full flex flex-col">
-            <!-- Star pattern overlay -->
+        <div class="ucl-card p-5 sm:p-6 h-full flex flex-col"
+             :style="{
+                 '--t-color': color,
+                 '--t-color-rgb': parseInt(color.slice(1,3), 16) + ',' + parseInt(color.slice(3,5), 16) + ',' + parseInt(color.slice(5,7), 16)
+             }">
             <div class="stars-overlay" />
 
-            <!-- Top row -->
             <div class="relative flex items-start justify-between mb-4">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-ucl-cyan/20 to-ucl-cyan/5
-                                border border-ucl-cyan/20 flex items-center justify-center
-                                font-condensed font-bold text-lg text-ucl-cyan
-                                group-hover:scale-110 transition-transform duration-300">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center font-condensed font-bold text-lg
+                                group-hover:scale-110 transition-transform duration-300"
+                         :style="{
+                             background: `linear-gradient(135deg, ${color}22, ${color}08)`,
+                             border: `1px solid ${color}33`,
+                             color: color
+                         }">
                         {{ tournament.players_count }}
                     </div>
                     <div>
-                        <div class="ucl-title-md text-base sm:text-lg leading-tight
-                                    group-hover:text-ucl-cyan transition-colors duration-200">
+                        <div class="ucl-title-md text-base sm:text-lg leading-tight transition-colors duration-200"
+                             :style="{ color: 'var(--t-color)' }">
                             {{ tournament.name }}
                         </div>
                         <div class="ucl-meta mt-0.5">{{ tournament.players_count }} jugadores</div>
@@ -38,7 +44,6 @@ const totalMatches = computed(() => props.tournament.matches_count || 0);
                 <StatusBadge :status="tournament.status" />
             </div>
 
-            <!-- Progress -->
             <div v-if="tournament.status === 'in_progress' && totalMatches > 0" class="relative mt-auto mb-4">
                 <ProgressBar
                     :value="playedCount"
@@ -47,7 +52,6 @@ const totalMatches = computed(() => props.tournament.matches_count || 0);
                 />
             </div>
 
-            <!-- Footer -->
             <div class="relative mt-auto flex items-center justify-between pt-4 border-t border-white/5">
                 <div class="flex items-center gap-4 text-xs text-white/30">
                     <span class="flex items-center gap-1.5">
@@ -64,10 +68,16 @@ const totalMatches = computed(() => props.tournament.matches_count || 0);
                         {{ totalMatches }} partidos
                     </span>
                 </div>
-                <svg class="w-4 h-4 text-white/20 group-hover:text-ucl-cyan group-hover:translate-x-1 transition-all duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <svg class="w-4 h-4 text-white/20 transition-all duration-200"
+                     :style="{ color: color + '66' }"
+                     fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
             </div>
+
+            <!-- Hover border color -->
+            <div class="absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100"
+                 :style="{ boxShadow: `inset 0 0 0 1px ${color}44, 0 0 24px ${color}18` }" />
         </div>
     </Link>
 </template>
