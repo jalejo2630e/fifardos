@@ -15,11 +15,15 @@ const color = computed(() => props.tournament.color || '#00D4FF');
 
 <template>
     <Link :href="route('tournaments.show', tournament.id)" class="block group">
-        <div class="ucl-card p-5 sm:p-6 h-full flex flex-col"
-             :style="{
-                 '--t-color': color,
-                 '--t-color-rgb': parseInt(color.slice(1,3), 16) + ',' + parseInt(color.slice(3,5), 16) + ',' + parseInt(color.slice(5,7), 16)
-             }">
+        <div
+            class="ucl-card p-5 sm:p-6 h-full flex flex-col transition-all duration-300 ease-out"
+            :class="[
+                'hover:shadow-[0_0_20px_rgba(34,211,238,0.3)]'
+            ]"
+            :style="{
+                '--t-color': color,
+                '--t-color-rgb': parseInt(color.slice(1,3), 16) + ',' + parseInt(color.slice(3,5), 16) + ',' + parseInt(color.slice(5,7), 16)
+            }">
             <div class="stars-overlay" />
 
             <div class="relative flex items-start justify-between mb-4">
@@ -75,7 +79,7 @@ const color = computed(() => props.tournament.color || '#00D4FF');
                 </svg>
             </div>
 
-            <!-- Hover border color -->
+            <!-- Hover glow overlay -->
             <div class="absolute inset-0 rounded-2xl pointer-events-none transition-opacity duration-300 opacity-0 group-hover:opacity-100"
                  :style="{ boxShadow: `inset 0 0 0 1px ${color}44, 0 0 24px ${color}18` }" />
         </div>

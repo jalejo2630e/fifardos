@@ -14,7 +14,13 @@ defineProps({
             <span v-if="detail" class="text-xs font-condensed font-bold text-ucl-cyan">{{ detail }}</span>
         </div>
         <div class="ucl-progress">
-            <div class="ucl-progress-bar" :style="{ width: Math.min(value / max * 100, 100) + '%' }" />
+            <div
+                class="h-full rounded-full transition-all duration-500 ease-out"
+                :style="{
+                    width: Math.min(value / max * 100, 100) + '%',
+                    background: 'linear-gradient(90deg, #22d3ee, #2563eb)'
+                }"
+            />
         </div>
     </div>
 </template>
