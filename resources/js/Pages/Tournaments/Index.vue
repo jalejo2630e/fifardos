@@ -27,18 +27,16 @@ const hasTournaments = computed(() => props.tournaments.length > 0);
 const hasFiltered = computed(() => filteredTournaments.value.length > 0);
 
 const isLoading = ref(false);
-let startFn, finishFn;
+let stopStart, stopFinish;
 
 onMounted(() => {
-    startFn = () => isLoading.value = true;
-    finishFn = () => isLoading.value = false;
-    router.on('start', startFn);
-    router.on('finish', finishFn);
+    stopStart = router.on('start', () => { isLoading.value = true; });
+    stopFinish = router.on('finish', () => { isLoading.value = false; });
 });
 
 onUnmounted(() => {
-    router.off('start', startFn);
-    router.off('finish', finishFn);
+    stopStart?.();
+    stopFinish?.();
 });
 
 const emptyMessages = {
