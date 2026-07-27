@@ -2,6 +2,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import ProgressBar from '@/Components/ProgressBar.vue';
 
 const props = defineProps({
     tournament: Object,
@@ -11,10 +13,8 @@ const props = defineProps({
 });
 
 const activeTab = ref('matches');
-const editingScore = ref(null);
-
-// Local reactive copy for score editing
 const localRounds = ref([]);
+
 function initRounds() {
     localRounds.value = JSON.parse(JSON.stringify(props.rounds));
 }
@@ -28,37 +28,15 @@ function saveScore(match) {
     router.post(route('matches.score.update', [props.tournament.id, match.id]), { score1: s1, score2: s2 });
 }
 
-function startEdit(match) {
-    editingScore.value = match.id;
-}
-
-function confirmEdit(match) {
+function editMatch(match) {
     router.post(route('matches.score.edit', [props.tournament.id, match.id]));
-    editingScore.value = null;
 }
 
-// Computed stats
-const totalMatches = computed(() => {
-    let count = 0;
-    props.rounds.forEach(r => count += r.length);
-    return count;
-});
-
-const playedMatches = computed(() => {
-    let count = 0;
-    props.rounds.forEach(r => r.forEach(m => { if (m.played) count++; }));
-    return count;
-});
-
-const progressPercent = computed(() => {
-    if (totalMatches.value === 0) return 0;
-    return Math.round((playedMatches.value / totalMatches.value) * 100);
-});
-
-const champion = computed(() => {
-    if (props.allPlayed && props.standings.length > 0) return props.standings[0];
-    return null;
-});
+// Stats
+const totalMatches = computed(() => props.rounds.reduce((a, r) => a + r.length, 0));
+const playedMatches = computed(() => props.rounds.reduce((a, r) => a + r.filter(m => m.played).length, 0));
+const progress = computed(() => totalMatches.value ? Math.round(playedMatches.value / totalMatches.value * 100) : 0);
+const champion = computed(() => props.allPlayed && props.standings.length > 0 ? props.standings[0] : null);
 </script>
 
 <template>
@@ -66,242 +44,211 @@ const champion = computed(() => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <div>
-                    <div class="flex items-center gap-3">
-                        <h1 class="text-3xl font-black font-display tracking-tight">
-                            <span class="text-gaming-cyan neon-text">{{ tournament.name }}</span>
-                        </h1>
-                        <span v-if="tournament.status === 'completed'"
-                              class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gaming-gold/20 text-gaming-gold border border-gaming-gold/30">
-                            🏆 Finalizado
-                        </span>
-                        <span v-else
-                              class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-gaming-cyan/20 text-gaming-cyan border border-gaming-cyan/30">
-                            ⚔️ En Curso
-                        </span>
+            <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <h1 class="ucl-title-lg truncate">{{ tournament.name }}</h1>
+                        <StatusBadge :status="tournament.status" />
                     </div>
-                    <div class="flex items-center gap-4 mt-1 text-sm text-white/40">
-                        <span>{{ tournament.players.length }} jugadores</span>
-                        <span class="w-1 h-1 rounded-full bg-white/20"></span>
-                        <span>{{ tournament.consoles_count }} TV(s)</span>
-                        <span class="w-1 h-1 rounded-full bg-white/20"></span>
-                        <span>{{ totalMatches }} partidos</span>
+                    <div class="flex items-center gap-3 mt-1.5 text-xs sm:text-sm text-white/30">
+                        <span>{{ tournament.players.length }} JUGADORES</span>
+                        <span class="w-1 h-1 rounded-full bg-white/10" />
+                        <span>{{ tournament.consoles_count }} TV</span>
+                        <span class="w-1 h-1 rounded-full bg-white/10" />
+                        <span>{{ totalMatches }} PARTIDOS</span>
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <Link :href="route('dashboard')"
-                          class="btn-ghost text-sm py-2.5 px-4 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <Link :href="route('dashboard')" class="ucl-btn-ghost text-xs min-h-touch px-4">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
                         Volver
                     </Link>
-                    <Link :href="route('tournaments.destroy', tournament.id)"
-                          method="delete" as="button"
-                          class="btn-danger text-sm py-2.5 px-4"
-                          onclick="return confirm('¿Eliminar este torneo? Se borrarán todos los datos.')">
-                        Eliminar
+                    <Link :href="route('tournaments.destroy', tournament.id)" method="delete" as="button"
+                          class="ucl-btn-danger text-xs min-h-touch px-4"
+                          onclick="return confirm('¿Eliminar torneo? Se borrarán todos los datos.')">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                     </Link>
                 </div>
             </div>
         </template>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-8">
+        <div class="py-6 sm:py-8 lg:py-10">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 space-y-6 sm:space-y-8">
 
-                <!-- Progress Bar -->
-                <div v-if="!allPlayed" class="glass-card p-6 animate-fade-up">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="text-white/60">Progreso del torneo</span>
-                            <span class="font-bold text-gaming-cyan">{{ playedMatches }}/{{ totalMatches }}</span>
-                            <span class="text-white/40">partidos jugados</span>
-                        </div>
-                        <span class="text-sm font-bold font-display text-gaming-cyan">{{ progressPercent }}%</span>
-                    </div>
-                    <div class="h-2.5 rounded-full bg-white/10 overflow-hidden">
-                        <div class="h-full rounded-full bg-gradient-to-r from-gaming-cyan via-gaming-purple to-gaming-gold transition-all duration-700 ease-out"
-                             :style="{ width: progressPercent + '%' }">
-                        </div>
-                    </div>
+                <!-- Progress -->
+                <div v-if="!allPlayed" class="animate-fade-up">
+                    <ProgressBar
+                        :value="playedMatches"
+                        :max="totalMatches"
+                        :detail="`${playedMatches}/${totalMatches} · ${progress}%`" />
                 </div>
 
                 <!-- Champion Banner -->
-                <div v-if="champion" class="champion-banner animate-fade-up">
+                <div v-if="champion" class="ucl-champion animate-scale-in">
                     <div class="relative z-10">
-                        <div class="text-6xl mb-4">🏆</div>
-                        <h2 class="text-3xl font-black font-display gold-text text-gaming-gold mb-2">
-                            ¡Tenemos un Campeón!
+                        <div class="text-5xl sm:text-7xl mb-3 sm:mb-4">🏆</div>
+                        <h2 class="font-condensed font-bold text-xl sm:text-2xl tracking-[0.08em] text-ucl-gold uppercase mb-2">
+                            Champion
                         </h2>
-                        <div class="text-5xl font-black font-display text-white gold-text mt-3 mb-4">
+                        <div class="ucl-title-lg text-3xl sm:text-5xl lg:text-6xl text-white gold-text animate-gold-pulse">
                             {{ champion.player_name }}
                         </div>
-                        <div class="flex items-center justify-center gap-6 text-sm text-white/60">
-                            <span>{{ champion.pts }} PTS</span>
-                            <span class="w-1 h-1 rounded-full bg-white/20"></span>
+                        <div class="flex items-center justify-center gap-4 sm:gap-6 mt-4 text-xs sm:text-sm text-white/40 font-medium">
+                            <span class="text-ucl-gold font-bold">{{ champion.pts }} PTS</span>
+                            <span class="w-1 h-1 rounded-full bg-white/10" />
                             <span>{{ champion.pg }}G {{ champion.pe }}E {{ champion.pp }}P</span>
-                            <span class="w-1 h-1 rounded-full bg-white/20"></span>
-                            <span>DG: {{ champion.dg > 0 ? '+' : '' }}{{ champion.dg }}</span>
+                            <span class="w-1 h-1 rounded-full bg-white/10" />
+                            <span>DG {{ champion.dg > 0 ? '+' : '' }}{{ champion.dg }}</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Tabs -->
-                <div class="glass-card p-1.5 flex gap-1 animate-fade-up">
+                <div class="ucl-card p-1 flex animate-fade-up">
                     <button @click="activeTab = 'matches'"
-                            class="tab-gaming flex-1 text-center"
-                            :class="activeTab === 'matches' ? 'active' : 'text-white/40 hover:text-white/70'">
-                        <div class="flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Partidos
-                        </div>
+                            class="flex-1 min-h-touch flex items-center justify-center gap-2 rounded-xl font-condensed text-xs sm:text-sm
+                                   uppercase tracking-[0.08em] transition-all duration-200"
+                            :class="activeTab === 'matches' ? 'bg-ucl-cyan/10 text-ucl-cyan' : 'text-white/30 hover:text-white/60'">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Partidos
                     </button>
                     <button @click="activeTab = 'standings'"
-                            class="tab-gaming flex-1 text-center"
-                            :class="activeTab === 'standings' ? 'active' : 'text-white/40 hover:text-white/70'">
-                        <div class="flex items-center justify-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                            </svg>
-                            Clasificación
-                        </div>
+                            class="flex-1 min-h-touch flex items-center justify-center gap-2 rounded-xl font-condensed text-xs sm:text-sm
+                                   uppercase tracking-[0.08em] transition-all duration-200"
+                            :class="activeTab === 'standings' ? 'bg-ucl-cyan/10 text-ucl-cyan' : 'text-white/30 hover:text-white/60'">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Clasificación
                     </button>
                 </div>
 
-                <!-- ============ MATCHES VIEW ============ -->
-                <div v-if="activeTab === 'matches'" class="space-y-10">
+                <!-- ====== MATCHES ====== -->
+                <div v-if="activeTab === 'matches'" class="space-y-8 sm:space-y-10">
                     <div v-for="(round, rIdx) in localRounds" :key="rIdx" class="animate-fade-up">
                         <!-- Round header -->
-                        <div class="flex items-center gap-4 mb-5">
-                            <div class="flex items-center gap-3">
-                                <span class="w-10 h-10 rounded-xl bg-gradient-to-br from-gaming-cyan/30 to-gaming-purple/30 border border-gaming-cyan/20 flex items-center justify-center text-sm font-black text-gaming-cyan">
-                                    {{ rIdx + 1 }}
-                                </span>
-                                <h3 class="text-lg font-bold font-display text-white">Jornada {{ rIdx + 1 }}</h3>
+                        <div class="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
+                            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-ucl-cyan/20 to-transparent
+                                        border border-ucl-cyan/20 flex items-center justify-center font-condensed font-bold text-ucl-cyan shrink-0">
+                                {{ rIdx + 1 }}
                             </div>
-                            <div class="flex-1 h-px bg-gradient-to-r from-white/10 to-transparent"></div>
-                            <span class="text-xs text-white/30">{{ round.length }} partido(s)</span>
+                            <h3 class="font-condensed font-bold text-base sm:text-lg uppercase tracking-[0.06em] text-white/80">
+                                Jornada {{ rIdx + 1 }}
+                            </h3>
+                            <div class="flex-1 h-px bg-gradient-to-r from-white/5 to-transparent" />
+                            <span class="text-[10px] sm:text-xs font-condensed text-white/20 tracking-wider">{{ round.length }} PARTIDOS</span>
                         </div>
 
                         <!-- Match grid -->
-                        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
                             <div v-for="match in round" :key="match.id"
-                                 class="match-card"
+                                 class="ucl-match"
                                  :class="{
                                      'played': match.played,
-                                     'winner-highlight': allPlayed && ((match.score1 > match.score2 && match.player1.id === champion.player_id) || (match.score2 > match.score1 && match.player2.id === champion.player_id))
+                                     'animate-gold-pulse': champion && ((match.score1 > match.score2 && match.player1.id === champion.player_id) || (match.score2 > match.score1 && match.player2.id === champion.player_id))
                                  }">
-                                <!-- TV Badge -->
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="badge-tv">
-                                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        TV {{ match.tv_number }}
-                                    </span>
-                                    <span v-if="match.played && !allPlayed"
-                                          class="text-xs font-bold text-gaming-green">✓ Finalizado</span>
-                                    <span v-else-if="allPlayed"
-                                          class="text-xs font-bold text-gaming-gold">🏁</span>
-                                    <span v-else class="text-xs text-white/20">Pendiente</span>
-                                </div>
+                                <div class="stars-overlay" />
+                                <div class="relative space-y-3">
+                                    <!-- TV Badge + Status -->
+                                    <div class="flex items-center justify-between">
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full
+                                                     bg-gradient-to-r from-ucl-cyan/10 to-cyan-700/5 border border-ucl-cyan/20
+                                                     text-[10px] font-condensed font-bold text-ucl-cyan uppercase tracking-wider">
+                                            <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                            </svg>
+                                            TV {{ match.tv_number }}
+                                        </span>
+                                        <span v-if="match.played" class="text-[10px] font-condensed text-ucl-gold uppercase tracking-wider">✓ FINAL</span>
+                                        <span v-else class="text-[10px] font-condensed text-white/15 uppercase tracking-wider">PENDIENTE</span>
+                                    </div>
 
-                                <!-- Match content -->
-                                <div class="flex items-center justify-between gap-3 py-2">
-                                    <!-- Player 1 -->
-                                    <div class="flex-1 text-right">
-                                        <div class="text-base font-bold font-display"
-                                             :class="match.played
-                                                ? (match.score1 > match.score2 ? 'text-gaming-green' : match.score1 < match.score2 ? 'text-white/50' : 'text-white')
-                                                : 'text-white'">
-                                            {{ match.player1.name }}
+                                    <!-- Teams + Score -->
+                                    <div class="flex items-center justify-between gap-3 py-1">
+                                        <div class="flex-1 text-right">
+                                            <div class="ucl-player"
+                                                 :class="match.played ? (match.score1 > match.score2 ? 'winner' : 'loser') : ''">
+                                                {{ match.player1.name }}
+                                            </div>
+                                        </div>
+
+                                        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+                                            <template v-if="!match.played">
+                                                <input type="number" min="0"
+                                                       class="score-input text-lg"
+                                                       v-model.number="match.score1" />
+                                                <span class="ucl-vs">VS</span>
+                                                <input type="number" min="0"
+                                                       class="score-input text-lg"
+                                                       v-model.number="match.score2" />
+                                            </template>
+                                            <template v-else>
+                                                <span class="min-w-[2.5rem] sm:min-w-[3rem] text-center text-2xl sm:text-3xl font-condensed font-bold"
+                                                      :class="match.score1 > match.score2 ? 'text-ucl-gold' : match.score1 < match.score2 ? 'text-white/30' : 'text-white/60'">
+                                                    {{ match.score1 }}
+                                                </span>
+                                                <span class="text-white/10 font-condensed font-bold text-sm tracking-widest">:</span>
+                                                <span class="min-w-[2.5rem] sm:min-w-[3rem] text-center text-2xl sm:text-3xl font-condensed font-bold"
+                                                      :class="match.score2 > match.score1 ? 'text-ucl-gold' : match.score2 < match.score1 ? 'text-white/30' : 'text-white/60'">
+                                                    {{ match.score2 }}
+                                                </span>
+                                            </template>
+                                        </div>
+
+                                        <div class="flex-1 text-left">
+                                            <div class="ucl-player"
+                                                 :class="match.played ? (match.score2 > match.score1 ? 'winner' : 'loser') : ''">
+                                                {{ match.player2.name }}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <!-- Score -->
-                                    <div class="flex items-center gap-3 shrink-0">
-                                        <template v-if="!match.played">
-                                            <input type="number" min="0"
-                                                   class="score-input"
-                                                   v-model.number="match.score1"
-                                                   :disabled="editingScore !== null && editingScore !== match.id" />
-                                            <span class="text-lg font-black text-white/30">:</span>
-                                            <input type="number" min="0"
-                                                   class="score-input"
-                                                   v-model.number="match.score2"
-                                                   :disabled="editingScore !== null && editingScore !== match.id" />
-                                        </template>
-                                        <template v-else>
-                                            <span class="min-w-[3.5rem] text-center text-3xl font-black font-display"
-                                                  :class="match.score1 > match.score2 ? 'text-gaming-green' : match.score1 < match.score2 ? 'text-gaming-red' : 'text-white'">
-                                                {{ match.score1 }}
-                                            </span>
-                                            <span class="text-lg font-black text-white/20">:</span>
-                                            <span class="min-w-[3.5rem] text-center text-3xl font-black font-display"
-                                                  :class="match.score2 > match.score1 ? 'text-gaming-green' : match.score2 < match.score1 ? 'text-gaming-red' : 'text-white'">
-                                                {{ match.score2 }}
-                                            </span>
-                                        </template>
+                                    <!-- Actions -->
+                                    <div v-if="match.played" class="pt-2 border-t border-white/5">
+                                        <button @click="editMatch(match)"
+                                                class="w-full min-h-touch rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-white/10
+                                                       font-condensed text-xs uppercase tracking-wider transition-all duration-200">
+                                            EDITAR RESULTADO
+                                        </button>
                                     </div>
-
-                                    <!-- Player 2 -->
-                                    <div class="flex-1 text-left">
-                                        <div class="text-base font-bold font-display"
-                                             :class="match.played
-                                                ? (match.score2 > match.score1 ? 'text-gaming-green' : match.score2 < match.score1 ? 'text-white/50' : 'text-white')
-                                                : 'text-white'">
-                                            {{ match.player2.name }}
-                                        </div>
+                                    <div v-else-if="match.score1 >= 0 && match.score2 >= 0" class="pt-2 border-t border-white/5">
+                                        <button @click="saveScore(match)"
+                                                class="ucl-btn-primary w-full text-xs min-h-touch">
+                                            <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                            GUARDAR RESULTADO
+                                        </button>
                                     </div>
-                                </div>
-
-                                <!-- Actions -->
-                                <div class="mt-4 pt-3 border-t border-white/5">
-                                    <button v-if="!match.played && editingScore !== match.id && match.score1 >= 0 && match.score2 >= 0"
-                                            @click="saveScore(match)"
-                                            class="btn-success w-full text-sm py-2.5 flex items-center justify-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        Guardar Resultado
-                                    </button>
-                                    <div v-else-if="!match.played && editingScore !== match.id"
-                                         class="text-center text-xs text-white/20 py-1">
-                                        Introduce los goles de ambos jugadores
+                                    <div v-else class="pt-2 border-t border-white/5 text-center text-[10px] text-white/15 font-condensed tracking-wider">
+                                        INTRODUCE LOS GOLES
                                     </div>
-                                    <button v-if="match.played"
-                                            @click="confirmEdit(match)"
-                                            class="btn-warning w-full text-sm py-2.5 flex items-center justify-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                        </svg>
-                                        Editar Resultado
-                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- ============ STANDINGS VIEW ============ -->
-                <div v-if="activeTab === 'standings'"
-                     class="glass-card overflow-hidden animate-fade-up">
-                    <!-- Table -->
+                <!-- ====== STANDINGS ====== -->
+                <div v-if="activeTab === 'standings'" class="ucl-card overflow-hidden animate-fade-up">
                     <div class="overflow-x-auto">
-                        <table class="standings-table w-full">
+                        <table class="ucl-table">
                             <thead>
-                                <tr class="border-b border-white/10 bg-white/5">
-                                    <th class="text-left">#</th>
-                                    <th class="text-left">Jugador</th>
+                                <tr class="bg-white/[0.02]">
+                                    <th class="w-10 sm:w-12 text-center">#</th>
+                                    <th>Jugador</th>
                                     <th class="text-center">PTS</th>
-                                    <th class="text-center">PJ</th>
-                                    <th class="text-center">PG</th>
-                                    <th class="text-center">PE</th>
-                                    <th class="text-center">PP</th>
+                                    <th class="text-center hidden sm:table-cell">PJ</th>
+                                    <th class="text-center hidden sm:table-cell">PG</th>
+                                    <th class="text-center hidden sm:table-cell">PE</th>
+                                    <th class="text-center hidden sm:table-cell">PP</th>
                                     <th class="text-center">GF</th>
                                     <th class="text-center">GC</th>
                                     <th class="text-center">DG</th>
@@ -309,51 +256,47 @@ const champion = computed(() => {
                             </thead>
                             <tbody>
                                 <tr v-for="(s, idx) in standings" :key="s.player_id"
-                                    class="border-b border-white/5 transition-colors hover:bg-white/5"
                                     :class="{
-                                        'bg-gradient-to-r from-gaming-gold/10 to-transparent': idx === 0 && allPlayed,
-                                        'bg-gaming-cyan/5': idx === 0 && !allPlayed
+                                        'bg-gradient-to-r from-ucl-gold/5 to-transparent': idx === 0 && allPlayed,
+                                        'bg-ucl-cyan/[0.02]': idx === 0 && !allPlayed
                                     }">
-                                    <td class="text-center font-bold text-lg"
-                                        :class="idx === 0 && allPlayed ? 'text-gaming-gold gold-text' : idx === 0 ? 'text-gaming-cyan' : 'text-white/40'">
+                                    <td class="text-center font-condensed font-bold text-lg"
+                                        :class="idx === 0 && allPlayed ? 'text-ucl-gold' : idx === 0 ? 'text-ucl-cyan' : 'text-white/30'">
                                         <span v-if="idx === 0 && allPlayed">👑</span>
                                         <span v-else>{{ idx + 1 }}</span>
                                     </td>
-                                    <td class="font-bold font-display"
-                                        :class="idx === 0 && allPlayed ? 'text-gaming-gold text-lg' : idx === 0 ? 'text-gaming-cyan' : 'text-white'">
+                                    <td class="font-semibold"
+                                        :class="idx === 0 && allPlayed ? 'text-ucl-gold text-base sm:text-lg' : idx === 0 ? 'text-ucl-cyan' : 'text-white/80'">
                                         {{ s.player_name }}
                                     </td>
-                                    <td class="text-center font-black text-xl font-display"
-                                        :class="idx === 0 && allPlayed ? 'text-gaming-gold gold-text' : idx === 0 ? 'text-gaming-cyan' : 'text-white'">
+                                    <td class="text-center font-condensed font-bold text-lg sm:text-xl"
+                                        :class="idx === 0 && allPlayed ? 'text-ucl-gold' : idx === 0 ? 'text-ucl-cyan' : 'text-white'">
                                         {{ s.pts }}
                                     </td>
-                                    <td class="text-center text-white/60">{{ s.pj }}</td>
-                                    <td class="text-center"
-                                        :class="s.pg > 0 ? 'text-gaming-green' : 'text-white/40'">{{ s.pg }}</td>
-                                    <td class="text-center text-white/60">{{ s.pe }}</td>
-                                    <td class="text-center"
-                                        :class="s.pp > 0 ? 'text-gaming-red' : 'text-white/40'">{{ s.pp }}</td>
-                                    <td class="text-center text-white/80 font-semibold">{{ s.gf }}</td>
-                                    <td class="text-center text-white/80 font-semibold">{{ s.gc }}</td>
-                                    <td class="text-center font-bold"
-                                        :class="s.dg > 0 ? 'text-gaming-green' : s.dg < 0 ? 'text-gaming-red' : 'text-white/40'">
+                                    <td class="text-center text-white/40 hidden sm:table-cell">{{ s.pj }}</td>
+                                    <td class="text-center hidden sm:table-cell" :class="s.pg > 0 ? 'text-green-400' : 'text-white/30'">{{ s.pg }}</td>
+                                    <td class="text-center text-white/40 hidden sm:table-cell">{{ s.pe }}</td>
+                                    <td class="text-center hidden sm:table-cell" :class="s.pp > 0 ? 'text-red-400' : 'text-white/30'">{{ s.pp }}</td>
+                                    <td class="text-center text-white/70 font-semibold">{{ s.gf }}</td>
+                                    <td class="text-center text-white/70 font-semibold">{{ s.gc }}</td>
+                                    <td class="text-center font-bold font-condensed"
+                                        :class="s.dg > 0 ? 'text-green-400' : s.dg < 0 ? 'text-red-400' : 'text-white/30'">
                                         {{ s.dg > 0 ? '+' : '' }}{{ s.dg }}
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-
                     <!-- Legend -->
-                    <div class="p-4 border-t border-white/5 flex flex-wrap gap-4 text-xs text-white/30">
+                    <div class="px-4 sm:px-6 py-3 border-t border-white/5 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-white/20 font-condensed tracking-wider">
                         <span>PTS = Puntos</span>
-                        <span>PJ = Partidos Jugados</span>
-                        <span>PG = Partidos Ganados</span>
-                        <span>PE = Partidos Empatados</span>
-                        <span>PP = Partidos Perdidos</span>
-                        <span>GF = Goles a Favor</span>
-                        <span>GC = Goles en Contra</span>
-                        <span>DG = Diferencia de Goles</span>
+                        <span>PJ = Jugados</span>
+                        <span>PG = Ganados</span>
+                        <span>PE = Empatados</span>
+                        <span>PP = Perdidos</span>
+                        <span>GF = Goles Favor</span>
+                        <span>GC = Goles Contra</span>
+                        <span>DG = Diferencia</span>
                     </div>
                 </div>
             </div>

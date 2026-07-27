@@ -1,167 +1,315 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Bebas+Neue&family=Oswald:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-    body {
-        @apply bg-gaming-dark text-white font-sans;
-        background-image: radial-gradient(ellipse at 20% 50%, rgba(124, 58, 237, 0.05) 0%, transparent 50%),
-                          radial-gradient(ellipse at 80% 20%, rgba(0, 240, 255, 0.04) 0%, transparent 50%);
-        background-attachment: fixed;
+    html {
+        @apply antialiased;
+        -webkit-tap-highlight-color: transparent;
     }
+
+    body {
+        @apply bg-ucl-navy text-white/90 font-sans;
+        background-image: linear-gradient(180deg, #0B1124 0%, #0A0F1E 50%, #080C18 100%);
+        background-attachment: fixed;
+        min-height: 100vh;
+    }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { @apply bg-white/10 rounded-full; }
+    ::-webkit-scrollbar-thumb:hover { @apply bg-white/20; }
+
+    /* Selection */
+    ::selection { @apply bg-ucl-cyan/30 text-white; }
 }
 
 @layer components {
-    .glass-card {
-        @apply bg-gaming-card/80 backdrop-blur-xl border border-gaming-border rounded-2xl shadow-lg;
+    /* === Cards UCL === */
+    .ucl-card {
+        @apply relative rounded-2xl bg-gradient-card border border-white/5 shadow-ucl
+               transition-all duration-300 ease-out;
     }
 
-    .glass-card-hover {
-        @apply glass-card transition-all duration-300 hover:border-gaming-cyan/30 hover:shadow-glow;
-    }
-
-    .btn-gaming {
-        @apply relative overflow-hidden rounded-xl font-display font-bold text-sm uppercase tracking-wider
-               transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed;
-    }
-
-    .btn-gaming::before {
+    .ucl-card::before {
         content: '';
-        @apply absolute inset-0 opacity-0 transition-opacity duration-300;
-        background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+        @apply absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 pointer-events-none;
+        background: linear-gradient(135deg, rgba(0,212,255,0.03), transparent);
     }
 
-    .btn-gaming:hover::before {
+    .ucl-card:hover {
+        @apply shadow-ucl-hover border-white/10;
+        transform: translateY(-2px);
+    }
+
+    .ucl-card:hover::before {
         @apply opacity-100;
     }
 
-    .btn-primary {
-        @apply btn-gaming bg-gradient-to-r from-gaming-cyan to-cyan-600 text-black px-6 py-3
-               hover:shadow-glow hover:scale-[1.02] active:scale-[0.98];
+    .ucl-card-interactive {
+        @apply ucl-card cursor-pointer;
     }
 
-    .btn-success {
-        @apply btn-gaming bg-gradient-to-r from-gaming-green to-emerald-600 text-white px-5 py-2.5
-               hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
+    /* === Buttons UCL === */
+    .ucl-btn {
+        @apply relative inline-flex items-center justify-center font-condensed font-bold
+               uppercase tracking-[0.08em] min-h-touch px-6 py-3 rounded-xl
+               transition-all duration-200 ease-out
+               disabled:opacity-30 disabled:cursor-not-allowed disabled:scale-100;
     }
 
-    .btn-danger {
-        @apply btn-gaming bg-gradient-to-r from-gaming-red to-red-600 text-white px-5 py-2.5
-               hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
-    }
-
-    .btn-warning {
-        @apply btn-gaming bg-gradient-to-r from-gaming-gold to-amber-600 text-black px-5 py-2.5
-               hover:shadow-lg hover:scale-[1.02] active:scale-[0.98];
-    }
-
-    .btn-ghost {
-        @apply btn-gaming bg-white/5 text-white/70 border border-white/10 px-5 py-2.5
-               hover:bg-white/10 hover:text-white active:scale-[0.98];
-    }
-
-    .input-gaming {
-        @apply w-full rounded-xl bg-white/5 border border-white/10 text-white px-4 py-3
-               placeholder:text-white/30 outline-none transition-all duration-200
-               focus:border-gaming-cyan/50 focus:ring-1 focus:ring-gaming-cyan/30 focus:bg-white/10;
-    }
-
-    .match-card {
-        @apply glass-card p-5 transition-all duration-300;
-    }
-
-    .match-card.played {
-        @apply border-gaming-green/30 bg-gradient-to-br from-gaming-green/5 to-transparent;
-    }
-
-    .match-card.winner-highlight {
-        @apply border-gaming-gold/40 bg-gradient-to-br from-gaming-gold/10 to-transparent shadow-glow-gold;
-    }
-
-    .tab-gaming {
-        @apply relative px-6 py-3 font-display font-semibold text-sm uppercase tracking-wider
-               transition-all duration-300;
-    }
-
-    .tab-gaming.active {
-        @apply text-gaming-cyan;
-    }
-
-    .tab-gaming.active::after {
+    .ucl-btn::after {
         content: '';
-        @apply absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-gaming-cyan to-gaming-purple;
+        @apply absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200;
+        background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
     }
 
-    .standings-table th {
-        @apply px-4 py-3 text-xs font-semibold uppercase tracking-wider text-white/40;
+    .ucl-btn:hover::after { @apply opacity-100; }
+    .ucl-btn:active { transform: scale(0.97); }
+
+    .ucl-btn-primary {
+        @apply ucl-btn text-black;
+        background: linear-gradient(135deg, #00D4FF, #0099CC);
+        box-shadow: 0 4px 16px rgba(0, 212, 255, 0.25);
+    }
+    .ucl-btn-primary:hover { box-shadow: 0 6px 24px rgba(0, 212, 255, 0.35); }
+
+    .ucl-btn-gold {
+        @apply ucl-btn text-black;
+        background: linear-gradient(135deg, #FFD700, #B8960F);
+        box-shadow: 0 4px 16px rgba(255, 215, 0, 0.25);
     }
 
-    .standings-table td {
-        @apply px-4 py-3 text-sm;
+    .ucl-btn-ghost {
+        @apply ucl-btn text-white/70 border border-white/10 bg-white/5;
+    }
+    .ucl-btn-ghost:hover { @apply text-white border-white/20 bg-white/10; }
+
+    .ucl-btn-danger {
+        @apply ucl-btn text-white;
+        background: linear-gradient(135deg, #EF4444, #DC2626);
     }
 
-    .neon-text {
-        text-shadow: 0 0 10px rgba(0, 240, 255, 0.5), 0 0 30px rgba(0, 240, 255, 0.2);
+    /* === Inputs UCL === */
+    .ucl-input {
+        @apply w-full rounded-xl bg-white/5 border-0 shadow-ucl-input text-white
+               placeholder:text-white/20 min-h-touch px-4 py-3 text-sm
+               outline-none transition-all duration-200;
     }
 
-    .gold-text {
-        text-shadow: 0 0 10px rgba(245, 158, 11, 0.4), 0 0 30px rgba(245, 158, 11, 0.15);
+    .ucl-input:focus {
+        @apply shadow-ucl-input-focus bg-white/[0.08];
     }
 
-    .pulse-glow {
-        animation: pulseGlow 2s ease-in-out infinite;
+    .ucl-input-lg {
+        @apply ucl-input text-lg font-bold;
     }
 
-    @keyframes pulseGlow {
-        0%, 100% { box-shadow: 0 0 15px rgba(245, 158, 11, 0.2); }
-        50% { box-shadow: 0 0 30px rgba(245, 158, 11, 0.4); }
+    /* === Status Badges === */
+    .ucl-badge {
+        @apply inline-flex items-center gap-1.5 font-condensed font-bold text-[11px]
+               uppercase tracking-[0.12em] px-3 py-1.5 rounded-full border;
     }
 
-    .score-input {
-        @apply w-16 h-14 text-center text-2xl font-bold rounded-xl bg-white/10 border border-white/20
-               text-white outline-none transition-all duration-200
-               focus:border-gaming-cyan/50 focus:ring-1 focus:ring-gaming-cyan/30;
+    .ucl-badge-live {
+        @apply ucl-badge text-ucl-cyan border-ucl-cyan/30 bg-ucl-cyan/10;
+        animation: pulseBorder 2s ease-in-out infinite;
     }
 
-    .badge-tv {
-        @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider
-               bg-gradient-to-r from-gaming-purple/30 to-gaming-cyan/20 text-gaming-cyan border border-gaming-cyan/20;
+    .ucl-badge-done {
+        @apply ucl-badge text-ucl-gold border-ucl-gold/30 bg-ucl-gold/10;
     }
 
-    .player-tag {
-        @apply inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold
-               bg-white/5 border border-white/10 transition-all duration-200;
+    .ucl-badge-pending {
+        @apply ucl-badge text-white/30 border-white/10 bg-white/5;
     }
 
-    .player-tag:hover {
-        @apply border-gaming-cyan/30 bg-white/10;
+    /* === Progress Bar === */
+    .ucl-progress {
+        @apply h-2 rounded-full bg-white/5 overflow-hidden;
     }
 
-    .champion-banner {
-        @apply relative overflow-hidden rounded-2xl p-8 text-center;
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(124, 58, 237, 0.1));
-        border: 1px solid rgba(245, 158, 11, 0.3);
+    .ucl-progress-bar {
+        @apply h-full rounded-full transition-all duration-700 ease-out;
+        background: linear-gradient(90deg, #00D4FF, #0099CC, #FFD700);
+        background-size: 200% 100%;
+        animation: shimmer 3s ease-in-out infinite;
     }
 
-    .champion-banner::before {
+    /* === Typography === */
+    .ucl-title {
+        @apply font-condensed font-bold uppercase tracking-[0.04em] text-white;
+    }
+
+    .ucl-title-lg {
+        @apply ucl-title text-3xl sm:text-4xl lg:text-5xl leading-none;
+    }
+
+    .ucl-title-md {
+        @apply ucl-title text-xl sm:text-2xl leading-none;
+    }
+
+    .ucl-meta {
+        @apply text-xs sm:text-sm text-white/40 font-medium tracking-wide;
+    }
+
+    /* === Match Card === */
+    .ucl-match {
+        @apply ucl-card p-4 sm:p-5;
+    }
+
+    .ucl-match.played {
+        border-color: rgba(255, 215, 0, 0.15);
+        background: linear-gradient(135deg, rgba(255,215,0,0.03), rgba(14,22,48,0.95));
+    }
+
+    .ucl-match .score-input {
+        @apply w-12 sm:w-14 h-12 sm:h-14 text-center text-xl sm:text-2xl font-bold
+               rounded-xl bg-white/[0.08] border-0 shadow-ucl-input text-white
+               outline-none transition-all duration-200;
+    }
+
+    .ucl-match .score-input:focus {
+        @apply shadow-ucl-input-focus bg-white/[0.12];
+    }
+
+    /* === FAB Mobile === */
+    .ucl-fab {
+        @apply fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-ucl-glow
+               flex items-center justify-center text-2xl text-black
+               transition-all duration-200 ease-out;
+        background: linear-gradient(135deg, #00D4FF, #0099CC);
+    }
+
+    .ucl-fab:hover {
+        transform: scale(1.08);
+        box-shadow: 0 0 40px rgba(0, 212, 255, 0.25);
+    }
+
+    .ucl-fab:active {
+        transform: scale(0.95);
+    }
+
+    /* === Star pattern overlay === */
+    .stars-overlay {
+        @apply absolute inset-0 pointer-events-none overflow-hidden rounded-2xl;
+    }
+
+    .stars-overlay::after {
+        content: '';
+        @apply absolute inset-0 opacity-30;
+        background-image: url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M15 0l4.5 9.1L30 11.2l-7.5 7.3L24.5 30 15 24.5 5.5 30 7.5 18.5 0 11.2l10.5-2.1L15 0z' fill='rgba(255,255,255,0.03)'/%3E%3C/svg%3E");
+        background-size: 30px 30px;
+    }
+
+    /* === Standings table === */
+    .ucl-table {
+        @apply w-full;
+    }
+
+    .ucl-table th {
+        @apply px-3 sm:px-4 py-3 text-[10px] sm:text-xs font-condensed font-bold
+               uppercase tracking-[0.12em] text-white/30 text-left;
+    }
+
+    .ucl-table td {
+        @apply px-3 sm:px-4 py-3 text-sm;
+    }
+
+    .ucl-table tr {
+        @apply border-b border-white/[0.03] transition-colors duration-200;
+    }
+
+    .ucl-table tbody tr:hover {
+        @apply bg-white/[0.02];
+    }
+
+    /* === Champion banner === */
+    .ucl-champion {
+        @apply relative overflow-hidden rounded-2xl p-6 sm:p-10 text-center;
+        background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(0,212,255,0.04));
+        border: 1px solid rgba(255, 215, 0, 0.2);
+        box-shadow: 0 0 60px rgba(255, 215, 0, 0.06);
+    }
+
+    .ucl-champion::before {
         content: '';
         @apply absolute inset-0;
-        background: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.1), transparent 70%);
+        background: radial-gradient(ellipse at 50% 0%, rgba(255,215,0,0.08), transparent 70%);
     }
+
+    /* === Step indicator === */
+    .ucl-step {
+        @apply flex items-center justify-center w-10 h-10 rounded-xl border-2
+               font-condensed font-bold text-lg transition-all duration-200;
+    }
+
+    .ucl-step-active {
+        @apply ucl-step border-ucl-cyan text-ucl-cyan bg-ucl-cyan/10;
+    }
+
+    .ucl-step-done {
+        @apply ucl-step border-ucl-gold text-ucl-gold bg-ucl-gold/10;
+    }
+
+    .ucl-step-pending {
+        @apply ucl-step border-white/10 text-white/20 bg-white/5;
+    }
+
+    /* === Match score separator === */
+    .ucl-vs {
+        @apply text-white/20 font-condensed font-bold text-xs sm:text-sm tracking-widest;
+    }
+
+    /* === Player name in match === */
+    .ucl-player {
+        @apply font-semibold text-sm sm:text-base leading-tight transition-colors duration-200;
+    }
+
+    .ucl-player.winner { @apply text-ucl-gold; }
+    .ucl-player.loser { @apply text-white/40; }
 }
 
-@keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
+/* === Animations === */
+@keyframes pulseBorder {
+    0%, 100% { border-color: rgba(0, 212, 255, 0.3); }
+    50% { border-color: rgba(0, 212, 255, 0.6); }
+}
+
+@keyframes shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+@keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(24px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-fade-up {
-    animation: fadeUp 0.5s ease forwards;
+@keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
 }
 
-.animate-fade-up-delay-1 { animation-delay: 0.1s; }
-.animate-fade-up-delay-2 { animation-delay: 0.2s; }
-.animate-fade-up-delay-3 { animation-delay: 0.3s; }
-.animate-fade-up-delay-4 { animation-delay: 0.4s; }
+@keyframes goldPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.1); }
+    50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.2); }
+}
+
+.animate-fade-up { animation: fadeSlideUp 0.5s ease forwards; }
+.animate-fade-up-d1 { animation: fadeSlideUp 0.5s ease 0.08s forwards; opacity: 0; }
+.animate-fade-up-d2 { animation: fadeSlideUp 0.5s ease 0.16s forwards; opacity: 0; }
+.animate-fade-up-d3 { animation: fadeSlideUp 0.5s ease 0.24s forwards; opacity: 0; }
+.animate-fade-up-d4 { animation: fadeSlideUp 0.5s ease 0.32s forwards; opacity: 0; }
+.animate-scale-in { animation: scaleIn 0.4s ease forwards; }
+.animate-gold-pulse { animation: goldPulse 3s ease-in-out infinite; }
+
+/* Mobile tap highlight */
+@media (max-width: 640px) {
+    .ucl-card:hover { transform: none; }
+    .ucl-card:hover::before { opacity: 0; }
+}

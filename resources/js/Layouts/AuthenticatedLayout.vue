@@ -1,58 +1,58 @@
 <script setup>
 import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
-import NavLink from '@/Components/NavLink.vue';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import { Link } from '@inertiajs/vue3';
 
-const showingNavigationDropdown = ref(false);
+const showingNav = ref(false);
 </script>
 
 <template>
-    <div class="min-h-screen bg-gaming-dark">
-        <!-- Nav -->
-        <nav class="border-b border-white/5 bg-gaming-card/60 backdrop-blur-xl">
+    <div class="min-h-screen bg-ucl-navy">
+        <!-- Header -->
+        <header class="sticky top-0 z-40 border-b border-white/5 bg-ucl-navy/80 backdrop-blur-xl">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                <div class="flex h-16 justify-between items-center">
-                    <!-- Left -->
-                    <div class="flex items-center gap-8">
-                        <Link :href="route('dashboard')" class="flex items-center gap-2.5">
-                            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-gaming-cyan to-gaming-purple flex items-center justify-center text-lg font-black text-black">
-                                F
+                <div class="flex h-14 sm:h-16 items-center justify-between">
+                    <!-- Logo + Desktop Nav -->
+                    <div class="flex items-center gap-6 sm:gap-10">
+                        <Link :href="route('dashboard')" class="flex items-center gap-2.5 shrink-0">
+                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-ucl-cyan to-cyan-700
+                                        flex items-center justify-center font-condensed font-bold text-sm sm:text-lg text-black shadow-lg shadow-ucl-cyan/20">
+                                UCL
                             </div>
-                            <span class="font-display font-bold text-white hidden sm:block">FIFA Torneo</span>
+                            <span class="hidden sm:block font-condensed font-bold text-base tracking-wider text-white/90">
+                                FIFA CHAMPIONS
+                            </span>
                         </Link>
 
-                        <div class="hidden sm:flex items-center gap-1">
-                            <NavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                                </svg>
-                                <span>Dashboard</span>
-                            </NavLink>
-                            <NavLink :href="route('tournaments.create')" :active="route().current('tournaments.create')">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                                </svg>
-                                <span>Nuevo Torneo</span>
-                            </NavLink>
-                        </div>
+                        <!-- Desktop Nav -->
+                        <nav class="hidden md:flex items-center gap-1">
+                            <Link :href="route('dashboard')"
+                                  class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                                  :class="route().current('dashboard') ? 'text-ucl-cyan bg-ucl-cyan/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
+                                TORNEOS
+                            </Link>
+                            <Link :href="route('tournaments.create')"
+                                  class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                                  :class="route().current('tournaments.create*') ? 'text-ucl-cyan bg-ucl-cyan/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
+                                NUEVO
+                            </Link>
+                        </nav>
                     </div>
 
-                    <!-- Right -->
-                    <div class="flex items-center gap-4">
+                    <!-- Right side -->
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <!-- Desktop User -->
                         <div class="hidden sm:flex items-center gap-3">
                             <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-white/5">
-                                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-gaming-cyan to-gaming-purple flex items-center justify-center text-xs font-black text-black">
+                                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-ucl-cyan to-cyan-700 flex items-center justify-center text-xs font-bold text-black">
                                     {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
                                 </div>
-                                <span class="text-sm text-white/70 font-medium">{{ $page.props.auth.user.name }}</span>
+                                <span class="text-sm text-white/60 font-medium max-w-[100px] truncate">{{ $page.props.auth.user.name }}</span>
                             </div>
                             <Dropdown align="right" width="48">
                                 <template #trigger>
-                                    <button class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                                    <button class="min-h-touch min-w-touch flex items-center justify-center rounded-lg text-white/40 hover:text-white hover:bg-white/5 transition-all">
                                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                                         </svg>
@@ -60,16 +60,16 @@ const showingNavigationDropdown = ref(false);
                                 </template>
                                 <template #content>
                                     <DropdownLink :href="route('profile.edit')">
-                                        <div class="flex items-center gap-2">
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <div class="flex items-center gap-2.5">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                             </svg>
                                             Perfil
                                         </div>
                                     </DropdownLink>
                                     <DropdownLink :href="route('logout')" method="post" as="button">
-                                        <div class="flex items-center gap-2 text-gaming-red">
-                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <div class="flex items-center gap-2.5 text-red-400">
+                                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                                             </svg>
                                             Cerrar Sesión
@@ -79,79 +79,63 @@ const showingNavigationDropdown = ref(false);
                             </Dropdown>
                         </div>
 
-                        <!-- Hamburger mobile -->
-                        <button @click="showingNavigationDropdown = !showingNavigationDropdown"
-                                class="sm:hidden p-2 rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                            <svg class="w-6 h-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                                <path :class="{
-                                    hidden: showingNavigationDropdown,
-                                    'inline-flex': !showingNavigationDropdown,
-                                }" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                                <path :class="{
-                                    hidden: !showingNavigationDropdown,
-                                    'inline-flex': showingNavigationDropdown,
-                                }" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        <!-- Hamburger Mobile -->
+                        <button @click="showingNav = !showingNav"
+                                class="md:hidden min-h-touch min-w-touch flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                            <svg class="w-5 h-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                <path :class="{ hidden: showingNav, 'inline-flex': !showingNav }"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                                <path :class="{ hidden: !showingNav, 'inline-flex': showingNav }"
+                                      stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Mobile menu -->
-            <div :class="{ block: showingNavigationDropdown, hidden: !showingNavigationDropdown }" class="sm:hidden border-t border-white/5">
-                <div class="space-y-1 px-4 py-3">
-                    <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                            </svg>
-                            Dashboard
-                        </div>
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink :href="route('tournaments.create')" :active="route().current('tournaments.create')">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                            </svg>
-                            Nuevo Torneo
-                        </div>
-                    </ResponsiveNavLink>
+            <!-- Mobile Nav -->
+            <div :class="{ block: showingNav, hidden: !showingNav }" class="md:hidden border-t border-white/5">
+                <div class="px-4 py-3 space-y-1">
+                    <Link :href="route('dashboard')"
+                          class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all"
+                          :class="route().current('dashboard') ? 'text-ucl-cyan bg-ucl-cyan/10' : 'text-white/60 hover:text-white hover:bg-white/5'"
+                          @click="showingNav = false">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                        </svg>
+                        Mis Torneos
+                    </Link>
+                    <Link :href="route('tournaments.create')"
+                          class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all"
+                          :class="route().current('tournaments.create*') ? 'text-ucl-cyan bg-ucl-cyan/10' : 'text-white/60 hover:text-white hover:bg-white/5'"
+                          @click="showingNav = false">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Nuevo Torneo
+                    </Link>
                 </div>
-                <div class="border-t border-white/5 px-4 py-3">
-                    <div class="flex items-center gap-3 mb-3">
-                        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-gaming-cyan to-gaming-purple flex items-center justify-center text-sm font-black text-black">
-                            {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
-                        </div>
-                        <div>
-                            <div class="text-sm font-semibold text-white">{{ $page.props.auth.user.name }}</div>
-                            <div class="text-xs text-white/40">{{ $page.props.auth.user.email }}</div>
-                        </div>
+                <div class="border-t border-white/5 px-4 py-3 flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-ucl-cyan to-cyan-700 flex items-center justify-center text-sm font-bold text-black shrink-0">
+                        {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
                     </div>
-                    <div class="space-y-1">
-                        <ResponsiveNavLink :href="route('profile.edit')">
-                            <div class="flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                Perfil
-                            </div>
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink :href="route('logout')" method="post" as="button">
-                            <div class="flex items-center gap-2 text-gaming-red">
-                                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                                </svg>
-                                Cerrar Sesión
-                            </div>
-                        </ResponsiveNavLink>
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-semibold text-white truncate">{{ $page.props.auth.user.name }}</div>
+                        <div class="text-xs text-white/40 truncate">{{ $page.props.auth.user.email }}</div>
                     </div>
+                    <Link :href="route('logout')" method="post" as="button"
+                          class="min-h-touch min-w-touch flex items-center justify-center rounded-lg text-red-400 hover:bg-white/5 transition-all">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </Link>
                 </div>
             </div>
-        </nav>
+        </header>
 
         <!-- Page Header -->
-        <header v-if="$slots.header" class="border-b border-white/5 bg-gaming-card/40">
-            <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <header v-if="$slots.header" class="border-b border-white/[0.02]">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10">
                 <slot name="header" />
             </div>
         </header>
@@ -160,5 +144,14 @@ const showingNavigationDropdown = ref(false);
         <main>
             <slot />
         </main>
+
+        <!-- FAB Mobile: Nuevo Torneo -->
+        <Link :href="route('tournaments.create')"
+              class="ucl-fab sm:hidden"
+              :class="{ hidden: route().current('tournaments.create*') }">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+        </Link>
     </div>
 </template>

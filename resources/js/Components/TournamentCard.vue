@@ -1,0 +1,73 @@
+<script setup>
+import { Link } from '@inertiajs/vue3';
+import StatusBadge from '@/Components/StatusBadge.vue';
+import ProgressBar from '@/Components/ProgressBar.vue';
+import { computed } from 'vue';
+
+const props = defineProps({
+    tournament: Object,
+});
+
+const playedCount = computed(() => props.tournament.matches_played || 0);
+const totalMatches = computed(() => props.tournament.matches_count || 0);
+</script>
+
+<template>
+    <Link :href="route('tournaments.show', tournament.id)" class="block group">
+        <div class="ucl-card p-5 sm:p-6 h-full flex flex-col">
+            <!-- Star pattern overlay -->
+            <div class="stars-overlay" />
+
+            <!-- Top row -->
+            <div class="relative flex items-start justify-between mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-ucl-cyan/20 to-ucl-cyan/5
+                                border border-ucl-cyan/20 flex items-center justify-center
+                                font-condensed font-bold text-lg text-ucl-cyan
+                                group-hover:scale-110 transition-transform duration-300">
+                        {{ tournament.players_count }}
+                    </div>
+                    <div>
+                        <div class="ucl-title-md text-base sm:text-lg leading-tight
+                                    group-hover:text-ucl-cyan transition-colors duration-200">
+                            {{ tournament.name }}
+                        </div>
+                        <div class="ucl-meta mt-0.5">{{ tournament.players_count }} jugadores</div>
+                    </div>
+                </div>
+                <StatusBadge :status="tournament.status" />
+            </div>
+
+            <!-- Progress -->
+            <div v-if="tournament.status === 'in_progress' && totalMatches > 0" class="relative mt-auto mb-4">
+                <ProgressBar
+                    :value="playedCount"
+                    :max="totalMatches"
+                    :detail="`${playedCount}/${totalMatches}`"
+                />
+            </div>
+
+            <!-- Footer -->
+            <div class="relative mt-auto flex items-center justify-between pt-4 border-t border-white/5">
+                <div class="flex items-center gap-4 text-xs text-white/30">
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        {{ tournament.consoles_count }} TV
+                    </span>
+                    <span class="flex items-center gap-1.5">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {{ totalMatches }} partidos
+                    </span>
+                </div>
+                <svg class="w-4 h-4 text-white/20 group-hover:text-ucl-cyan group-hover:translate-x-1 transition-all duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+            </div>
+        </div>
+    </Link>
+</template>
