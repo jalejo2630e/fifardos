@@ -1,26 +1,72 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, watch, nextTick, onMounted } from 'vue';
 
 const open = ref(false);
-const messages = ref([
-    { role: 'bot', text: '¡Hola! Soy el asistente de FIFARDOS ELITE. ¿En qué puedo ayudarte?' },
-]);
+const messages = ref([]);
 const input = ref('');
 const loading = ref(false);
-async function send() {
-    const msg = input.value.trim();
-    if (!msg || loading.value) return;
-    input.value = '';
-    messages.value.push({ role: 'user', text: msg });
+const history = ref([]);
+const chatRef = ref(null);
+const STORAGE_KEY = 'fifardos_chat';
+
+const suggestions = [
+    '¿Qué torneos hay?',
+    '¿Quién es el máximo goleador?',
+    'Tabla de posiciones',
+    '¿Cómo me registro?',
+    '¿Cuáles son los premios?',
+    'Últimos partidos',
+];
+
+onMounted(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            messages.value = parsed.messages || [];
+            history.value = parsed.history || [];
+        } catch {}
+    }
+    if (messages.value.length === 0) {
+        messages.value.push({ role: 'bot', text: '¡Hola! Soy el asistente de FIFARDOS ELITE. ¿En qué puedo ayudarte?' });
+    }
+});
+
+watch(messages, () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        messages: messages.value,
+        history: history.value,
+    }));
+}, { deep: true });
+
+watch(messages, () => {
+    nextTick(() => {
+        if (chatRef.value) chatRef.value.scrollTop = chatRef.value.scrollHeight;
+    });
+}, { deep: true });
+
+function clearChat() {
+    messages.value = [];
+    history.value = [];
+    localStorage.removeItem(STORAGE_KEY);
+    messages.value.push({ role: 'bot', text: '¡Hola! Soy el asistente de FIFARDOS ELITE. ¿En qué puedo ayudarte?' });
+}
+
+async function send(msg) {
+    const text = (msg || input.value).trim();
+    if (!text || loading.value) return;
+    if (!msg) input.value = '';
+    messages.value.push({ role: 'user', text });
     loading.value = true;
     try {
         const res = await fetch('/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '' },
-            body: JSON.stringify({ message: msg }),
+            body: JSON.stringify({ message: text, history: history.value }),
         });
         const data = await res.json();
         messages.value.push({ role: 'bot', text: data.reply || 'Sin respuesta.' });
+        if (data.history) history.value = data.history;
     } catch {
         messages.value.push({ role: 'bot', text: 'Error de conexión. Intenta de nuevo.' });
     } finally {
@@ -44,17 +90,27 @@ async function send() {
 
         <Transition name="chat">
             <div v-if="open"
-                 class="absolute bottom-16 right-0 w-80 sm:w-96 h-[28rem] glass-panel border border-elite-outline/30
+                 class="absolute bottom-16 right-0 w-80 sm:w-96 h-[32rem] glass-panel border border-elite-outline/30
                         flex flex-col overflow-hidden shadow-2xl">
-                <div class="px-4 py-3 border-b border-elite-outline/20 flex items-center gap-2">
-                    <div class="w-2 h-2 rounded-full bg-elite-secondary animate-pulse"></div>
-                    <span class="text-sm font-elite-condensed font-bold uppercase tracking-wider text-white">Asistente FIFARDOS</span>
+                <!-- Header -->
+                <div class="px-4 py-3 border-b border-elite-outline/20 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-elite-secondary animate-pulse"></div>
+                        <span class="text-sm font-elite-condensed font-bold uppercase tracking-wider text-white">Asistente FIFARDOS</span>
+                    </div>
+                    <button @click="clearChat" title="Limpiar chat"
+                            class="text-white/30 hover:text-white/70 transition-colors">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
                 </div>
 
-                <div class="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+                <!-- Messages -->
+                <div ref="chatRef" class="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
                     <div v-for="(msg, i) in messages" :key="i"
                          class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-                        <div class="max-w-[80%] px-3 py-2 rounded-xl text-sm leading-relaxed"
+                        <div class="max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed whitespace-pre-wrap"
                              :class="msg.role === 'user'
                                  ? 'bg-elite-secondary text-black rounded-br-sm'
                                  : 'bg-white/5 text-elite-primary/90 rounded-bl-sm'">
@@ -68,9 +124,23 @@ async function send() {
                             <span class="animate-bounce [animation-delay:300ms]">.</span>
                         </div>
                     </div>
+
+                    <!-- Suggestions (only show when empty history) -->
+                    <div v-if="messages.length === 1 && !loading" class="pt-3 space-y-2">
+                        <p class="text-[10px] text-elite-primary/30 uppercase tracking-wider text-center">Preguntas rápidas</p>
+                        <div class="flex flex-wrap gap-1.5 justify-center">
+                            <button v-for="(s, si) in suggestions" :key="si" @click="send(s)"
+                                    class="text-[11px] px-2.5 py-1.5 rounded-full bg-white/5 border border-elite-outline/20
+                                           text-elite-primary/60 hover:text-white hover:bg-white/10 hover:border-elite-secondary/30
+                                           transition-all duration-200 whitespace-nowrap">
+                                {{ s }}
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
-                <form @submit.prevent="send" class="border-t border-elite-outline/20 p-3 flex gap-2">
+                <!-- Input -->
+                <form @submit.prevent="send()" class="border-t border-elite-outline/20 p-3 flex gap-2">
                     <input v-model="input"
                            type="text"
                            placeholder="Escribe un mensaje..."

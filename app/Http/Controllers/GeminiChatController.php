@@ -85,22 +85,25 @@ class GeminiChatController extends Controller
     {
         $request->validate(['message' => 'required|string|max:1000']);
 
-        Log::info('Chat message received', ['message' => $request->input('message')]);
-
         $message = $request->input('message');
+        $history = $request->input('history', []);
 
         // Try Gemini first (quick timeout)
-        $result = $this->tryGemini($message);
+        $result = $this->tryGemini($message, $history);
         if ($result !== null) {
-            return response()->json(['reply' => $result]);
+            $history[] = ['role' => 'user', 'parts' => [['text' => $message]]];
+            $history[] = ['role' => 'model', 'parts' => [['text' => $result]]];
+            return response()->json(['reply' => $result, 'history' => $history]);
         }
 
         // Fallback: answer from local DB
-        Log::info('Using local fallback');
-        return response()->json(['reply' => $this->localAnswer($message)]);
+        $reply = $this->localAnswer($message, $history);
+        $history[] = ['role' => 'user', 'parts' => [['text' => $message]]];
+        $history[] = ['role' => 'model', 'parts' => [['text' => $reply]]];
+        return response()->json(['reply' => $reply, 'history' => $history]);
     }
 
-    private function tryGemini(string $message): ?string
+    private function tryGemini(string $message, array $history = []): ?string
     {
         try {
             $config = ChatConfig::first();
@@ -108,11 +111,12 @@ class GeminiChatController extends Controller
 
             $prompt = $config->system_prompt ?? 'Eres un asistente de la FIFARDOS ELITE LEAGUE. Respondes en español de forma breve y amigable.';
 
+            $contents = $history;
+            $contents[] = ['role' => 'user', 'parts' => [['text' => $message]]];
+
             $payload = [
                 'system_instruction' => ['parts' => [['text' => $prompt]]],
-                'contents' => [
-                    ['role' => 'user', 'parts' => [['text' => $message]]],
-                ],
+                'contents' => $contents,
                 'tools' => [['functionDeclarations' => $this->tools]],
                 'generationConfig' => [
                     'maxOutputTokens' => 800,
@@ -170,7 +174,7 @@ class GeminiChatController extends Controller
         }
     }
 
-    private function localAnswer(string $message): string
+    private function localAnswer(string $message, array $history = []): string
     {
         $msg = mb_strtolower(trim($message));
 
