@@ -36,13 +36,13 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install Android SDK 35
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager "platforms;android-35" 2>&1
+
       - name: Make gradlew executable
         working-directory: android
         run: chmod +x gradlew
-
-      - name: Build unsigned release APK
-        working-directory: android
-        run: ./gradlew assembleRelease
 
       - name: Generate keystore
         run: |
@@ -53,29 +53,25 @@ jobs:
             -storepass fifardos123 -keypass fifardos123 \
             -dname "CN=FIFARDOS, OU=, O=, L=, S=, C="
 
-      - name: Zipalign APK
+      - name: Inject signing config into build.gradle
         run: |
-          ZIPALIGN=$(ls $ANDROID_HOME/build-tools/*/zipalign | head -1)
-          $ZIPALIGN -p -f 4 \
-            android/app/build/outputs/apk/release/app-release-unsigned.apk \
-            android/app/build/outputs/apk/release/app-release-aligned.apk
+          sed -i '/android {/a\
+          \    signingConfigs {\
+          \        release {\
+          \            storeFile file("../../fifardos.keystore")\
+          \            storePassword "fifardos123"\
+          \            keyAlias "fifardos"\
+          \            keyPassword "fifardos123"\
+          \        }\
+          \    }' android/app/build.gradle
+          sed -i 's/minifyEnabled false/minifyEnabled false\n            signingConfig signingConfigs.release/' android/app/build.gradle
 
-      - name: Sign APK
-        run: |
-          APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | head -1)
-          $APKSIGNER sign \
-            --ks fifardos.keystore \
-            --ks-pass pass:fifardos123 \
-            --key-pass pass:fifardos123 \
-            --ks-key-alias fifardos \
-            --v1-signing-enabled true \
-            --v2-signing-enabled true \
-            --v3-signing-enabled true \
-            --out fifardos.apk \
-            android/app/build/outputs/apk/release/app-release-aligned.apk
+      - name: Build signed release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: fifardos-apk
-          path: fifardos.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
