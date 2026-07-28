@@ -98,7 +98,7 @@ class GenerateSummaries extends Command
             try {
                 $response = Http::timeout(30)
                     ->withHeader('x-goog-api-key', config('services.gemini.api_key'))
-                    ->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', [
+                    ->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent', [
                         'contents' => [['parts' => [['text' => $prompt]]]],
                         'generationConfig' => ['maxOutputTokens' => 200, 'temperature' => 0.7],
                     ]);
