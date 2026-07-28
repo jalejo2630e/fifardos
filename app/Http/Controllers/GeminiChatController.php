@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ChatConfig;
 use App\Models\Tournament;
+use App\Models\Player;
 use App\Services\StandingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -11,120 +12,271 @@ use Illuminate\Support\Facades\Log;
 
 class GeminiChatController extends Controller
 {
+    private array $tools;
+
+    public function __construct()
+    {
+        $this->tools = [
+            [
+                'name' => 'getTournaments',
+                'description' => 'Obtiene todos los torneos con su estado, cantidad de jugadores y fechas.',
+                'parameters' => ['type' => 'object', 'properties' => (object)[], 'required' => []],
+            ],
+            [
+                'name' => 'getStandings',
+                'description' => 'Obtiene la tabla de posiciones de un torneo específico.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'tournament_id' => ['type' => 'integer', 'description' => 'ID del torneo'],
+                    ],
+                    'required' => ['tournament_id'],
+                ],
+            ],
+            [
+                'name' => 'getPrizes',
+                'description' => 'Obtiene los premios de un torneo específico.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'tournament_id' => ['type' => 'integer', 'description' => 'ID del torneo'],
+                    ],
+                    'required' => ['tournament_id'],
+                ],
+            ],
+            [
+                'name' => 'getTopScorers',
+                'description' => 'Obtiene los goleadores (máximos anotadores) de un torneo.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'tournament_id' => ['type' => 'integer', 'description' => 'ID del torneo'],
+                    ],
+                    'required' => ['tournament_id'],
+                ],
+            ],
+            [
+                'name' => 'searchPlayers',
+                'description' => 'Busca jugadores por nombre en todos los torneos.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'name' => ['type' => 'string', 'description' => 'Nombre del jugador a buscar'],
+                    ],
+                    'required' => ['name'],
+                ],
+            ],
+            [
+                'name' => 'getRecentMatches',
+                'description' => 'Obtiene los últimos partidos registrados de un torneo.',
+                'parameters' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'tournament_id' => ['type' => 'integer', 'description' => 'ID del torneo'],
+                        'limit' => ['type' => 'integer', 'description' => 'Cantidad de partidos a devolver (default 10)'],
+                    ],
+                    'required' => ['tournament_id'],
+                ],
+            ],
+        ];
+    }
+
     public function __invoke(Request $request)
     {
         $request->validate(['message' => 'required|string|max:1000']);
 
         $config = ChatConfig::first();
-
         if ($config && !$config->is_active) {
             return response()->json(['reply' => 'El asistente está desactivado actualmente.']);
         }
 
-        $context = $this->buildFullContext();
+        $prompt = $config->system_prompt ?? 'Eres un asistente de la FIFARDOS ELITE LEAGUE. Respondes en español de forma breve y amigable.';
 
-        $prompt = $config->system_prompt ?? 'Eres un asistente amigable que responde en español.';
-        $forbidden = $config->forbidden_topics
-            ? "\n\nTEMAS PROHIBIDOS (no debes hablar de esto bajo ningún concepto): {$config->forbidden_topics}"
-            : '';
+        $history = $request->input('history', []);
+        $contents = array_merge($history, [
+            ['role' => 'user', 'parts' => [['text' => $request->input('message')]]],
+        ]);
 
-        $system = "{$prompt}{$forbidden}\n\n=== DATOS DE LA PLATAFORMA ===\n{$context}\n\nSiempre responde en español. Si no encuentras la respuesta en los datos proporcionados, indícalo amablemente.";
+        $result = $this->callGemini($prompt, $contents);
+
+        if (isset($result['error'])) {
+            return response()->json(['reply' => $result['error']]);
+        }
+
+        return response()->json(['reply' => $result['text'], 'history' => $result['history'] ?? []]);
+    }
+
+    private function callGemini(string $systemPrompt, array $contents, int $depth = 0): array
+    {
+        if ($depth > 5) {
+            return ['text' => 'La consulta requirió demasiadas operaciones. Intenta simplificarla.'];
+        }
 
         $payload = [
-            'system_instruction' => [
-                'parts' => [['text' => $system]],
-            ],
-            'contents' => [
-                ['parts' => [['text' => $request->input('message')]]],
-            ],
+            'system_instruction' => ['parts' => [['text' => $systemPrompt]]],
+            'contents' => $contents,
+            'tools' => [['functionDeclarations' => $this->tools]],
             'generationConfig' => [
-                'maxOutputTokens' => $config->max_tokens ?? 500,
-                'temperature' => $config->temperature ?? 0.7,
+                'maxOutputTokens' => 800,
+                'temperature' => 0.7,
             ],
         ];
 
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-        ])->post(
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . config('services.gemini.api_key'),
-            $payload
-        );
+        $response = Http::withHeaders(['Content-Type' => 'application/json'])
+            ->post(
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . config('services.gemini.api_key'),
+                $payload
+            );
 
         $body = $response->json();
 
         if (isset($body['error'])) {
             Log::error('Gemini API error', ['error' => $body['error']]);
-            return response()->json(['reply' => 'Lo siento, ocurrió un error al procesar tu mensaje.']);
+            return ['error' => 'Lo siento, ocurrió un error al procesar tu mensaje.'];
         }
 
-        $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? null;
-
-        if (!$text) {
-            Log::warning('Gemini unexpected response', ['body' => $body]);
-            return response()->json(['reply' => 'Lo siento, no pude procesar tu mensaje.']);
+        $candidate = $body['candidates'][0] ?? null;
+        if (!$candidate) {
+            return ['error' => 'Lo siento, no pude procesar tu mensaje.'];
         }
 
-        return response()->json(['reply' => $text]);
+        $part = $candidate['content']['parts'][0] ?? null;
+        if (!$part) {
+            return ['error' => 'Lo siento, no pude procesar tu mensaje.'];
+        }
+
+        // If model wants to call a function
+        if (isset($part['functionCall'])) {
+            $fn = $part['functionCall'];
+            $fnName = $fn['name'];
+            $fnArgs = $fn['args'] ?? [];
+
+            $fnResult = $this->executeFunction($fnName, $fnArgs);
+
+            $contents[] = ['role' => 'model', 'parts' => [['functionCall' => ['name' => $fnName, 'args' => $fnArgs]]]];
+            $contents[] = ['role' => 'user', 'parts' => [['functionResponse' => ['name' => $fnName, 'response' => ['result' => $fnResult]]]]];
+
+            return $this->callGemini($systemPrompt, $contents, $depth + 1);
+        }
+
+        // Model responded with text
+        $text = $part['text'] ?? '';
+        return ['text' => $text, 'history' => $contents];
     }
 
-    private function buildFullContext(): string
+    private function executeFunction(string $name, array $args): array
     {
-        $tournaments = Tournament::with('prizes')->latest()->get();
+        return match ($name) {
+            'getTournaments' => $this->fnGetTournaments(),
+            'getStandings' => $this->fnGetStandings($args['tournament_id'] ?? null),
+            'getPrizes' => $this->fnGetPrizes($args['tournament_id'] ?? null),
+            'getTopScorers' => $this->fnGetTopScorers($args['tournament_id'] ?? null),
+            'searchPlayers' => $this->fnSearchPlayers($args['name'] ?? ''),
+            'getRecentMatches' => $this->fnGetRecentMatches($args['tournament_id'] ?? null, $args['limit'] ?? 10),
+            default => ['error' => "Función '$name' no encontrada"],
+        };
+    }
 
-        if ($tournaments->isEmpty()) {
-            return "No hay torneos registrados en la plataforma.";
-        }
+    private function fnGetTournaments(): array
+    {
+        return Tournament::withCount('players')
+            ->latest()
+            ->get()
+            ->map(fn($t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'status' => $t->status,
+                'players_count' => $t->players_count,
+                'created_at' => $t->created_at->format('d/m/Y'),
+                'finished_at' => $t->finished_at?->format('d/m/Y H:i'),
+            ])
+            ->toArray();
+    }
 
-        $lines = [];
-        $lines[] = "Total de torneos: {$tournaments->count()}";
+    private function fnGetStandings(?int $tournamentId): array
+    {
+        $tournament = Tournament::with('matches')->find($tournamentId);
+        if (!$tournament) return ['error' => 'Torneo no encontrado'];
 
-        foreach ($tournaments as $t) {
-            $t->load('matches');
-            $standings = app(StandingsService::class)->calculate($t);
+        $standings = app(StandingsService::class)->calculate($tournament);
+        return array_map(fn($s) => [
+            'position' => $s['player_id'],
+            'player' => $s['player_name'],
+            'pts' => $s['pts'],
+            'pj' => $s['pj'],
+            'pg' => $s['pg'],
+            'pe' => $s['pe'],
+            'pp' => $s['pp'],
+            'gf' => $s['gf'],
+            'gc' => $s['gc'],
+            'dg' => $s['dg'],
+        ], $standings);
+    }
 
-            $lines[] = "";
-            $lines[] = str_repeat("=", 50);
-            $lines[] = "TORNEO: {$t->name}";
-            $lines[] = "Estado: {$t->status} | Jugadores: {$t->players()->count()} | Creado: {$t->created_at->format('d/m/Y')}";
-            if ($t->finished_at) {
-                $lines[] = "Finalizado: {$t->finished_at->format('d/m/Y H:i')}";
-            }
+    private function fnGetPrizes(?int $tournamentId): array
+    {
+        $tournament = Tournament::with('prizes')->find($tournamentId);
+        if (!$tournament) return ['error' => 'Torneo no encontrado'];
 
-            $prizes = $t->prizes->sortBy('position');
-            if ($prizes->isNotEmpty()) {
-                $lines[] = "--- PREMIOS ---";
-                foreach ($prizes as $p) {
-                    $perks = $p->perks ? ' (' . implode(', ', $p->perks) . ')' : '';
-                    $lines[] = "  {$p->position}º: {$p->label} — {$p->amount}{$perks}";
-                }
-            }
+        return $tournament->prizes->sortBy('position')->map(fn($p) => [
+            'position' => $p->position,
+            'label' => $p->label,
+            'amount' => $p->amount,
+            'perks' => $p->perks ?? [],
+            'is_featured' => $p->is_featured,
+        ])->toArray();
+    }
 
-            if (!empty($standings)) {
-                $lines[] = "--- TABLA DE POSICIONES ---";
-                foreach ($standings as $i => $s) {
-                    $lines[] = "  " . ($i + 1) . ". {$s['player_name']} — {$s['pts']} pts | PJ:{$s['pj']} G:{$s['pg']} E:{$s['pe']} P:{$s['pp']} | GF:{$s['gf']} GC:{$s['gc']} DG:{$s['dg']}";
-                }
+    private function fnGetTopScorers(?int $tournamentId): array
+    {
+        $tournament = Tournament::with('matches')->find($tournamentId);
+        if (!$tournament) return ['error' => 'Torneo no encontrado'];
 
-                $maxGf = max(array_column($standings, 'gf'));
-                if ($maxGf > 0) {
-                    $topScorers = array_filter($standings, fn($s) => $s['gf'] === $maxGf);
-                    $lines[] = "--- GOLEADOR(ES) ---";
-                    foreach ($topScorers as $s) {
-                        $lines[] = "  {$s['player_name']} — {$s['gf']} goles";
-                    }
-                }
-            }
+        $standings = app(StandingsService::class)->calculate($tournament);
+        $maxGf = max(array_column($standings, 'gf'));
 
-            $lines[] = str_repeat("=", 50);
-        }
+        if ($maxGf <= 0) return ['message' => 'No hay goles registrados'];
 
-        $lines[] = "";
-        $lines[] = "--- INFORMACIÓN GENERAL ---";
-        $lines[] = "Registro: los jugadores se registran en la página /inscribirse";
-        $lines[] = "Formato: fase de grupos (round-robin) + eliminatorias directas (knockout)";
-        $lines[] = "Cada torneo es creado por un usuario administrador.";
-        $lines[] = "Los partidos pueden tener resultado (score1-score2) y estado: pending / finished.";
+        return array_values(array_map(
+            fn($s) => ['player' => $s['player_name'], 'goals' => $s['gf']],
+            array_filter($standings, fn($s) => $s['gf'] === $maxGf)
+        ));
+    }
 
-        return implode("\n", $lines);
+    private function fnSearchPlayers(string $name): array
+    {
+        return Player::where('name', 'like', "%{$name}%")
+            ->with('tournament')
+            ->limit(20)
+            ->get()
+            ->map(fn($p) => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'tournament' => $p->tournament?->name,
+                'tournament_id' => $p->tournament_id,
+            ])
+            ->toArray();
+    }
+
+    private function fnGetRecentMatches(?int $tournamentId, int $limit): array
+    {
+        $tournament = Tournament::find($tournamentId);
+        if (!$tournament) return ['error' => 'Torneo no encontrado'];
+
+        return $tournament->matches()
+            ->with(['player1', 'player2'])
+            ->where('status', 'finished')
+            ->latest('played_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn($m) => [
+                'round' => $m->round,
+                'player1' => $m->player1?->name,
+                'player2' => $m->player2?->name,
+                'score' => "{$m->score1} - {$m->score2}",
+                'phase' => $m->phase ?? 'group',
+                'played_at' => $m->played_at?->format('d/m/Y H:i'),
+            ])
+            ->toArray();
     }
 }
