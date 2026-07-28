@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
+import ChatBot from '@/Components/ChatBot.vue';
 import { Link } from '@inertiajs/vue3';
 
 const showingNav = ref(false);
@@ -183,6 +184,7 @@ const showingNav = ref(false);
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
         </Link>
+            <ChatBot />
         </div>
     </div>
 </template>
