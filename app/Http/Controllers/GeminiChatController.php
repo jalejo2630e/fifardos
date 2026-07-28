@@ -85,28 +85,27 @@ class GeminiChatController extends Controller
     {
         $request->validate(['message' => 'required|string|max:1000']);
 
-        $config = ChatConfig::first();
-        if ($config && !$config->is_active) {
-            return response()->json(['reply' => 'El asistente está desactivado actualmente.']);
-        }
+        Log::info('Chat message received', ['message' => $request->input('message')]);
 
         $message = $request->input('message');
 
-        // Try Gemini first
-        if ($config && $config->is_active) {
-            $result = $this->tryGemini($message, $config);
-            if ($result !== null) {
-                return response()->json(['reply' => $result]);
-            }
+        // Try Gemini first (quick timeout)
+        $result = $this->tryGemini($message);
+        if ($result !== null) {
+            return response()->json(['reply' => $result]);
         }
 
         // Fallback: answer from local DB
+        Log::info('Using local fallback');
         return response()->json(['reply' => $this->localAnswer($message)]);
     }
 
-    private function tryGemini(string $message, ChatConfig $config): ?string
+    private function tryGemini(string $message): ?string
     {
         try {
+            $config = ChatConfig::first();
+            if (!$config || !$config->is_active) return null;
+
             $prompt = $config->system_prompt ?? 'Eres un asistente de la FIFARDOS ELITE LEAGUE. Respondes en español de forma breve y amigable.';
 
             $payload = [
@@ -121,7 +120,7 @@ class GeminiChatController extends Controller
                 ],
             ];
 
-            $response = Http::timeout(15)->withHeaders(['Content-Type' => 'application/json'])
+            $response = Http::timeout(3)->withHeaders(['Content-Type' => 'application/json'])
                 ->post(
                     'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . config('services.gemini.api_key'),
                     $payload
