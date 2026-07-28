@@ -125,35 +125,41 @@ class GenerateSummaries extends Command
                     throw new \Exception('OpenAI devolvió respuesta vacía');
                 }
 
-                DB::table('match_summaries')->insert([
-                    'player_id' => $player->id,
-                    'tournament_id' => null,
-                    'period_start' => $periodStart->toDateString(),
-                    'period_end' => $periodEnd->toDateString(),
-                    'summary_text' => $summaryText,
-                    'embedding' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
+                DB::table('match_summaries')->updateOrInsert(
+                    [
+                        'player_id' => $player->id,
+                        'period_start' => $periodStart->toDateString(),
+                        'period_end' => $periodEnd->toDateString(),
+                    ],
+                    [
+                        'tournament_id' => null,
+                        'summary_text' => $summaryText,
+                        'embedding' => null,
+                        'updated_at' => now(),
+                        'created_at' => now(),
+                    ]
+                );
 
                 $this->info("    ✓ Resumen guardado");
                 $withSummary++;
 
                 try {
-                    $ollamaResponse = Http::timeout(15)
-                        ->post('http://localhost:11434/api/embeddings', [
-                            'model' => 'nomic-embed-text',
-                            'prompt' => $summaryText,
+                    $geminiResponse = Http::timeout(15)
+                        ->withHeader('x-goog-api-key', config('services.gemini.api_key'))
+                        ->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent', [
+                            'model' => 'models/gemini-embedding-001',
+                            'content' => ['parts' => [['text' => $summaryText]]],
+                            'output_dimensionality' => 768,
                         ]);
 
-                    if ($ollamaResponse->failed()) {
-                        throw new \Exception("Ollama error: {$ollamaResponse->status()} - {$ollamaResponse->body()}");
+                    if ($geminiResponse->failed()) {
+                        throw new \Exception("Gemini error: {$geminiResponse->status()} - {$geminiResponse->body()}");
                     }
 
-                    $embedding = $ollamaResponse->json('embedding');
+                    $embedding = $geminiResponse->json('embedding.values');
 
                     if (!is_array($embedding)) {
-                        throw new \Exception('Ollama no devolvió un array de embedding');
+                        throw new \Exception('Gemini no devolvió un array de embedding');
                     }
 
                     $embeddingJson = json_encode($embedding);

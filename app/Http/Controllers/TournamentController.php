@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Tournament;
 use App\Models\Player;
 use App\Models\GameMatch;
+use App\Services\StandingsService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -24,7 +25,7 @@ class TournamentController extends Controller
                 unset($arr['players'], $arr['matches']);
                 $arr['leader'] = null;
                 if ($tournament->matches_played > 0) {
-                    $standings = $this->calculateStandings($tournament);
+                    $standings = app(StandingsService::class)->calculate($tournament);
                     $arr['leader'] = [
                         'name' => $standings[0]['player_name'],
                         'pts' => $standings[0]['pts'],
@@ -82,7 +83,7 @@ class TournamentController extends Controller
             $q->with(['player1', 'player2'])->orderBy('round')->orderBy('id');
         }]);
 
-        $standings = $this->calculateStandings($tournament);
+        $standings = app(StandingsService::class)->calculate($tournament);
         $allPlayed = $tournament->matches->every(fn($m) => $m->status === 'finished');
 
         return Inertia::render('Tournaments/Show', [
@@ -177,52 +178,4 @@ class TournamentController extends Controller
         }
     }
 
-    private function calculateStandings(Tournament $tournament)
-    {
-        $standings = [];
-        foreach ($tournament->players as $player) {
-            $standings[$player->id] = [
-                'player_id' => $player->id,
-                'player_name' => $player->name,
-                'pts' => 0, 'pj' => 0, 'pg' => 0, 'pe' => 0, 'pp' => 0,
-                'gf' => 0, 'gc' => 0, 'dg' => 0,
-            ];
-        }
-
-        foreach ($tournament->matches as $match) {
-            if ($match->status !== 'finished') continue;
-
-            $s1 = $standings[$match->player1_id];
-            $s2 = $standings[$match->player2_id];
-
-            $s1['pj']++; $s2['pj']++;
-            $s1['gf'] += $match->score1; $s2['gf'] += $match->score2;
-            $s1['gc'] += $match->score2; $s2['gc'] += $match->score1;
-
-            if ($match->score1 > $match->score2) {
-                $s1['pg']++; $s1['pts'] += 3;
-                $s2['pp']++;
-            } elseif ($match->score1 < $match->score2) {
-                $s2['pg']++; $s2['pts'] += 3;
-                $s1['pp']++;
-            } else {
-                $s1['pe']++; $s1['pts'] += 1;
-                $s2['pe']++; $s2['pts'] += 1;
-            }
-
-            $s1['dg'] = $s1['gf'] - $s1['gc'];
-            $s2['dg'] = $s2['gf'] - $s2['gc'];
-
-            $standings[$match->player1_id] = $s1;
-            $standings[$match->player2_id] = $s2;
-        }
-
-        usort($standings, function ($a, $b) {
-            if ($b['pts'] !== $a['pts']) return $b['pts'] - $a['pts'];
-            if ($b['dg'] !== $a['dg']) return $b['dg'] - $a['dg'];
-            return $b['gf'] - $a['gf'];
-        });
-
-        return $standings;
-    }
 }

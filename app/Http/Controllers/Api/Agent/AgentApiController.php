@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tournament;
 use App\Models\Player;
 use App\Models\GameMatch;
+use App\Services\StandingsService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +27,7 @@ class AgentApiController extends Controller
         ])->orderBy('created_at', 'desc')->get()->map(function ($t) {
             $leader = null;
             if ($t->matches_played > 0) {
-                $standings = $this->calculateStandings($t);
+                $standings = app(StandingsService::class)->calculate($t);
                 $leader = [
                     'player_id' => $standings[0]['player_id'],
                     'player_name' => $standings[0]['player_name'],
@@ -68,7 +69,7 @@ class AgentApiController extends Controller
         $tournament = Tournament::with(['players', 'matches' => fn($q) => $q->with(['player1', 'player2'])])
             ->findOrFail($id);
 
-        $rows = $this->calculateStandings($tournament);
+        $rows = app(StandingsService::class)->calculate($tournament);
         $allPlayed = $tournament->matches->every(fn($m) => $m->status === 'finished');
 
         $standings = array_map(function ($row, $index) use ($allPlayed) {
@@ -460,57 +461,6 @@ class AgentApiController extends Controller
     /**
      * Calcula la tabla de posiciones para un torneo.
      */
-    private function calculateStandings(Tournament $tournament): array
-    {
-        $standings = [];
-        foreach ($tournament->players as $player) {
-            $standings[$player->id] = [
-                'player_id' => $player->id,
-                'player_name' => $player->name,
-                'pts' => 0, 'pj' => 0, 'pg' => 0, 'pe' => 0, 'pp' => 0,
-                'gf' => 0, 'gc' => 0, 'dg' => 0,
-            ];
-        }
-
-        foreach ($tournament->matches as $match) {
-            if ($match->status !== 'finished') continue;
-            if (!isset($standings[$match->player1_id]) || !isset($standings[$match->player2_id])) continue;
-
-            $standings[$match->player1_id]['pj']++;
-            $standings[$match->player2_id]['pj']++;
-            $standings[$match->player1_id]['gf'] += $match->score1;
-            $standings[$match->player2_id]['gf'] += $match->score2;
-            $standings[$match->player1_id]['gc'] += $match->score2;
-            $standings[$match->player2_id]['gc'] += $match->score1;
-
-            if ($match->score1 > $match->score2) {
-                $standings[$match->player1_id]['pg']++;
-                $standings[$match->player1_id]['pts'] += 3;
-                $standings[$match->player2_id]['pp']++;
-            } elseif ($match->score1 < $match->score2) {
-                $standings[$match->player2_id]['pg']++;
-                $standings[$match->player2_id]['pts'] += 3;
-                $standings[$match->player1_id]['pp']++;
-            } else {
-                $standings[$match->player1_id]['pe']++;
-                $standings[$match->player1_id]['pts'] += 1;
-                $standings[$match->player2_id]['pe']++;
-                $standings[$match->player2_id]['pts'] += 1;
-            }
-
-            $standings[$match->player1_id]['dg'] = $standings[$match->player1_id]['gf'] - $standings[$match->player1_id]['gc'];
-            $standings[$match->player2_id]['dg'] = $standings[$match->player2_id]['gf'] - $standings[$match->player2_id]['gc'];
-        }
-
-        usort($standings, function ($a, $b) {
-            if ($b['pts'] !== $a['pts']) return $b['pts'] - $a['pts'];
-            if ($b['dg'] !== $a['dg']) return $b['dg'] - $a['dg'];
-            return $b['gf'] - $a['gf'];
-        });
-
-        return $standings;
-    }
-
     /**
      * POST /api/agent/search
      * Búsqueda semántica sobre resúmenes narrativos de jugadores.
@@ -521,23 +471,25 @@ class AgentApiController extends Controller
         $queryText = $data['query'];
 
         $response = Http::timeout(15)
-            ->post('http://localhost:11434/api/embeddings', [
-                'model' => 'nomic-embed-text',
-                'prompt' => $queryText,
+            ->withHeader('x-goog-api-key', config('services.gemini.api_key'))
+            ->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-001:embedContent', [
+                'model' => 'models/gemini-embedding-001',
+                'content' => ['parts' => [['text' => $queryText]]],
+                'output_dimensionality' => 768,
             ]);
 
         if ($response->failed()) {
             return response()->json([
                 'success' => false,
-                'error' => 'Error al generar embedding de la consulta: ' . $response->body(),
+                'error' => 'Error al generar embedding: ' . $response->body(),
             ], 500);
         }
 
-        $queryEmbedding = $response->json('embedding');
+        $queryEmbedding = $response->json('embedding.values');
         if (!is_array($queryEmbedding)) {
             return response()->json([
                 'success' => false,
-                'error' => 'Ollama no devolvió un array de embedding',
+                'error' => 'Gemini no devolvió un array de embedding',
             ], 500);
         }
 
