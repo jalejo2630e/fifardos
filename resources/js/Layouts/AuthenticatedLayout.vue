@@ -58,6 +58,12 @@ const showingNav = ref(false);
                                   :class="route().current('dashboard.api-docs') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
                                 CÓMO USAR
                             </Link>
+                            <Link v-if="$page.props.auth.user?.is_admin"
+                                  :href="route('admin.chat-config.edit')"
+                                  class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                                  :class="route().current('admin.chat-config.*') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
+                                CHATBOT
+                            </Link>
                         </nav>
                     </div>
 
@@ -144,6 +150,16 @@ const showingNav = ref(false);
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
                         </svg>
                         Cómo Usar
+                    </Link>
+                    <Link v-if="$page.props.auth.user?.is_admin"
+                          :href="route('admin.chat-config.edit')"
+                          class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all"
+                          :class="route().current('admin.chat-config.*') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/60 hover:text-white hover:bg-white/5'"
+                          @click="showingNav = false">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        ChatBot
                     </Link>
                 </div>
                 <div class="border-t border-white/5 px-4 py-3 flex items-center gap-3">

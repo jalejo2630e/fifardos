@@ -65,6 +65,9 @@ Route::middleware('auth')->group(function () {
         return \Inertia\Inertia::render('Admin/ComoUsar');
     })->name('admin.como-usar');
 
+    Route::get('/admin/chat-config', [App\Http\Controllers\Admin\ChatConfigController::class, 'edit'])->name('admin.chat-config.edit');
+    Route::put('/admin/chat-config', [App\Http\Controllers\Admin\ChatConfigController::class, 'update'])->name('admin.chat-config.update');
+
     Route::get('/dashboard/api-docs', function () {
         if (!auth()->user()->is_admin) abort(403);
         return app(App\Http\Controllers\ApiDocsController::class)->index();
