@@ -129,6 +129,26 @@ const emptyMessages = {
                             </svg>
                             + Crear Torneo
                         </Link>
+                        <div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-2xl mx-auto">
+                            <div class="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-left">
+                                <div class="w-8 h-8 rounded-full bg-elite-secondary/15 flex items-center justify-center mb-3
+                                            text-elite-secondary font-bold text-sm">1</div>
+                                <h4 class="text-white/70 text-sm font-semibold mb-1">Crea un torneo</h4>
+                                <p class="text-white/30 text-xs leading-relaxed">Elegí un nombre, las consolas disponibles y agregá los jugadores. El fixture se genera automáticamente.</p>
+                            </div>
+                            <div class="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-left">
+                                <div class="w-8 h-8 rounded-full bg-elite-secondary/15 flex items-center justify-center mb-3
+                                            text-elite-secondary font-bold text-sm">2</div>
+                                <h4 class="text-white/70 text-sm font-semibold mb-1">Ingresá resultados</h4>
+                                <p class="text-white/30 text-xs leading-relaxed">Partido a partido, cargá los goles de cada encuentro. La tabla se actualiza sola.</p>
+                            </div>
+                            <div class="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-left">
+                                <div class="w-8 h-8 rounded-full bg-elite-secondary/15 flex items-center justify-center mb-3
+                                            text-elite-secondary font-bold text-sm">3</div>
+                                <h4 class="text-white/70 text-sm font-semibold mb-1">Coroná al campeón</h4>
+                                <p class="text-white/30 text-xs leading-relaxed">Cuando se juegue el último partido, el campeón aparecerá con todos los honores. ¡Compartí el bracket público!</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

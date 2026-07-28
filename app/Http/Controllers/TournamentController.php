@@ -7,6 +7,7 @@ use App\Models\Player;
 use App\Models\GameMatch;
 use App\Services\StandingsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class TournamentController extends Controller
@@ -74,6 +75,13 @@ class TournamentController extends Controller
 
         $this->generateMatches($tournament);
 
+        Log::info('Torneo creado', [
+            'user_id' => auth()->id(),
+            'tournament_id' => $tournament->id,
+            'name' => $tournament->name,
+            'players' => count($validated['players']),
+        ]);
+
         return redirect()->route('tournaments.show', $tournament);
     }
 
@@ -108,6 +116,13 @@ class TournamentController extends Controller
             'played_at' => now(),
         ]);
 
+        Log::info('Resultado guardado', [
+            'user_id' => auth()->id(),
+            'tournament_id' => $tournament->id,
+            'match_id' => $match->id,
+            'score' => "{$validated['score1']}-{$validated['score2']}",
+        ]);
+
         return redirect()->back();
     }
 
@@ -119,13 +134,25 @@ class TournamentController extends Controller
             'status' => 'pending',
         ]);
 
+        Log::info('Resultado editado (reset)', [
+            'user_id' => auth()->id(),
+            'tournament_id' => $tournament->id,
+            'match_id' => $match->id,
+        ]);
+
         return redirect()->back();
     }
 
     public function destroy(Tournament $tournament)
     {
+        Log::info('Torneo eliminado', [
+            'user_id' => auth()->id(),
+            'tournament_id' => $tournament->id,
+            'name' => $tournament->name,
+        ]);
+
         $tournament->delete();
-        return redirect()->route('tournaments.index');
+        return redirect()->route('dashboard');
     }
 
     private function generateMatches(Tournament $tournament)

@@ -51,6 +51,18 @@ watch(() => props.allPlayed, (val) => {
         triggerConfetti();
     }
 });
+
+const copiedStandings = ref(false);
+function copyStandings() {
+    const header = 'Pos\tJugador\tPTS\tPJ\tPG\tPE\tPP\tGF\tGC\tDG';
+    const rows = props.standings.map((s, i) =>
+        `${i + 1}\t${s.player_name}\t${s.pts}\t${s.pj}\t${s.pg}\t${s.pe}\t${s.pp}\t${s.gf}\t${s.gc}\t${s.dg > 0 ? '+' : ''}${s.dg}`
+    );
+    navigator.clipboard.writeText([header, ...rows].join('\n')).then(() => {
+        copiedStandings.value = true;
+        setTimeout(() => { copiedStandings.value = false; }, 2000);
+    });
+}
 </script>
 
 <template>
@@ -74,6 +86,12 @@ watch(() => props.allPlayed, (val) => {
                     </div>
                 </div>
                 <div class="flex gap-2">
+                    <a :href="route('tournaments.public.bracket', tournament.id)" target="_blank"
+                       class="ucl-btn-ghost text-xs min-h-touch px-4">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                    </a>
                     <Link :href="route('dashboard')" class="ucl-btn-ghost text-xs min-h-touch px-4">
                         <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -255,6 +273,16 @@ watch(() => props.allPlayed, (val) => {
 
                 <!-- ====== STANDINGS ====== -->
                 <div v-if="activeTab === 'standings'" class="ucl-card overflow-hidden animate-fade-up">
+                    <div class="px-5 sm:px-6 py-3 border-b border-white/5 flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-white/80">Tabla de posiciones</h3>
+                        <button @click="copyStandings"
+                                class="text-xs px-3 py-1.5 rounded-md font-medium transition-all duration-200"
+                                :class="copiedStandings
+                                    ? 'bg-emerald-500/20 text-emerald-300'
+                                    : 'bg-white/10 text-white/40 hover:bg-white/20 hover:text-white/60'">
+                            {{ copiedStandings ? 'Copiado!' : 'Copiar tabla' }}
+                        </button>
+                    </div>
                     <div class="overflow-x-auto">
                         <table class="ucl-table">
                             <thead>
