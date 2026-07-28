@@ -1,5 +1,6 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { watch } from 'vue';
 import { useScrollReveal } from '@/composables/useScrollReveal';
 import { useMouseSpotlight } from '@/composables/useMouseSpotlight';
 
@@ -20,13 +21,49 @@ const teams = [
 const form = useForm({
     tournament_id: '',
     name: '',
+    apellido: '',
+    username: '',
     psn_id: '',
     email: '',
     preferred_team: '',
+    password: '',
+    password_confirmation: '',
 });
+
+function transliterate(text) {
+    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function generateUsername(nombre, apellido) {
+    if (!nombre || !apellido) return '';
+    const base = (nombre.charAt(0) + apellido).toLowerCase().trim();
+    const clean = transliterate(base).replace(/[^a-z0-9._-]/g, '').replace(/^[._-]+|[._-]+$/g, '');
+    return clean || '';
+}
 
 function submit() {
     form.post(route('players.public.store'));
+}
+
+watch(
+    () => [form.name, form.apellido],
+    ([nombre, apellido]) => {
+        const auto = generateUsername(nombre, apellido);
+        if (auto && !form.isDirty('username')) {
+            form.username = auto;
+        }
+    }
+);
+
+function isFormValid() {
+    return form.tournament_id
+        && form.name
+        && form.apellido
+        && form.psn_id
+        && form.email
+        && form.preferred_team
+        && form.password
+        && form.password === form.password_confirmation;
 }
 </script>
 
@@ -45,9 +82,26 @@ function submit() {
                     FIFARDOS ELITE
                 </span>
             </Link>
-            <Link href="/" class="text-sm text-elite-primary/60 hover:text-elite-primary transition-colors px-3 py-2">
-                INICIO
-            </Link>
+            <div class="flex items-center gap-1 sm:gap-3">
+                <Link href="/"
+                      class="text-sm text-elite-primary/60 hover:text-elite-primary transition-colors px-2 sm:px-3 py-2">
+                    INICIO
+                </Link>
+                <Link :href="route('players.public.create')"
+                      class="text-sm text-elite-primary/60 hover:text-elite-primary transition-colors px-2 sm:px-3 py-2">
+                    REGISTRO
+                </Link>
+                <Link href="/rules"
+                      class="text-sm text-elite-primary/60 hover:text-elite-primary transition-colors px-2 sm:px-3 py-2">
+                    EQUIPOS
+                </Link>
+                <Link :href="route('login')"
+                      class="text-sm font-bold font-elite-condensed uppercase tracking-wider
+                             px-5 py-2 rounded-lg bg-elite-secondary text-black
+                             hover:brightness-110 transition-all duration-200">
+                    INICIAR SESIÓN
+                </Link>
+            </div>
         </nav>
 
         <!-- HERO -->
@@ -87,8 +141,8 @@ function submit() {
 
         <!-- FORM -->
         <section v-else ref="observeHero" class="relative z-10 px-4 pb-24">
-            <div class="max-w-md mx-auto">
-                <div class="glass-panel p-6 sm:p-8 relative overflow-hidden"
+            <div class="max-w-2xl mx-auto">
+                <div class="glass-panel p-6 sm:p-10 relative overflow-hidden glow-secondary"
                      @mouseenter="onEnter"
                      @mousemove="onMove"
                      @mouseleave="onLeave"
@@ -101,7 +155,7 @@ function submit() {
                         <!-- Tournament selector -->
                         <div>
                             <label class="block text-xs font-elite-condensed uppercase tracking-[0.12em] text-elite-primary/60 mb-1.5">
-                                ¿A qué torneo te unes?
+                                Torneo
                             </label>
                             <div class="relative">
                                 <select v-model="form.tournament_id"
@@ -130,46 +184,79 @@ function submit() {
                             </p>
                         </div>
 
-                        <!-- Name -->
-                        <div>
-                            <label class="block text-xs font-elite-condensed uppercase tracking-[0.12em] text-elite-primary/60 mb-1.5">
-                                Nombre completo
-                            </label>
-                            <input type="text" v-model="form.name"
-                                   class="w-full bg-elite-surface-low border border-elite-outline/40 rounded-lg
-                                          px-4 py-3 text-sm text-white placeholder-elite-primary/20
-                                          focus:outline-none focus:border-elite-secondary/60 focus:ring-1 focus:ring-elite-secondary/30
-                                          transition-all duration-200"
-                                   placeholder="Tu nombre" />
-                            <p v-if="form.errors.name" class="mt-1.5 text-xs text-red-400">{{ form.errors.name }}</p>
+                        <!-- Nombre + Apellido -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-elite-condensed uppercase tracking-[0.12em] text-elite-primary/60 mb-1.5">
+                                    Nombre
+                                </label>
+                                <input type="text" v-model="form.name"
+                                       class="w-full bg-elite-surface-low border border-elite-outline/40 rounded-lg
+                                              px-4 py-3 text-sm text-white placeholder-elite-primary/20
+                                              focus:outline-none focus:border-elite-secondary/60 focus:ring-1 focus:ring-elite-secondary/30
+                                              transition-all duration-200"
+                                       placeholder="Tu nombre" />
+                                <p v-if="form.errors.name" class="mt-1.5 text-xs text-red-400">{{ form.errors.name }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-elite-condensed uppercase tracking-[0.12em] text-elite-primary/60 mb-1.5">
+                                    Apellido
+                                </label>
+                                <input type="text" v-model="form.apellido"
+                                       class="w-full bg-elite-surface-low border border-elite-outline/40 rounded-lg
+                                              px-4 py-3 text-sm text-white placeholder-elite-primary/20
+                                              focus:outline-none focus:border-elite-secondary/60 focus:ring-1 focus:ring-elite-secondary/30
+                                              transition-all duration-200"
+                                       placeholder="Tu apellido" />
+                                <p v-if="form.errors.apellido" class="mt-1.5 text-xs text-red-400">{{ form.errors.apellido }}</p>
+                            </div>
                         </div>
 
-                        <!-- PSN ID -->
+                        <!-- Username (auto-generated) -->
                         <div>
                             <label class="block text-xs font-elite-condensed uppercase tracking-[0.12em] text-elite-primary/60 mb-1.5">
-                                PSN ID
+                                Nombre de usuario
                             </label>
-                            <input type="text" v-model="form.psn_id"
-                                   class="w-full bg-elite-surface-low border border-elite-outline/40 rounded-lg
-                                          px-4 py-3 text-sm text-white placeholder-elite-primary/20
-                                          focus:outline-none focus:border-elite-secondary/60 focus:ring-1 focus:ring-elite-secondary/30
-                                          transition-all duration-200"
-                                   placeholder="Tu ID de PlayStation Network" />
-                            <p v-if="form.errors.psn_id" class="mt-1.5 text-xs text-red-400">{{ form.errors.psn_id }}</p>
+                            <div class="relative">
+                                <input type="text" v-model="form.username"
+                                       class="w-full bg-elite-surface-low border border-elite-outline/40 rounded-lg
+                                              px-4 py-3 text-sm text-white placeholder-elite-primary/20
+                                              focus:outline-none focus:border-elite-secondary/60 focus:ring-1 focus:ring-elite-secondary/30
+                                              transition-all duration-200"
+                                       placeholder="Se generará automáticamente" />
+                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-elite-primary/30 font-elite-condensed uppercase tracking-wider">
+                                    Auto
+                                </span>
+                            </div>
+                            <p v-if="form.errors.username" class="mt-1.5 text-xs text-red-400">{{ form.errors.username }}</p>
                         </div>
 
-                        <!-- Email -->
-                        <div>
-                            <label class="block text-xs font-elite-condensed uppercase tracking-[0.12em] text-elite-primary/60 mb-1.5">
-                                Correo electrónico
-                            </label>
-                            <input type="email" v-model="form.email"
-                                   class="w-full bg-elite-surface-low border border-elite-outline/40 rounded-lg
-                                          px-4 py-3 text-sm text-white placeholder-elite-primary/20
-                                          focus:outline-none focus:border-elite-secondary/60 focus:ring-1 focus:ring-elite-secondary/30
-                                          transition-all duration-200"
-                                   placeholder="tu@email.com" />
-                            <p v-if="form.errors.email" class="mt-1.5 text-xs text-red-400">{{ form.errors.email }}</p>
+                        <!-- Email + PSN ID -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-elite-condensed uppercase tracking-[0.12em] text-elite-primary/60 mb-1.5">
+                                    Correo electrónico
+                                </label>
+                                <input type="email" v-model="form.email"
+                                       class="w-full bg-elite-surface-low border border-elite-outline/40 rounded-lg
+                                              px-4 py-3 text-sm text-white placeholder-elite-primary/20
+                                              focus:outline-none focus:border-elite-secondary/60 focus:ring-1 focus:ring-elite-secondary/30
+                                              transition-all duration-200"
+                                       placeholder="tu@email.com" />
+                                <p v-if="form.errors.email" class="mt-1.5 text-xs text-red-400">{{ form.errors.email }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-elite-condensed uppercase tracking-[0.12em] text-elite-primary/60 mb-1.5">
+                                    PSN ID
+                                </label>
+                                <input type="text" v-model="form.psn_id"
+                                       class="w-full bg-elite-surface-low border border-elite-outline/40 rounded-lg
+                                              px-4 py-3 text-sm text-white placeholder-elite-primary/20
+                                              focus:outline-none focus:border-elite-secondary/60 focus:ring-1 focus:ring-elite-secondary/30
+                                              transition-all duration-200"
+                                       placeholder="ID de PlayStation Network" />
+                                <p v-if="form.errors.psn_id" class="mt-1.5 text-xs text-red-400">{{ form.errors.psn_id }}</p>
+                            </div>
                         </div>
 
                         <!-- Preferred Team -->
@@ -190,6 +277,38 @@ function submit() {
                             </select>
                             <p v-if="form.errors.preferred_team" class="mt-1.5 text-xs text-red-400">{{ form.errors.preferred_team }}</p>
                         </div>
+
+                        <!-- Password + Confirm -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-elite-condensed uppercase tracking-[0.12em] text-elite-primary/60 mb-1.5">
+                                    Contraseña
+                                </label>
+                                <input type="password" v-model="form.password"
+                                       class="w-full bg-elite-surface-low border border-elite-outline/40 rounded-lg
+                                              px-4 py-3 text-sm text-white placeholder-elite-primary/20
+                                              focus:outline-none focus:border-elite-secondary/60 focus:ring-1 focus:ring-elite-secondary/30
+                                              transition-all duration-200"
+                                       placeholder="Mín. 8 caracteres" />
+                                <p v-if="form.errors.password" class="mt-1.5 text-xs text-red-400">{{ form.errors.password }}</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-elite-condensed uppercase tracking-[0.12em] text-elite-primary/60 mb-1.5">
+                                    Confirmar contraseña
+                                </label>
+                                <input type="password" v-model="form.password_confirmation"
+                                       class="w-full bg-elite-surface-low border border-elite-outline/40 rounded-lg
+                                              px-4 py-3 text-sm text-white placeholder-elite-primary/20
+                                              focus:outline-none focus:border-elite-secondary/60 focus:ring-1 focus:ring-elite-secondary/30
+                                              transition-all duration-200"
+                                       placeholder="Repite la contraseña" />
+                            </div>
+                        </div>
+
+                        <!-- Password hint -->
+                        <p class="text-[11px] text-elite-primary/30 leading-relaxed -mt-2">
+                            La contraseña debe tener al menos 8 caracteres y una mayúscula.
+                        </p>
 
                         <!-- Submit -->
                         <button type="submit" :disabled="form.processing || !tournaments.length"

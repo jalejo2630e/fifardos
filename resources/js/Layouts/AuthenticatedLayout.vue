@@ -41,6 +41,12 @@ const showingNav = ref(false);
                                   :class="route().current('tournaments.create*') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
                                 NUEVO
                             </Link>
+                            <Link v-if="$page.props.auth.user?.is_admin"
+                                  :href="route('admin.como-usar')"
+                                  class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                                  :class="route().current('admin.como-usar') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
+                                API DOCS
+                            </Link>
                         </nav>
                     </div>
 
@@ -117,6 +123,16 @@ const showingNav = ref(false);
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
                         Nuevo Torneo
+                    </Link>
+                    <Link v-if="$page.props.auth.user?.is_admin"
+                          :href="route('admin.como-usar')"
+                          class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all"
+                          :class="route().current('admin.como-usar') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/60 hover:text-white hover:bg-white/5'"
+                          @click="showingNav = false">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                        </svg>
+                        API Docs
                     </Link>
                 </div>
                 <div class="border-t border-white/5 px-4 py-3 flex items-center gap-3">

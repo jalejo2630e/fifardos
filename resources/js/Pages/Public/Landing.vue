@@ -53,9 +53,21 @@ const { observe: observePrizes } = useScrollReveal();
                     FIFARDOS ELITE
                 </span>
             </div>
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-1 sm:gap-3">
+                <Link href="/"
+                      class="text-sm text-elite-primary/60 hover:text-elite-primary transition-colors px-2 sm:px-3 py-2">
+                    INICIO
+                </Link>
+                <Link :href="route('players.public.create')"
+                      class="text-sm text-elite-primary/60 hover:text-elite-primary transition-colors px-2 sm:px-3 py-2">
+                    REGISTRO
+                </Link>
+                <Link href="/rules"
+                      class="text-sm text-elite-primary/60 hover:text-elite-primary transition-colors px-2 sm:px-3 py-2">
+                    EQUIPOS
+                </Link>
                 <Link v-if="canLogin" :href="route('login')"
-                      class="text-sm text-elite-primary/60 hover:text-elite-primary transition-colors px-3 py-2">
+                      class="text-sm text-elite-primary/60 hover:text-elite-primary transition-colors px-2 sm:px-3 py-2">
                     INICIAR SESIÓN
                 </Link>
                 <Link v-if="canRegister" :href="route('register')"

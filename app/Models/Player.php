@@ -11,9 +11,16 @@ class Player extends Model
     protected $fillable = [
         'tournament_id',
         'name',
+        'apellido',
         'psn_id',
         'email',
+        'username',
         'preferred_team',
+        'password',
+    ];
+
+    protected $hidden = [
+        'password',
     ];
 
     public function tournament(): BelongsTo

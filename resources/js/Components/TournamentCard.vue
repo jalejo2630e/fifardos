@@ -3,6 +3,7 @@ import { Link } from '@inertiajs/vue3';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import ProgressBar from '@/Components/ProgressBar.vue';
 import { computed } from 'vue';
+import { useCountUp } from '@/composables/useCountUp';
 
 const props = defineProps({
     tournament: Object,
@@ -10,7 +11,12 @@ const props = defineProps({
 
 const playedCount = computed(() => props.tournament.matches_played || 0);
 const totalMatches = computed(() => props.tournament.matches_count || 0);
+const leaderPts = computed(() => props.tournament.leader?.pts || 0);
 const color = computed(() => props.tournament.color || '#F97316');
+
+const animatedPlayed = useCountUp(playedCount);
+const animatedTotal = useCountUp(totalMatches);
+const animatedLeaderPts = useCountUp(leaderPts);
 </script>
 
 <template>
@@ -52,13 +58,13 @@ const color = computed(() => props.tournament.color || '#F97316');
                 <ProgressBar
                     :value="playedCount"
                     :max="totalMatches"
-                    :detail="`${playedCount}/${totalMatches}`"
+                    :detail="animatedPlayed + '/' + animatedTotal"
                 />
                 <div v-if="tournament.leader"
                      class="mt-2 text-xs text-white/40 flex items-center gap-1.5">
                     <span>🔥</span>
                     <span class="font-condensed font-bold text-elite-secondary">{{ tournament.leader.name }}</span>
-                    <span>{{ tournament.leader.pts }} pts</span>
+                    <span>{{ animatedLeaderPts }} pts</span>
                 </div>
             </div>
 

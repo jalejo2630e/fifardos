@@ -40,10 +40,10 @@ onUnmounted(() => {
 });
 
 const emptyMessages = {
-    todos: { emoji: '🏟️', title: 'Sin torneos aún', desc: 'Crea tu primer torneo, añade jugadores, configura las consolas y descubre al campeón.' },
-    in_progress: { emoji: '⚡', title: 'No hay torneos en curso', desc: 'Los torneos que estén activos aparecerán aquí. ¡Crea uno nuevo para empezar!' },
-    completed: { emoji: '🏆', title: 'No hay torneos finalizados', desc: 'Cuando un torneo termine, aparecerá aquí con su campeón.' },
-    setup: { emoji: '⚙️', title: 'No hay torneos en configuración', desc: 'Los torneos que estén en fase de configuración se mostrarán aquí.' },
+    todos: { icon: 'ball', title: 'El campo está vacío', desc: 'Crea tu primer torneo y que empiece el partido.' },
+    in_progress: { icon: 'bolt', title: 'Sin actividad', desc: 'No hay torneos en curso. Activa uno desde la configuración o crea uno nuevo.' },
+    completed: { icon: 'cup', title: 'Nadie ha ganado aún', desc: 'Cuando un torneo finalice, el campeón aparecerá aquí con todos los honores.' },
+    setup: { icon: 'gear', title: 'Nada en preparación', desc: 'Los torneos en fase de configuración vivirán aquí. Prepara las consolas y los jugadores.' },
 };
 </script>
 
@@ -110,7 +110,12 @@ const emptyMessages = {
                      class="ucl-card p-10 sm:p-16 text-center animate-scale-in">
                     <div class="stars-overlay" />
                     <div class="relative">
-                        <div class="text-6xl sm:text-7xl mb-6">🏟️</div>
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full bg-elite-secondary/5 border border-elite-secondary/15
+                                    flex items-center justify-center animate-pulse">
+                            <svg class="w-10 h-10 sm:w-12 sm:h-12 text-elite-secondary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                            </svg>
+                        </div>
                         <h2 class="ucl-title-md text-2xl sm:text-3xl text-white/80 mb-3">
                             {{ emptyMessages.todos.title }}
                         </h2>
@@ -122,7 +127,7 @@ const emptyMessages = {
                             <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                             </svg>
-                            Crear Torneo
+                            + Crear Torneo
                         </Link>
                     </div>
                 </div>
@@ -132,20 +137,47 @@ const emptyMessages = {
                      class="ucl-card p-10 sm:p-16 text-center animate-scale-in">
                     <div class="stars-overlay" />
                     <div class="relative">
-                        <div class="text-6xl sm:text-7xl mb-6">{{ emptyMessages[activeFilter].emoji }}</div>
+                        <div class="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-6 rounded-full bg-elite-secondary/5 border border-elite-secondary/15
+                                    flex items-center justify-center animate-pulse">
+                            <svg v-if="emptyMessages[activeFilter].icon === 'bolt'" class="w-10 h-10 sm:w-12 sm:h-12 text-elite-secondary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            <svg v-else-if="emptyMessages[activeFilter].icon === 'cup'" class="w-10 h-10 sm:w-12 sm:h-12 text-elite-secondary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 3h12v4c0 4-3 7-6 7s-6-3-6-7V3z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 3H3v2c0 2.5 1.5 4.5 3 5.5M18 3h3v2c0 2.5-1.5 4.5-3 5.5" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 21h8" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 17v4" />
+                            </svg>
+                            <svg v-else-if="emptyMessages[activeFilter].icon === 'gear'" class="w-10 h-10 sm:w-12 sm:h-12 text-elite-secondary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15a3 3 0 100-6 3 3 0 000 6z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+                            </svg>
+                            <svg v-else class="w-10 h-10 sm:w-12 sm:h-12 text-elite-secondary/60" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+                            </svg>
+                        </div>
                         <h2 class="ucl-title-md text-2xl sm:text-3xl text-white/80 mb-3">
                             {{ emptyMessages[activeFilter].title }}
                         </h2>
                         <p class="text-white/30 max-w-md mx-auto mb-8 text-sm sm:text-base leading-relaxed">
                             {{ emptyMessages[activeFilter].desc }}
                         </p>
-                        <button
-                            v-if="activeFilter !== 'todos'"
-                            @click="activeFilter = 'todos'"
-                            class="ucl-btn-ghost px-6 py-3 text-sm"
-                        >
-                            Ver todos los torneos
-                        </button>
+                        <div class="flex items-center justify-center gap-3">
+                            <button
+                                v-if="activeFilter !== 'todos'"
+                                @click="activeFilter = 'todos'"
+                                class="ucl-btn-ghost px-6 py-3 text-sm"
+                            >
+                                Ver todos
+                            </button>
+                            <Link :href="route('tournaments.create')"
+                                  class="ucl-btn-primary px-6 py-3 text-sm">
+                                <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                + Crear Torneo
+                            </Link>
+                        </div>
                     </div>
                 </div>
 

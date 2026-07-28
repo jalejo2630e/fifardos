@@ -46,6 +46,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/admin/como-usar', function () {
+        if (!auth()->user()->is_admin) abort(403);
+        return \Inertia\Inertia::render('Admin/ComoUsar');
+    })->name('admin.como-usar');
 });
 
 require __DIR__ . '/auth.php';

@@ -32,6 +32,7 @@ class PublicPlayerController extends Controller
         $validated = $request->validate([
             'tournament_id' => 'required|exists:tournaments,id',
             'name' => 'required|string|max:255',
+            'apellido' => 'required|string|max:255',
             'psn_id' => [
                 'required',
                 'string',
@@ -40,6 +41,7 @@ class PublicPlayerController extends Controller
             ],
             'email' => 'required|email|max:255',
             'preferred_team' => 'required|string|max:255',
+            'password' => 'required|string|min:8|confirmed|regex:/[A-Z]/',
         ]);
 
         $tournament = Tournament::findOrFail($validated['tournament_id']);
@@ -52,8 +54,28 @@ class PublicPlayerController extends Controller
             return back()->withErrors(['tournament_id' => 'Este torneo ya alcanzó el cupo máximo de jugadores.'])->withInput();
         }
 
+        $validated['username'] = $this->generateUsername($validated['name'], $validated['apellido'], $validated['tournament_id']);
+        $validated['password'] = bcrypt($validated['password']);
+
         $tournament->players()->create($validated);
 
         return back()->with('success', 'TRANSMISSION RECEIVED');
+    }
+
+    private function generateUsername(string $nombre, string $apellido, int $tournamentId): string
+    {
+        $base = strtolower(trim(mb_substr($nombre, 0, 1) . $apellido));
+        $base = @iconv('UTF-8', 'ASCII//TRANSLIT', $base);
+        $base = preg_replace('/[^a-z0-9._-]/', '', $base);
+        $base = trim($base, '._-') ?: 'player';
+
+        $username = $base;
+        $counter = 1;
+        while (Tournament::find($tournamentId)?->players()->where('username', $username)->exists()) {
+            $username = $base . $counter;
+            $counter++;
+        }
+
+        return $username;
     }
 }

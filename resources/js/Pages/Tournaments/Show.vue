@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import ProgressBar from '@/Components/ProgressBar.vue';
+import { triggerConfetti } from '@/composables/useConfetti';
 
 const props = defineProps({
     tournament: Object,
@@ -42,6 +43,14 @@ function hexToRgb(hex) {
     const v = parseInt(hex.slice(1), 16);
     return `${(v >> 16) & 255}, ${(v >> 8) & 255}, ${v & 255}`;
 }
+
+const confettiFired = ref(false);
+watch(() => props.allPlayed, (val) => {
+    if (val && !confettiFired.value) {
+        confettiFired.value = true;
+        triggerConfetti();
+    }
+});
 </script>
 
 <template>
