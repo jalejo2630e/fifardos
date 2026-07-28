@@ -6,6 +6,7 @@ use App\Models\Tournament;
 use App\Services\StandingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class GeminiChatController extends Controller
 {
@@ -16,9 +17,7 @@ class GeminiChatController extends Controller
         $tournament = Tournament::with('prizes')->latest()->first();
         $context = $this->buildContext($tournament);
 
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-        ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . config('services.gemini.api_key'), [
+        $payload = [
             'system_instruction' => [
                 'parts' => [
                     ['text' => "Eres un asistente de la FIFARDOS ELITE LEAGUE, una liga competitiva de FIFA.
@@ -40,11 +39,25 @@ Si el usuario pregunta algo que no está en esta información, dilo amablemente 
                 'maxOutputTokens' => 500,
                 'temperature' => 0.7,
             ],
-        ]);
+        ];
+
+        $response = Http::withHeaders([
+            'Content-Type' => 'application/json',
+        ])->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . config('services.gemini.api_key'), $payload);
 
         $body = $response->json();
 
-        $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? 'Lo siento, no pude procesar tu mensaje.';
+        if (isset($body['error'])) {
+            Log::error('Gemini API error', ['error' => $body['error']]);
+            return response()->json(['reply' => 'Lo siento, ocurrió un error al procesar tu mensaje. Intenta de nuevo más tarde.']);
+        }
+
+        $text = $body['candidates'][0]['content']['parts'][0]['text'] ?? null;
+
+        if (!$text) {
+            Log::warning('Gemini unexpected response', ['body' => $body]);
+            return response()->json(['reply' => 'Lo siento, no pude procesar tu mensaje. Intenta de nuevo.']);
+        }
 
         return response()->json(['reply' => $text]);
     }
@@ -54,6 +67,9 @@ Si el usuario pregunta algo que no está en esta información, dilo amablemente 
         if (!$tournament) {
             return "No hay torneo activo actualmente. Informa que pronto habrá novedades.";
         }
+
+        $tournament->load('matches');
+        $standings = app(StandingsService::class)->calculate($tournament);
 
         $lines = [];
         $lines[] = "=== TORNEO ACTIVO ===";
@@ -65,9 +81,6 @@ Si el usuario pregunta algo que no está en esta información, dilo amablemente 
         if ($tournament->finished_at) {
             $lines[] = "Finalizado: {$tournament->finished_at->format('d/m/Y H:i')}";
         }
-
-        $tournament->load('matches');
-        $standings = app(StandingsService::class)->calculate($tournament);
 
         $prizes = $tournament->prizes->sortBy('position');
         if ($prizes->isNotEmpty()) {
@@ -84,7 +97,17 @@ Si el usuario pregunta algo que no está en esta información, dilo amablemente 
             $lines[] = "";
             $lines[] = "=== {$label} ===";
             foreach ($standings as $i => $s) {
-                $lines[] = ($i + 1) . ". {$s['player_name']} — {$s['pts']} pts ({$s['pg']}G {$s['pe']}E {$s['pp']}P, DG: {$s['dg']})";
+                $lines[] = ($i + 1) . ". {$s['player_name']} — {$s['pts']} pts ({$s['pg']}G {$s['pe']}E {$s['pp']}P, GF:{$s['gf']} GC:{$s['gc']} DG:{$s['dg']})";
+            }
+
+            $maxGf = max(array_column($standings, 'gf'));
+            $topScorers = array_filter($standings, fn($s) => $s['gf'] === $maxGf && $maxGf > 0);
+            if (!empty($topScorers)) {
+                $lines[] = "";
+                $lines[] = "=== GOLEADORES ===";
+                foreach ($topScorers as $s) {
+                    $lines[] = "- {$s['player_name']} con {$s['gf']} goles";
+                }
             }
         }
 
