@@ -40,23 +40,27 @@ jobs:
         working-directory: android
         run: chmod +x gradlew
 
-      - name: Generate keystore for signing
-        run: |
-          keytool -genkey -v \
-            -keystore fifardos.keystore \
-            -alias fifardos \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass fifardos123 \
-            -keypass fifardos123 \
-            -dname "CN=FIFARDOS, OU=, O=, L=, S=, C="
-
       - name: Build unsigned release APK
         working-directory: android
         run: ./gradlew assembleRelease
 
-      - name: Sign APK with apksigner
+      - name: Generate keystore
+        run: |
+          keytool -genkey -v \
+            -keystore fifardos.keystore \
+            -alias fifardos \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass fifardos123 -keypass fifardos123 \
+            -dname "CN=FIFARDOS, OU=, O=, L=, S=, C="
+
+      - name: Zipalign APK
+        run: |
+          ZIPALIGN=$(ls $ANDROID_HOME/build-tools/*/zipalign | head -1)
+          $ZIPALIGN -p -f 4 \
+            android/app/build/outputs/apk/release/app-release-unsigned.apk \
+            android/app/build/outputs/apk/release/app-release-aligned.apk
+
+      - name: Sign APK
         run: |
           APKSIGNER=$(ls $ANDROID_HOME/build-tools/*/apksigner | head -1)
           $APKSIGNER sign \
@@ -64,8 +68,11 @@ jobs:
             --ks-pass pass:fifardos123 \
             --key-pass pass:fifardos123 \
             --ks-key-alias fifardos \
+            --v1-signing-enabled true \
+            --v2-signing-enabled true \
+            --v3-signing-enabled true \
             --out fifardos.apk \
-            android/app/build/outputs/apk/release/app-release-unsigned.apk
+            android/app/build/outputs/apk/release/app-release-aligned.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
