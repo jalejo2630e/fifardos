@@ -279,7 +279,13 @@ class AgentApiController extends Controller
             'version' => '1.0',
             'base_url' => url('/api/agent'),
             'authentication' => 'Bearer token via Laravel Sanctum. Incluir header: Authorization: Bearer {token}',
-            'endpoints' => [
+            'endpoints' => self::getSchemaEndpoints(),
+        ]);
+    }
+
+    public static function getSchemaEndpoints(): array
+    {
+        return [
                 [
                     'method' => 'GET',
                     'path' => '/api/agent/schema',
@@ -454,13 +460,9 @@ class AgentApiController extends Controller
                             ]],
                         ],
                     ],
-                ],
-            ]);
+            ];
         }
 
-    /**
-     * Calcula la tabla de posiciones para un torneo.
-     */
     /**
      * POST /api/agent/search
      * Búsqueda semántica sobre resúmenes narrativos de jugadores.

@@ -51,6 +51,11 @@ Route::middleware('auth')->group(function () {
         if (!auth()->user()->is_admin) abort(403);
         return \Inertia\Inertia::render('Admin/ComoUsar');
     })->name('admin.como-usar');
+
+    Route::get('/dashboard/api-docs', function () {
+        if (!auth()->user()->is_admin) abort(403);
+        return app(App\Http\Controllers\ApiDocsController::class)->index();
+    })->name('dashboard.api-docs');
 });
 
 require __DIR__ . '/auth.php';
