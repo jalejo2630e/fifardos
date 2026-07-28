@@ -95,6 +95,18 @@ class TournamentController extends Controller
         $standings = app(StandingsService::class)->calculate($tournament);
         $allPlayed = $tournament->matches->every(fn($m) => $m->status === 'finished');
 
+        if ($allPlayed && $tournament->status !== 'completed') {
+            $tournament->update([
+                'status' => 'completed',
+                'finished_at' => now(),
+            ]);
+            $tournament = $tournament->fresh();
+            $tournament->load(['players', 'matches' => function ($q) {
+                $q->with(['player1', 'player2'])->orderBy('round')->orderBy('id');
+            }]);
+            $standings = app(StandingsService::class)->calculate($tournament);
+        }
+
         $groupRounds = $tournament->matches->where('phase', 'group')->groupBy('round')->values();
         $knockoutMatches = $tournament->matches->where('phase', 'knockout')->sortBy('bracket_position')->values();
         $groupAllPlayed = $tournament->matches->where('phase', 'group')->every(fn($m) => $m->status === 'finished');

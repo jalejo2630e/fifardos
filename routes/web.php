@@ -2,14 +2,26 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TournamentController;
+use App\Models\Tournament;
+use App\Services\StandingsService;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
+    $tournament = Tournament::with('prizes')->latest()->first();
+    $standings = [];
+    if ($tournament && $tournament->status === 'completed') {
+        $tournament->load('matches');
+        $standings = app(StandingsService::class)->calculate($tournament);
+    }
+
     return Inertia::render('Public/Landing', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
+        'tournament' => $tournament,
+        'prizes' => $tournament?->prizes->sortBy('position')->values() ?? [],
+        'standings' => $standings,
     ]);
 });
 
@@ -64,5 +76,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('/{tokenId}', [App\Http\Controllers\ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
     });
 });
+
+Route::post('/chat', App\Http\Controllers\GeminiChatController::class)->name('chat');
 
 require __DIR__ . '/auth.php';

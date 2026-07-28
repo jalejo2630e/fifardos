@@ -17,6 +17,11 @@ class Tournament extends Model
         'status',
         'color',
         'max_players',
+        'finished_at',
+    ];
+
+    protected $casts = [
+        'finished_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

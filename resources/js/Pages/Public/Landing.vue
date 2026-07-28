@@ -1,41 +1,20 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
-import { ref, onMounted, onUnmounted } from 'vue';
 import { useScrollReveal } from '@/composables/useScrollReveal';
+import ChatBot from '@/Components/ChatBot.vue';
 
 defineProps({
     canLogin: Boolean,
     canRegister: Boolean,
-});
-
-const TARGET = '2026-09-15T00:00:00';
-
-const timeLeft = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-let timer = null;
-
-function calc() {
-    const diff = new Date(TARGET) - new Date();
-    if (diff <= 0) return;
-    timeLeft.value = {
-        days: String(Math.floor(diff / 86400000)).padStart(2, '0'),
-        hours: String(Math.floor((diff / 3600000) % 24)).padStart(2, '0'),
-        minutes: String(Math.floor((diff / 60000) % 60)).padStart(2, '0'),
-        seconds: String(Math.floor((diff / 1000) % 60)).padStart(2, '0'),
-    };
-}
-
-onMounted(() => {
-    calc();
-    timer = setInterval(calc, 1000);
-});
-
-onUnmounted(() => {
-    clearInterval(timer);
+    tournament: Object,
+    prizes: Array,
+    standings: Array,
 });
 
 const { observe: observeHero } = useScrollReveal();
 const { observe: observeSteps } = useScrollReveal();
 const { observe: observePrizes } = useScrollReveal();
+const { observe: observePodium } = useScrollReveal();
 </script>
 
 <template>
@@ -70,12 +49,7 @@ const { observe: observePrizes } = useScrollReveal();
                       class="text-sm text-elite-primary/60 hover:text-elite-primary transition-colors px-2 sm:px-3 py-2">
                     INICIAR SESIÓN
                 </Link>
-                <Link v-if="canRegister" :href="route('register')"
-                      class="text-sm font-bold font-elite-condensed uppercase tracking-wider
-                             px-5 py-2 rounded-lg bg-elite-secondary text-black
-                             hover:brightness-110 transition-all duration-200">
-                    REGISTRARSE
-                </Link>
+
             </div>
         </nav>
 
@@ -95,19 +69,6 @@ const { observe: observePrizes } = useScrollReveal();
                     La competencia FIFA definitiva. Demuestra tu talento, domina el torneo
                     y reclama la gloria.
                 </p>
-
-                <!-- Countdown -->
-                <div class="glass-panel inline-flex gap-3 sm:gap-5 p-4 sm:p-6 mb-10 glow-secondary">
-                    <div v-for="unit in ['DAYS','HOURS','MINUTES','SECONDS']" :key="unit"
-                         class="flex flex-col items-center min-w-[60px] sm:min-w-[80px]">
-                        <span class="font-elite-mono font-bold text-3xl sm:text-4xl lg:text-5xl text-white tabular-nums leading-none">
-                            {{ timeLeft[unit.toLowerCase()] }}
-                        </span>
-                        <span class="text-[10px] sm:text-xs font-elite-condensed uppercase tracking-[0.15em] text-elite-secondary mt-2">
-                            {{ unit }}
-                        </span>
-                    </div>
-                </div>
 
                 <Link :href="route('register')"
                       class="inline-flex items-center gap-2 px-8 sm:px-12 py-4 sm:py-5 rounded-xl
@@ -167,26 +128,94 @@ const { observe: observePrizes } = useScrollReveal();
                 PRIZE <span class="text-elite-secondary">POOL</span>
             </h2>
 
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-                <div v-for="(prize, i) in [
-                    { place: '2º', amount: '$500', color: 'border-white/20', text: 'text-white/60', bg: '' },
-                    { place: '1º', amount: '$1,000', color: 'border-elite-secondary/50', text: 'text-elite-secondary', bg: 'glow-secondary' },
-                    { place: '3º', amount: '$250', color: 'border-white/20', text: 'text-white/60', bg: '' },
-                ]" :key="i"
+            <div v-if="prizes && prizes.length" class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <div v-for="(prize, i) in prizes" :key="prize.id"
                      class="glass-panel p-6 sm:p-8 relative overflow-hidden transition-all duration-300"
-                     :class="[prize.bg, { 'scale-105 sm:scale-110': i === 1 }]">
+                     :class="[prize.is_featured ? 'glow-secondary' : '', { 'scale-105 sm:scale-110': prize.is_featured }]">
                     <div class="font-elite-condensed font-black text-4xl sm:text-5xl text-white mb-2">
-                        {{ prize.place }}
+                        {{ prize.position }}º
                     </div>
-                    <div class="font-elite-mono font-bold text-2xl sm:text-3xl mb-3" :class="prize.text">
+                    <div class="font-elite-mono font-bold text-2xl sm:text-3xl mb-3"
+                         :class="prize.is_featured ? 'text-elite-secondary' : 'text-white/60'">
                         {{ prize.amount }}
                     </div>
                     <div class="text-xs text-elite-primary/40 uppercase tracking-wider font-elite-condensed">
-                        {{ i === 0 ? 'Subcampeón' : i === 1 ? 'Campeón' : 'Tercer Lugar' }}
+                        {{ prize.label }}
+                    </div>
+                    <div v-if="prize.perks && prize.perks.length" class="mt-3 space-y-1">
+                        <div v-for="(perk, pi) in prize.perks" :key="pi"
+                             class="text-[10px] text-elite-primary/30 uppercase tracking-wider">
+                            • {{ perk }}
+                        </div>
                     </div>
                 </div>
             </div>
+            <p v-else class="text-sm text-elite-primary/40">Próximamente</p>
         </section>
+
+        <!-- PODIUM (visible when tournament is completed) -->
+        <section ref="observePodium" v-if="tournament && tournament.status === 'completed'" class="relative z-10 px-4 py-16 sm:py-24 max-w-5xl mx-auto text-center">
+            <div class="inline-block glass-panel px-4 py-1.5 mb-4 text-xs font-elite-condensed uppercase tracking-[0.15em] text-elite-secondary">
+                Torneo Finalizado
+            </div>
+            <h2 class="font-elite-condensed font-black text-3xl sm:text-5xl text-white mb-12 sm:mb-16">
+                FINAL <span class="text-elite-secondary">STANDINGS</span>
+            </h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+                <div v-for="(player, i) in standings.slice(0, 3)" :key="player.player_id"
+                     class="glass-panel p-6 sm:p-8 relative overflow-hidden transition-all duration-300"
+                     :class="[i === 0 ? 'glow-secondary scale-105 sm:scale-110' : '', { 'border-elite-secondary/30': i === 0 }]">
+                    <div class="text-4xl sm:text-5xl mb-2">
+                        {{ i === 0 ? '🏆' : i === 1 ? '🥈' : '🥉' }}
+                    </div>
+                    <div class="font-elite-condensed font-black text-2xl sm:text-3xl text-white mb-1">
+                        {{ player.player_name }}
+                    </div>
+                    <div class="font-elite-mono font-bold text-3xl sm:text-4xl mb-4"
+                         :class="i === 0 ? 'text-elite-secondary' : 'text-white/60'">
+                        {{ player.pts }} <span class="text-xs text-elite-primary/40">pts</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-xs text-elite-primary/50">
+                        <div><span class="text-white/80">{{ player.pg }}</span> G</div>
+                        <div><span class="text-white/80">{{ player.pe }}</span> E</div>
+                        <div><span class="text-white/80">{{ player.pp }}</span> P</div>
+                        <div><span class="text-white/80">{{ player.gf }}</span> GF</div>
+                        <div><span class="text-white/80">{{ player.gc }}</span> GC</div>
+                        <div><span class="text-white/80">{{ player.dg }}</span> DG</div>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="standings.length > 3" class="mt-10 max-w-2xl mx-auto">
+                <div class="glass-panel overflow-hidden">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="border-b border-elite-outline/20 text-xs text-elite-primary/40 uppercase tracking-wider">
+                                <th class="py-3 px-4 text-left">#</th>
+                                <th class="py-3 px-4 text-left">Jugador</th>
+                                <th class="py-3 px-4 text-center">Pts</th>
+                                <th class="py-3 px-4 text-center">PJ</th>
+                                <th class="py-3 px-4 text-center">DG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="(player, i) in standings" :key="player.player_id"
+                                class="border-b border-elite-outline/10 text-elite-primary/70"
+                                :class="{ 'bg-elite-secondary/5': i < 3 }">
+                                <td class="py-2.5 px-4 text-left font-elite-mono">{{ i + 1 }}</td>
+                                <td class="py-2.5 px-4 text-left font-medium text-white/90">{{ player.player_name }}</td>
+                                <td class="py-2.5 px-4 text-center font-elite-mono">{{ player.pts }}</td>
+                                <td class="py-2.5 px-4 text-center font-elite-mono">{{ player.pj }}</td>
+                                <td class="py-2.5 px-4 text-center font-elite-mono">{{ player.dg }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <ChatBot />
 
         <!-- FOOTER -->
         <footer class="relative z-10 border-t border-elite-outline/20 px-4 py-8 text-center text-xs text-elite-primary/30">
