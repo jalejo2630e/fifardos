@@ -7,8 +7,6 @@ const messages = ref([
 ]);
 const input = ref('');
 const loading = ref(false);
-const history = ref([]);
-
 async function send() {
     const msg = input.value.trim();
     if (!msg || loading.value) return;
@@ -19,11 +17,10 @@ async function send() {
         const res = await fetch('/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '' },
-            body: JSON.stringify({ message: msg, history: history.value }),
+            body: JSON.stringify({ message: msg }),
         });
         const data = await res.json();
         messages.value.push({ role: 'bot', text: data.reply || 'Sin respuesta.' });
-        if (data.history) history.value = data.history;
     } catch {
         messages.value.push({ role: 'bot', text: 'Error de conexión. Intenta de nuevo.' });
     } finally {
