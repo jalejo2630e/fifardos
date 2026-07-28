@@ -8,7 +8,17 @@ const showingNav = ref(false);
 </script>
 
 <template>
-    <div class="min-h-screen bg-elite-bg">
+    <div class="min-h-screen bg-elite-bg relative overflow-hidden">
+        <!-- Dynamic Background -->
+        <div class="fixed inset-0 pointer-events-none z-0">
+            <div class="absolute inset-0 bg-gradient-to-br from-elite-bg via-elite-bg to-purple-950/10 animate-gradient-shift" />
+            <div class="absolute top-0 -left-1/4 w-1/2 h-1/2 bg-elite-secondary/5 rounded-full blur-[120px] animate-float-slow" />
+            <div class="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-purple-600/5 rounded-full blur-[120px] animate-float-slow-reverse" />
+            <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/[0.02] to-transparent" />
+        </div>
+
+        <!-- Content -->
+        <div class="relative z-10">
         <!-- Header -->
         <header class="sticky top-0 z-40 border-b border-white/5 bg-elite-bg/80 backdrop-blur-xl">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -173,5 +183,6 @@ const showingNav = ref(false);
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
         </Link>
+        </div>
     </div>
 </template>

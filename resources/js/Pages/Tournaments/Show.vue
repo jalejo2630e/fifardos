@@ -11,6 +11,8 @@ const props = defineProps({
     standings: Array,
     allPlayed: Boolean,
     rounds: Array,
+    groupAllPlayed: Boolean,
+    knockoutMatches: Array,
 });
 
 const activeTab = ref('matches');
@@ -53,6 +55,27 @@ watch(() => props.allPlayed, (val) => {
 });
 
 const copiedStandings = ref(false);
+const knockoutTop = ref(4);
+
+function generateKnockout() {
+    router.post(route('tournaments.generate-knockout', props.tournament.id), { top: knockoutTop.value });
+}
+
+function getRoundName(m) {
+    const pos = m.bracket_position || '';
+    if (pos.startsWith('qf')) return 'Cuartos de final';
+    if (pos.startsWith('sf')) return 'Semifinales';
+    if (pos === 'final') return 'Final';
+    return 'Eliminatorias';
+}
+
+function getPosition(m) {
+    return m.bracket_position || '';
+}
+
+function hasRound(prefix) {
+    return props.knockoutMatches?.some(m => (m.bracket_position || '').startsWith(prefix));
+}
 function copyStandings() {
     const header = 'Pos\tJugador\tPTS\tPJ\tPG\tPE\tPP\tGF\tGC\tDG';
     const rows = props.standings.map((s, i) =>
@@ -163,6 +186,15 @@ function copyStandings() {
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                         Clasificación
+                    </button>
+                    <button @click="activeTab = 'knockout'"
+                            class="flex-1 min-h-touch flex items-center justify-center gap-2 rounded-xl font-condensed text-xs sm:text-sm uppercase tracking-[0.08em] transition-all duration-200"
+                            :class="activeTab === 'knockout' ? 'text-white' : 'text-white/30 hover:text-white/60'"
+                            :style="activeTab === 'knockout' ? { background: color + '18', color: color } : {}">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                        Eliminatorias
                     </button>
                 </div>
 
@@ -339,8 +371,163 @@ function copyStandings() {
                         <span>GC = Goles Contra</span>
                         <span>DG = Diferencia</span>
                     </div>
+                <!-- ====== KNOCKOUT BRACKET ====== -->
+                <div v-if="activeTab === 'knockout'" class="animate-fade-up space-y-6">
+                    <!-- Generate knockout button -->
+                    <div v-if="groupAllPlayed && !knockoutMatches.length"
+                         class="ucl-card p-8 text-center">
+                        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-elite-secondary/10 flex items-center justify-center">
+                            <svg class="w-8 h-8 text-elite-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-white mb-2">¡Fase de grupos completa!</h3>
+                        <p class="text-sm text-white/40 mb-6 max-w-md mx-auto">Generá las eliminatorias finales con los mejores jugadores de la tabla.</p>
+                        <form @submit.prevent="generateKnockout">
+                            <div class="flex items-center justify-center gap-3 mb-4">
+                                <label class="text-sm text-white/60">Pasan los mejores</label>
+                                <select v-model="knockoutTop"
+                                        class="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-medium focus:outline-none focus:border-elite-secondary/50">
+                                    <option value="2">2</option>
+                                    <option value="4" selected>4</option>
+                                    <option value="8">8</option>
+                                </select>
+                            </div>
+                            <button type="submit"
+                                    class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold text-white
+                                           bg-gradient-to-r from-elite-secondary to-purple-600 hover:brightness-110 transition-all duration-200">
+                                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Generar eliminatorias
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Waiting for group stage -->
+                    <div v-else-if="!groupAllPlayed && !knockoutMatches.length"
+                         class="ucl-card p-8 text-center">
+                        <p class="text-white/30 text-sm">Completá todos los partidos de la fase de grupos para desbloquear las eliminatorias.</p>
+                    </div>
+
+                    <!-- Bracket -->
+                    <div v-else-if="knockoutMatches.length" class="space-y-4">
+                        <h3 class="text-sm font-semibold text-white/80">Fase eliminatoria</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div v-for="roundName in ['Cuartos de final', 'Semifinales', 'Final']" :key="roundName"
+                                 class="space-y-2">
+                                <h4 class="text-xs font-semibold text-white/40 uppercase tracking-wider text-center">{{ roundName }}</h4>
+                                <div v-for="m in knockoutMatches.filter(mm => getRoundName(mm) === roundName)" :key="m.id"
+                                     class="ucl-match !p-3"
+                                     :class="{ 'played': m.status === 'finished' }"
+                                     :style="m.status === 'finished' ? { borderColor: `${color}33`, background: `linear-gradient(135deg, ${color}08, rgba(14,22,48,0.95))` } : {}">
+                                    <div class="stars-overlay" />
+                                    <div class="relative space-y-2">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <div class="flex-1 text-right text-xs truncate"
+                                                 :class="m.status === 'finished' && m.score1 > m.score2 ? 'text-green-400 font-semibold' : 'text-white/60'">
+                                                {{ m.player1?.name || '—' }}
+                                            </div>
+                                            <div class="flex items-center gap-1 shrink-0">
+                                                <template v-if="m.status !== 'finished'">
+                                                    <input type="number" min="0" class="w-10 h-8 text-center rounded-md bg-white/5 border border-white/10 text-white text-sm" v-model.number="m.score1" />
+                                                    <span class="text-white/20 text-xs">:</span>
+                                                    <input type="number" min="0" class="w-10 h-8 text-center rounded-md bg-white/5 border border-white/10 text-white text-sm" v-model.number="m.score2" />
+                                                </template>
+                                                <template v-else>
+                                                    <span class="w-8 text-center font-bold text-base" :class="m.score1 > m.score2 ? 'text-ucl-gold' : 'text-white/30'">{{ m.score1 }}</span>
+                                                    <span class="text-white/20 text-xs">:</span>
+                                                    <span class="w-8 text-center font-bold text-base" :class="m.score2 > m.score1 ? 'text-ucl-gold' : 'text-white/30'">{{ m.score2 }}</span>
+                                                </template>
+                                            </div>
+                                            <div class="flex-1 text-left text-xs truncate"
+                                                 :class="m.status === 'finished' && m.score2 > m.score1 ? 'text-green-400 font-semibold' : 'text-white/60'">
+                                                {{ m.player2?.name || '—' }}
+                                            </div>
+                                        </div>
+                                        <div v-if="m.status === 'finished'" class="flex justify-center">
+                                            <button @click="editMatch(m)" class="text-[10px] text-white/30 hover:text-white transition-colors">EDITAR</button>
+                                        </div>
+                                        <div v-else-if="m.score1 >= 0 && m.score2 >= 0" class="flex justify-center">
+                                            <button @click="saveScore(m)"
+                                                    class="text-xs px-3 py-1 rounded-md font-semibold text-black transition-all"
+                                                    :style="{ background: `linear-gradient(135deg, ${color}, ${color}cc)` }">
+                                                GUARDAR
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bracket Flowchart -->
+                    <div v-if="knockoutMatches.length"
+                         class="ucl-card overflow-hidden">
+                        <div class="px-5 py-3 border-b border-white/5">
+                            <h3 class="text-sm font-semibold text-white/80">Recorrido al título</h3>
+                        </div>
+                        <div class="p-5 overflow-x-auto">
+                            <div class="flex items-start justify-center gap-2 min-w-[500px]">
+                                <!-- QF column -->
+                                <div v-if="hasRound('qf')" class="flex flex-col gap-4 flex-1">
+                                    <div v-for="m in knockoutMatches.filter(mm => getPosition(mm).startsWith('qf'))" :key="m.id"
+                                         class="rounded-lg border text-xs p-2 text-center transition-all"
+                                         :class="m.status === 'finished'
+                                             ? (m.score1 !== m.score2 ? 'border-green-500/30 bg-green-500/5' : 'border-white/10 bg-white/[0.02]')
+                                             : 'border-white/10 bg-white/[0.02] opacity-60'">
+                                        <div class="font-medium truncate" :class="m.status === 'finished' && m.score1 > m.score2 ? 'text-green-400' : 'text-white/60'">{{ m.player1?.name || '?' }}</div>
+                                        <div class="text-white/20 text-[10px]">VS</div>
+                                        <div class="font-medium truncate" :class="m.status === 'finished' && m.score2 > m.score1 ? 'text-green-400' : 'text-white/60'">{{ m.player2?.name || '?' }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Arrow QF→SF -->
+                                <div v-if="hasRound('qf')" class="flex flex-col items-center justify-center gap-4 pt-8">
+                                    <svg class="w-6 h-6 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+
+                                <!-- SF column -->
+                                <div v-if="hasRound('sf')" class="flex flex-col gap-8 flex-1">
+                                    <div v-for="m in knockoutMatches.filter(mm => getPosition(mm).startsWith('sf'))" :key="m.id"
+                                         class="rounded-lg border text-xs p-2 text-center transition-all"
+                                         :class="m.status === 'finished'
+                                             ? (m.score1 !== m.score2 ? 'border-purple-500/30 bg-purple-500/5' : 'border-white/10 bg-white/[0.02]')
+                                             : 'border-white/10 bg-white/[0.02] opacity-60'">
+                                        <div class="font-medium truncate" :class="m.status === 'finished' && m.score1 > m.score2 ? 'text-purple-400' : 'text-white/60'">{{ m.player1?.name || '?' }}</div>
+                                        <div class="text-white/20 text-[10px]">VS</div>
+                                        <div class="font-medium truncate" :class="m.status === 'finished' && m.score2 > m.score1 ? 'text-purple-400' : 'text-white/60'">{{ m.player2?.name || '?' }}</div>
+                                    </div>
+                                </div>
+
+                                <!-- Arrow SF→Final -->
+                                <div v-if="hasRound('sf')" class="flex flex-col items-center justify-center gap-4 pt-16">
+                                    <svg class="w-6 h-6 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </div>
+
+                                <!-- Final column -->
+                                <div class="flex flex-col justify-center flex-1">
+                                    <div v-for="m in knockoutMatches.filter(mm => getPosition(mm) === 'final')" :key="m.id"
+                                         class="rounded-lg border text-xs p-3 text-center transition-all"
+                                         :class="m.status === 'finished'
+                                             ? 'border-ucl-gold/30 bg-amber-500/5'
+                                             : 'border-white/10 bg-white/[0.02] opacity-60'">
+                                        <div v-if="m.status === 'finished'" class="text-lg mb-1">🏆</div>
+                                        <div class="font-semibold truncate" :class="m.status === 'finished' && m.score1 > m.score2 ? 'text-ucl-gold' : 'text-white/60'">{{ m.player1?.name || '?' }}</div>
+                                        <div class="text-white/20 text-[10px]">VS</div>
+                                        <div class="font-semibold truncate" :class="m.status === 'finished' && m.score2 > m.score1 ? 'text-ucl-gold' : 'text-white/60'">{{ m.player2?.name || '?' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+    </div>
     </AuthenticatedLayout>
 </template>

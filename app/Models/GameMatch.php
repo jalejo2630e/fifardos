@@ -21,6 +21,8 @@ class GameMatch extends Model
         'status',
         'tv_number',
         'played_at',
+        'phase',
+        'bracket_position',
     ];
 
     protected $casts = [

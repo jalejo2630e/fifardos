@@ -8,6 +8,7 @@ use App\Models\GameMatch;
 use App\Services\StandingsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class TournamentController extends Controller
@@ -94,12 +95,68 @@ class TournamentController extends Controller
         $standings = app(StandingsService::class)->calculate($tournament);
         $allPlayed = $tournament->matches->every(fn($m) => $m->status === 'finished');
 
+        $groupRounds = $tournament->matches->where('phase', 'group')->groupBy('round')->values();
+        $knockoutMatches = $tournament->matches->where('phase', 'knockout')->sortBy('bracket_position')->values();
+        $groupAllPlayed = $tournament->matches->where('phase', 'group')->every(fn($m) => $m->status === 'finished');
+
         return Inertia::render('Tournaments/Show', [
             'tournament' => $tournament,
             'standings' => $standings,
             'allPlayed' => $allPlayed,
-            'rounds' => $tournament->matches->groupBy('round')->values(),
+            'rounds' => $groupRounds,
+            'groupAllPlayed' => $groupAllPlayed,
+            'knockoutMatches' => $knockoutMatches,
         ]);
+    }
+
+    public function generateKnockout(Request $request, Tournament $tournament)
+    {
+        $top = (int) $request->input('top', 8);
+        if (!in_array($top, [2, 4, 8, 16])) {
+            return redirect()->back()->with('error', 'El número de jugadores debe ser 2, 4, 8 o 16.');
+        }
+
+        $standings = app(StandingsService::class)->calculate($tournament);
+        $qualified = array_slice($standings, 0, $top);
+
+        if (count($qualified) < 2) {
+            return redirect()->back()->with('error', 'Se necesitan al menos 2 jugadores para eliminatorias.');
+        }
+
+        $hasExisting = $tournament->matches()->where('phase', 'knockout')->exists();
+        if ($hasExisting) {
+            return redirect()->back()->with('error', 'Ya hay eliminatorias generadas. Editá los resultados directamente.');
+        }
+
+        $positions = $this->seedBracket($qualified);
+        $tvCount = $tournament->consoles_count;
+        $maxRound = $tournament->matches()->where('phase', 'group')->max('round') ?? 0;
+
+        foreach ($positions as $pos => $players) {
+            $round = $maxRound + match (true) {
+                str_starts_with($pos, 'qf') => 1,
+                str_starts_with($pos, 'sf') => 2,
+                $pos === 'final' => 3,
+                default => 1,
+            };
+            GameMatch::create([
+                'tournament_id' => $tournament->id,
+                'round' => $round,
+                'player1_id' => $players[0],
+                'player2_id' => $players[1],
+                'phase' => 'knockout',
+                'bracket_position' => $pos,
+                'status' => 'pending',
+                'tv_number' => 1,
+            ]);
+        }
+
+        Log::info('Eliminatorias generadas', [
+            'tournament_id' => $tournament->id,
+            'top' => $top,
+        ]);
+
+        return redirect()->back();
     }
 
     public function updateScore(Request $request, Tournament $tournament, GameMatch $match)
@@ -154,6 +211,45 @@ class TournamentController extends Controller
         $tournament->delete();
         return redirect()->route('dashboard');
     }
+
+    private function seedBracket(array $qualified): array
+{
+    $total = count($qualified);
+    $positions = [];
+    $ids = array_map(fn($p) => $p['player_id'], $qualified);
+
+    if ($total === 2) {
+        $positions['final'] = [$ids[0], $ids[1]];
+    } elseif ($total === 4) {
+        $positions['sf_1'] = [$ids[0], $ids[3]];
+        $positions['sf_2'] = [$ids[1], $ids[2]];
+        $positions['final'] = [null, null];
+    } elseif ($total === 8) {
+        $positions['qf_1'] = [$ids[0], $ids[7]];
+        $positions['qf_2'] = [$ids[3], $ids[4]];
+        $positions['qf_3'] = [$ids[1], $ids[6]];
+        $positions['qf_4'] = [$ids[2], $ids[5]];
+        $positions['sf_1'] = [null, null];
+        $positions['sf_2'] = [null, null];
+        $positions['final'] = [null, null];
+    } elseif ($total === 16) {
+        $positions['qf_1'] = [$ids[0], $ids[15]];
+        $positions['qf_2'] = [$ids[7], $ids[8]];
+        $positions['qf_3'] = [$ids[3], $ids[12]];
+        $positions['qf_4'] = [$ids[4], $ids[11]];
+        $positions['qf_5'] = [$ids[1], $ids[14]];
+        $positions['qf_6'] = [$ids[6], $ids[9]];
+        $positions['qf_7'] = [$ids[2], $ids[13]];
+        $positions['qf_8'] = [$ids[5], $ids[10]];
+        $positions['sf_1'] = [null, null];
+        $positions['sf_2'] = [null, null];
+        $positions['sf_3'] = [null, null];
+        $positions['sf_4'] = [null, null];
+        $positions['final'] = [null, null];
+    }
+
+    return $positions;
+}
 
     private function generateMatches(Tournament $tournament)
     {
