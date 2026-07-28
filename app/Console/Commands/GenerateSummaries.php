@@ -14,7 +14,7 @@ class GenerateSummaries extends Command
 {
     protected $signature = 'fifardos:generate-summaries {player_id?} {--month=}';
 
-    protected $description = 'Genera resúmenes narrativos de rendimiento de jugadores usando Ollama';
+    protected $description = 'Genera resúmenes narrativos de rendimiento de jugadores usando Gemini';
 
     public function handle(): int
     {
@@ -96,33 +96,21 @@ class GenerateSummaries extends Command
             $prompt = "Estos son datos reales de un torneo ya jugado. No cuestiones ni menciones la fecha. Redacta ÚNICAMENTE un resumen breve y natural en español, en tono informal de narrador deportivo, basado exclusivamente en estos datos: {$player->name} jugó {$played} partidos en {$mesNombre}, con {$wins} victorias, {$draws} empates y {$losses} derrotas, anotando {$goalsFor} goles a favor y recibiendo {$goalsAgainst} en contra. Máximo 3 oraciones. No agregues advertencias, disculpas ni comentarios sobre si el evento ya ocurrió o no — asume que sí ocurrió.";
 
             try {
-                // OpenAI deshabilitado temporalmente por falta de saldo - reactivar cambiando esta sección
-                // $response = Http::withToken(config('services.openai.api_key'))
-                //     ->timeout(30)
-                //     ->post('https://api.openai.com/v1/chat/completions', [
-                //         'model' => 'gpt-4o-mini',
-                //         'messages' => [
-                //             ['role' => 'user', 'content' => $prompt],
-                //         ],
-                //         'max_tokens' => 200,
-                //         'temperature' => 0.7,
-                //     ]);
-
                 $response = Http::timeout(30)
-                    ->post('http://localhost:11434/api/generate', [
-                        'model' => 'llama3.2',
-                        'prompt' => $prompt,
-                        'stream' => false,
+                    ->withHeader('x-goog-api-key', config('services.gemini.api_key'))
+                    ->post('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', [
+                        'contents' => [['parts' => [['text' => $prompt]]]],
+                        'generationConfig' => ['maxOutputTokens' => 200, 'temperature' => 0.7],
                     ]);
 
                 if ($response->failed()) {
-                    throw new \Exception("Ollama generate error: {$response->status()} - {$response->body()}");
+                    throw new \Exception("Gemini generate error: {$response->status()} - {$response->body()}");
                 }
 
-                $summaryText = $response->json('response');
+                $summaryText = $response->json('candidates.0.content.parts.0.text');
 
                 if (empty($summaryText)) {
-                    throw new \Exception('OpenAI devolvió respuesta vacía');
+                    throw new \Exception('Gemini devolvió respuesta vacía');
                 }
 
                 DB::table('match_summaries')->updateOrInsert(
@@ -181,7 +169,7 @@ class GenerateSummaries extends Command
 
             } catch (\Throwable $e) {
                 $this->error("    ✗ Error: {$e->getMessage()}");
-                Log::warning("GenerateSummaries (Ollama): {$player->name} (#{$player->id}): {$e->getMessage()}");
+                Log::warning("GenerateSummaries (Gemini): {$player->name} (#{$player->id}): {$e->getMessage()}");
                 $withGenerationError++;
             }
         }
@@ -191,7 +179,7 @@ class GenerateSummaries extends Command
         $this->line("  Jugadores procesados:    {$processed}");
         $this->line("  Con resumen generado:    {$withSummary}");
         $this->line("  Con embedding:           {$withEmbedding}");
-        $this->line("  Sin embedding (Ollama):  {$noEmbedding}");
+        $this->line("  Sin embedding (Gemini):  {$noEmbedding}");
         $this->line("  Sin partidos:            {$noMatches}");
         $this->line("  Con error (generación):  {$withGenerationError}");
         $this->line("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
