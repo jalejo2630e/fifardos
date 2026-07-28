@@ -1,0 +1,9 @@
+{
+  "appId": "com.fifardos.app",
+  "appName": "FIFARDOS",
+  "webDir": "capacitor/dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

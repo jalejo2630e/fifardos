@@ -7,7 +7,11 @@
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+        <meta name="application-name" content="FIFARDOS">
+        <meta name="apple-mobile-web-app-title" content="FIFARDOS">
         <link rel="manifest" href="/manifest.json">
+        <link rel="apple-touch-icon" href="/icon-192.png">
+        <link rel="apple-touch-startup-image" href="/icon-512.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">

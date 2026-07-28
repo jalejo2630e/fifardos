@@ -3,7 +3,9 @@ const ASSETS = [
     '/',
     '/manifest.json',
     '/build/assets/app-DC0gO5lx.css',
-    '/build/assets/app-CG6Gvki9.js',
+    '/build/assets/app-BQU2eIFw.js',
+    '/build/assets/ChatBot-Csy2ookk.js',
+    '/build/assets/ChatBot-BvWIeDMA.css',
 ];
 
 self.addEventListener('install', (e) => {

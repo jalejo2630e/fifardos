@@ -25,3 +25,6 @@ Thumbs.db
 /database/database.sqlite
 
 /ngrok/
+/capacitor/dist/
+/android/.gradle/
+/android/app/build/
