@@ -56,6 +56,12 @@ Route::middleware('auth')->group(function () {
         if (!auth()->user()->is_admin) abort(403);
         return app(App\Http\Controllers\ApiDocsController::class)->index();
     })->name('dashboard.api-docs');
+
+    Route::prefix('api-tokens')->group(function () {
+        Route::get('/', [App\Http\Controllers\ApiTokenController::class, 'index'])->name('api-tokens.index');
+        Route::post('/', [App\Http\Controllers\ApiTokenController::class, 'store'])->name('api-tokens.store');
+        Route::delete('/{tokenId}', [App\Http\Controllers\ApiTokenController::class, 'destroy'])->name('api-tokens.destroy');
+    });
 });
 
 require __DIR__ . '/auth.php';
