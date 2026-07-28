@@ -18,10 +18,12 @@ class GameMatch extends Model
         'score2',
         'status',
         'tv_number',
+        'played_at',
     ];
 
     protected $casts = [
         'status' => 'string',
+        'played_at' => 'datetime',
     ];
 
     public function tournament(): BelongsTo

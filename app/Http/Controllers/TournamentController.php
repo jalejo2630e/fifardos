@@ -105,6 +105,7 @@ class TournamentController extends Controller
             'score1' => $validated['score1'],
             'score2' => $validated['score2'],
             'status' => 'finished',
+            'played_at' => now(),
         ]);
 
         return redirect()->back();

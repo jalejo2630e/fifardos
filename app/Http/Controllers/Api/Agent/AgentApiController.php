@@ -183,6 +183,7 @@ class AgentApiController extends Controller
                 ] : null,
                 'score1' => $m->score1,
                 'score2' => $m->score2,
+                'played_at' => $m->played_at,
                 'winner_id' => $m->status === 'finished'
                     ? ($m->score1 > $m->score2 ? $m->player1_id : ($m->score2 > $m->score1 ? $m->player2_id : null))
                     : null,
@@ -402,6 +403,7 @@ class AgentApiController extends Controller
                             'player2' => ['id' => 'int', 'name' => 'string'],
                             'score1' => 'int|null',
                             'score2' => 'int|null',
+                            'played_at' => 'string (datetime) | null',
                             'winner_id' => 'int|null',
                             'is_draw' => 'boolean',
                         ]],

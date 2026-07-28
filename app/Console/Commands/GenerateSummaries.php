@@ -54,12 +54,12 @@ class GenerateSummaries extends Command
 
             $matchesAsP1 = GameMatch::where('player1_id', $player->id)
                 ->where('status', 'finished')
-                ->whereBetween('created_at', [$periodStart, $periodEnd])
+                ->whereBetween('played_at', [$periodStart, $periodEnd])
                 ->get();
 
             $matchesAsP2 = GameMatch::where('player2_id', $player->id)
                 ->where('status', 'finished')
-                ->whereBetween('created_at', [$periodStart, $periodEnd])
+                ->whereBetween('played_at', [$periodStart, $periodEnd])
                 ->get();
 
             if ($matchesAsP1->isEmpty() && $matchesAsP2->isEmpty()) {
