@@ -1,6 +1,45 @@
 <script setup>
 import { ref, computed } from 'vue';
 import { router, useForm } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n({
+    useScope: 'local',
+    messages: {
+        es: {
+            heading: 'Preguntas de seguridad',
+            descConfigured: 'Tienes preguntas configuradas. Para cambiarlas, ingresa tu contraseña actual.',
+            descNotConfigured: 'Configura preguntas para recuperar tu cuenta si olvidas la contraseña.',
+            questionShort: 'P{num}:',
+            changeQuestions: 'Cambiar preguntas',
+            currentPassword: 'Contraseña actual',
+            currentPasswordPlaceholder: 'Ingresa tu contraseña para confirmar',
+            questionLabel: 'Pregunta {num}',
+            selectPlaceholder: 'Selecciona una pregunta...',
+            answerLabel: 'Respuesta {num}',
+            answerPlaceholder: 'Tu respuesta',
+            updateQuestions: 'Actualizar preguntas',
+            saveQuestions: 'Guardar preguntas',
+            cancel: 'Cancelar',
+        },
+        en: {
+            heading: 'Security questions',
+            descConfigured: 'You have questions configured. To change them, enter your current password.',
+            descNotConfigured: 'Set up questions to recover your account if you forget your password.',
+            questionShort: 'Q{num}:',
+            changeQuestions: 'Change questions',
+            currentPassword: 'Current password',
+            currentPasswordPlaceholder: 'Enter your password to confirm',
+            questionLabel: 'Question {num}',
+            selectPlaceholder: 'Select a question...',
+            answerLabel: 'Answer {num}',
+            answerPlaceholder: 'Your answer',
+            updateQuestions: 'Update questions',
+            saveQuestions: 'Save questions',
+            cancel: 'Cancel',
+        },
+    },
+});
 
 const props = defineProps({
     catalog: { type: Array, default: () => [] },
@@ -60,41 +99,41 @@ function toggleForm() {
 
 <template>
     <div>
-        <h3 class="text-sm font-semibold text-white mb-1">Preguntas de seguridad</h3>
+        <h3 class="text-sm font-semibold text-white mb-1">{{ t('heading') }}</h3>
         <p class="text-xs text-white/30 mb-3">
-            {{ has_setup ? 'Tienes preguntas configuradas. Para cambiarlas, ingresa tu contraseña actual.' : 'Configura preguntas para recuperar tu cuenta si olvidas la contraseña.' }}
+            {{ has_setup ? t('descConfigured') : t('descNotConfigured') }}
         </p>
 
         <div v-if="has_setup && !showForm" class="space-y-2 mb-3">
             <div v-for="(q, i) in existing_questions" :key="i" class="text-xs text-white/50">
-                <span class="text-white/30">P{{ i + 1 }}:</span> {{ q }}
+                <span class="text-white/30">{{ t('questionShort', { num: i + 1 }) }}</span> {{ q }}
             </div>
             <button @click="toggleForm" class="text-xs text-elite-secondary hover:text-orange-300 transition-colors font-medium">
-                Cambiar preguntas
+                {{ t('changeQuestions') }}
             </button>
         </div>
 
         <form v-if="showForm || !has_setup" @submit.prevent="submit" class="space-y-4">
             <div>
-                <label class="block text-xs font-medium text-white/60 mb-1">Contraseña actual <span class="text-red-400">*</span></label>
+                <label class="block text-xs font-medium text-white/60 mb-1">{{ t('currentPassword') }} <span class="text-red-400">*</span></label>
                 <input type="password" v-model="form.current_password"
-                       class="ucl-input text-sm py-2" placeholder="Ingresa tu contraseña para confirmar" required />
+                       class="ucl-input text-sm py-2" :placeholder="t('currentPasswordPlaceholder')" required />
                 <p v-if="form.errors.current_password" class="text-red-400 text-xs mt-1">{{ form.errors.current_password }}</p>
             </div>
 
             <div v-for="n in 3" :key="n" class="p-3 rounded-xl bg-white/[0.03] border border-white/5 space-y-2">
-                <label class="text-xs font-medium text-white/60">Pregunta {{ n }}</label>
+                <label class="text-xs font-medium text-white/60">{{ t('questionLabel', { num: n }) }}</label>
                 <select v-model.number="selected[n - 1]" @change="selectQuestion(n - 1, selected[n - 1])"
                         class="ucl-input text-sm py-2">
-                    <option :value="-1" disabled>Selecciona una pregunta...</option>
+                    <option :value="-1" disabled>{{ t('selectPlaceholder') }}</option>
                     <option v-for="item in availableQuestions(n - 1)" :key="item.idx" :value="item.idx">
                         {{ item.text }}
                     </option>
                 </select>
 
-                <label class="text-xs font-medium text-white/60">Respuesta {{ n }}</label>
+                <label class="text-xs font-medium text-white/60">{{ t('answerLabel', { num: n }) }}</label>
                 <input type="text" v-model="form.questions[n - 1].answer"
-                       class="ucl-input text-sm py-2" placeholder="Tu respuesta" minlength="2" maxlength="100" required />
+                       class="ucl-input text-sm py-2" :placeholder="t('answerPlaceholder')" minlength="2" maxlength="100" required />
             </div>
 
             <p v-if="form.errors.questions" class="text-red-400 text-xs">{{ form.errors.questions }}</p>
@@ -102,11 +141,11 @@ function toggleForm() {
             <div class="flex gap-2">
                 <button type="submit" :disabled="form.processing || !canSave"
                         class="ucl-btn-primary text-sm px-5">
-                    {{ has_setup ? 'Actualizar preguntas' : 'Guardar preguntas' }}
+                    {{ has_setup ? t('updateQuestions') : t('saveQuestions') }}
                 </button>
                 <button v-if="has_setup" type="button" @click="toggleForm"
                         class="ucl-btn-ghost text-sm px-5">
-                    Cancelar
+                    {{ t('cancel') }}
                 </button>
             </div>
         </form>

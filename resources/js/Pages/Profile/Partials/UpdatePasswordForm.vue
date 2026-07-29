@@ -5,6 +5,31 @@ import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n({
+    useScope: 'local',
+    messages: {
+        es: {
+            heading: 'Actualizar Contraseña',
+            subheading: 'Asegúrate de que tu cuenta use una contraseña larga y aleatoria para mantenerte seguro.',
+            currentPassword: 'Contraseña Actual',
+            newPassword: 'Nueva Contraseña',
+            confirmPassword: 'Confirmar Contraseña',
+            save: 'Guardar',
+            saved: 'Guardado.',
+        },
+        en: {
+            heading: 'Update Password',
+            subheading: 'Ensure your account is using a long, random password to stay secure.',
+            currentPassword: 'Current Password',
+            newPassword: 'New Password',
+            confirmPassword: 'Confirm Password',
+            save: 'Save',
+            saved: 'Saved.',
+        },
+    },
+});
 
 const passwordInput = ref(null);
 const currentPasswordInput = ref(null);
@@ -37,18 +62,17 @@ const updatePassword = () => {
     <section>
         <header>
             <h2 class="text-lg font-medium text-gray-900">
-                Update Password
+                {{ t('heading') }}
             </h2>
 
             <p class="mt-1 text-sm text-gray-600">
-                Ensure your account is using a long, random password to stay
-                secure.
+                {{ t('subheading') }}
             </p>
         </header>
 
         <form @submit.prevent="updatePassword" class="mt-6 space-y-6">
             <div>
-                <InputLabel for="current_password" value="Current Password" />
+                <InputLabel for="current_password" :value="t('currentPassword')" />
 
                 <TextInput
                     id="current_password"
@@ -66,7 +90,7 @@ const updatePassword = () => {
             </div>
 
             <div>
-                <InputLabel for="password" value="New Password" />
+                <InputLabel for="password" :value="t('newPassword')" />
 
                 <TextInput
                     id="password"
@@ -83,7 +107,7 @@ const updatePassword = () => {
             <div>
                 <InputLabel
                     for="password_confirmation"
-                    value="Confirm Password"
+                    :value="t('confirmPassword')"
                 />
 
                 <TextInput
@@ -101,7 +125,7 @@ const updatePassword = () => {
             </div>
 
             <div class="flex items-center gap-4">
-                <PrimaryButton :disabled="form.processing">Save</PrimaryButton>
+                <PrimaryButton :disabled="form.processing">{{ t('save') }}</PrimaryButton>
 
                 <Transition
                     enter-active-class="transition ease-in-out"
@@ -113,7 +137,7 @@ const updatePassword = () => {
                         v-if="form.recentlySuccessful"
                         class="text-sm text-gray-600"
                     >
-                        Saved.
+                        {{ t('saved') }}
                     </p>
                 </Transition>
             </div>

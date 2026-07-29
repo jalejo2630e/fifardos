@@ -4,6 +4,67 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import TournamentCard from '@/Components/TournamentCard.vue';
 import TournamentCardSkeleton from '@/Components/TournamentCardSkeleton.vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n({
+    useScope: 'local',
+    messages: {
+        es: {
+            headTitle: 'Mis Torneos',
+            titlePrefix: 'Mis',
+            titleHighlight: 'Torneos',
+            subtitle: 'Gestiona tus torneos FIFA Champions',
+            newTournament: 'Nuevo Torneo',
+            tabTodos: 'Todos',
+            tabInProgress: 'En curso',
+            tabCompleted: 'Finalizados',
+            tabSetup: 'Config',
+            createTournament: '+ Crear Torneo',
+            viewAll: 'Ver todos',
+            emptyTodosTitle: 'El campo está vacío',
+            emptyTodosDesc: 'Crea tu primer torneo y que empiece el partido.',
+            emptyInProgressTitle: 'Sin actividad',
+            emptyInProgressDesc: 'No hay torneos en curso. Activa uno desde la configuración o crea uno nuevo.',
+            emptyCompletedTitle: 'Nadie ha ganado aún',
+            emptyCompletedDesc: 'Cuando un torneo finalice, el campeón aparecerá aquí con todos los honores.',
+            emptySetupTitle: 'Nada en preparación',
+            emptySetupDesc: 'Los torneos en fase de configuración vivirán aquí. Prepara las consolas y los jugadores.',
+            step1Title: 'Crea un torneo',
+            step1Desc: 'Elegí un nombre, las consolas disponibles y agregá los jugadores. El fixture se genera automáticamente.',
+            step2Title: 'Ingresá resultados',
+            step2Desc: 'Partido a partido, cargá los goles de cada encuentro. La tabla se actualiza sola.',
+            step3Title: 'Coroná al campeón',
+            step3Desc: 'Cuando se juegue el último partido, el campeón aparecerá con todos los honores. ¡Compartí el bracket público!',
+        },
+        en: {
+            headTitle: 'My Tournaments',
+            titlePrefix: 'My',
+            titleHighlight: 'Tournaments',
+            subtitle: 'Manage your FIFA Champions tournaments',
+            newTournament: 'New Tournament',
+            tabTodos: 'All',
+            tabInProgress: 'In progress',
+            tabCompleted: 'Finished',
+            tabSetup: 'Setup',
+            createTournament: '+ Create Tournament',
+            viewAll: 'View all',
+            emptyTodosTitle: 'The pitch is empty',
+            emptyTodosDesc: 'Create your first tournament and let the match begin.',
+            emptyInProgressTitle: 'No activity',
+            emptyInProgressDesc: 'There are no tournaments in progress. Activate one from the setup or create a new one.',
+            emptyCompletedTitle: 'No one has won yet',
+            emptyCompletedDesc: 'When a tournament finishes, the champion will appear here with full honors.',
+            emptySetupTitle: 'Nothing in preparation',
+            emptySetupDesc: 'Tournaments in the setup phase will live here. Get the consoles and players ready.',
+            step1Title: 'Create a tournament',
+            step1Desc: 'Pick a name, the available consoles and add the players. The fixture is generated automatically.',
+            step2Title: 'Enter results',
+            step2Desc: 'Match by match, enter the goals of each game. The table updates on its own.',
+            step3Title: 'Crown the champion',
+            step3Desc: 'When the last match is played, the champion will appear with full honors. Share the public bracket!',
+        },
+    },
+});
 
 const props = defineProps({
     tournaments: Array,
@@ -11,16 +72,16 @@ const props = defineProps({
 
 const activeFilter = ref('todos');
 
-const tabs = [
-    { key: 'todos', label: 'Todos' },
-    { key: 'in_progress', label: 'En curso' },
-    { key: 'completed', label: 'Finalizados' },
-    { key: 'setup', label: 'Config' },
-];
+const tabs = computed(() => [
+    { key: 'todos', label: t('tabTodos') },
+    { key: 'in_progress', label: t('tabInProgress') },
+    { key: 'completed', label: t('tabCompleted') },
+    { key: 'setup', label: t('tabSetup') },
+]);
 
 const filteredTournaments = computed(() => {
     if (activeFilter.value === 'todos') return props.tournaments;
-    return props.tournaments.filter(t => t.status === activeFilter.value);
+    return props.tournaments.filter(row => row.status === activeFilter.value);
 });
 
 const hasTournaments = computed(() => props.tournaments.length > 0);
@@ -39,25 +100,25 @@ onUnmounted(() => {
     stopFinish?.();
 });
 
-const emptyMessages = {
-    todos: { icon: 'ball', title: 'El campo está vacío', desc: 'Crea tu primer torneo y que empiece el partido.' },
-    in_progress: { icon: 'bolt', title: 'Sin actividad', desc: 'No hay torneos en curso. Activa uno desde la configuración o crea uno nuevo.' },
-    completed: { icon: 'cup', title: 'Nadie ha ganado aún', desc: 'Cuando un torneo finalice, el campeón aparecerá aquí con todos los honores.' },
-    setup: { icon: 'gear', title: 'Nada en preparación', desc: 'Los torneos en fase de configuración vivirán aquí. Prepara las consolas y los jugadores.' },
-};
+const emptyMessages = computed(() => ({
+    todos: { icon: 'ball', title: t('emptyTodosTitle'), desc: t('emptyTodosDesc') },
+    in_progress: { icon: 'bolt', title: t('emptyInProgressTitle'), desc: t('emptyInProgressDesc') },
+    completed: { icon: 'cup', title: t('emptyCompletedTitle'), desc: t('emptyCompletedDesc') },
+    setup: { icon: 'gear', title: t('emptySetupTitle'), desc: t('emptySetupDesc') },
+}));
 </script>
 
 <template>
-    <Head title="Mis Torneos" />
+    <Head :title="t('headTitle')" />
 
     <AuthenticatedLayout>
         <template #header>
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <h1 class="ucl-title-lg text-white">
-                        Mis <span class="text-elite-secondary">Torneos</span>
+                        {{ t('titlePrefix') }} <span class="text-elite-secondary">{{ t('titleHighlight') }}</span>
                     </h1>
-                    <p class="ucl-meta mt-1">Gestiona tus torneos FIFA Champions</p>
+                    <p class="ucl-meta mt-1">{{ t('subtitle') }}</p>
                 </div>
                 <div class="flex items-center gap-2">
                     <Link :href="route('tournaments.create')"
@@ -65,7 +126,7 @@ const emptyMessages = {
                         <svg class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                         </svg>
-                        Nuevo Torneo
+                        {{ t('newTournament') }}
                     </Link>
                     <Link :href="route('tournaments.create')"
                           class="sm:hidden ucl-btn-primary min-h-touch min-w-touch px-3">
@@ -95,7 +156,7 @@ const emptyMessages = {
                     >
                         {{ tab.label }}
                         <span v-if="tab.key === 'todos'" class="ml-1.5 text-[10px] opacity-50">({{ tournaments.length }})</span>
-                        <span v-else class="ml-1.5 text-[10px] opacity-50">({{ tournaments.filter(t => t.status === tab.key).length }})</span>
+                        <span v-else class="ml-1.5 text-[10px] opacity-50">({{ tournaments.filter(row => row.status === tab.key).length }})</span>
                     </button>
                 </div>
 
@@ -127,26 +188,26 @@ const emptyMessages = {
                             <svg class="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                             </svg>
-                            + Crear Torneo
+                            {{ t('createTournament') }}
                         </Link>
                         <div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 max-w-2xl mx-auto">
                             <div class="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-left">
                                 <div class="w-8 h-8 rounded-full bg-elite-secondary/15 flex items-center justify-center mb-3
                                             text-elite-secondary font-bold text-sm">1</div>
-                                <h4 class="text-white/70 text-sm font-semibold mb-1">Crea un torneo</h4>
-                                <p class="text-white/30 text-xs leading-relaxed">Elegí un nombre, las consolas disponibles y agregá los jugadores. El fixture se genera automáticamente.</p>
+                                <h4 class="text-white/70 text-sm font-semibold mb-1">{{ t('step1Title') }}</h4>
+                                <p class="text-white/30 text-xs leading-relaxed">{{ t('step1Desc') }}</p>
                             </div>
                             <div class="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-left">
                                 <div class="w-8 h-8 rounded-full bg-elite-secondary/15 flex items-center justify-center mb-3
                                             text-elite-secondary font-bold text-sm">2</div>
-                                <h4 class="text-white/70 text-sm font-semibold mb-1">Ingresá resultados</h4>
-                                <p class="text-white/30 text-xs leading-relaxed">Partido a partido, cargá los goles de cada encuentro. La tabla se actualiza sola.</p>
+                                <h4 class="text-white/70 text-sm font-semibold mb-1">{{ t('step2Title') }}</h4>
+                                <p class="text-white/30 text-xs leading-relaxed">{{ t('step2Desc') }}</p>
                             </div>
                             <div class="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-left">
                                 <div class="w-8 h-8 rounded-full bg-elite-secondary/15 flex items-center justify-center mb-3
                                             text-elite-secondary font-bold text-sm">3</div>
-                                <h4 class="text-white/70 text-sm font-semibold mb-1">Coroná al campeón</h4>
-                                <p class="text-white/30 text-xs leading-relaxed">Cuando se juegue el último partido, el campeón aparecerá con todos los honores. ¡Compartí el bracket público!</p>
+                                <h4 class="text-white/70 text-sm font-semibold mb-1">{{ t('step3Title') }}</h4>
+                                <p class="text-white/30 text-xs leading-relaxed">{{ t('step3Desc') }}</p>
                             </div>
                         </div>
                     </div>
@@ -188,14 +249,14 @@ const emptyMessages = {
                                 @click="activeFilter = 'todos'"
                                 class="ucl-btn-ghost px-6 py-3 text-sm"
                             >
-                                Ver todos
+                                {{ t('viewAll') }}
                             </button>
                             <Link :href="route('tournaments.create')"
                                   class="ucl-btn-primary px-6 py-3 text-sm">
                                 <svg class="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                                 </svg>
-                                + Crear Torneo
+                                {{ t('createTournament') }}
                             </Link>
                         </div>
                     </div>
@@ -203,10 +264,10 @@ const emptyMessages = {
 
                 <!-- Grid de torneos -->
                 <div v-else class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
-                    <div v-for="(t, i) in filteredTournaments" :key="t.id"
+                    <div v-for="(row, i) in filteredTournaments" :key="row.id"
                          class="animate-fade-up"
                          :style="{ animationDelay: (i * 80) + 'ms' }">
-                        <TournamentCard :tournament="t" />
+                        <TournamentCard :tournament="row" />
                     </div>
                 </div>
             </div>

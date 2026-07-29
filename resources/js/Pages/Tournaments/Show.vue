@@ -5,6 +5,217 @@ import { ref, watch, computed, nextTick, reactive } from 'vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import ProgressBar from '@/Components/ProgressBar.vue';
 import { triggerConfetti } from '@/composables/useConfetti';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n({
+    useScope: 'local',
+    messages: {
+        es: {
+            // header
+            headerPlayers: 'JUGADORES',
+            headerTv: 'TV',
+            headerMatches: 'PARTIDOS',
+            headerBack: 'Volver',
+            headerReplacePlayer: 'Reemplazar jugador',
+            headerDeleteConfirm: '¿Eliminar torneo? Se borrarán todos los datos.',
+            // status bar
+            statusFinished: 'FINALIZADO',
+            statusInProgress: 'EN CURSO',
+            statusMatchesPlayed: '{played} de {total} partidos jugados',
+            // champion banner
+            champion: 'Champion',
+            championPts: '{pts} PTS',
+            championRecord: '{pg}G {pe}E {pp}P',
+            championDg: 'DG {dg}',
+            // tabs
+            tabMatches: 'Partidos',
+            tabStandings: 'Clasificación',
+            tabKnockout: 'Eliminatorias',
+            tabStats: 'Estadísticas',
+            // matches
+            round: 'Jornada {n}',
+            roundMatches: '{n} PARTIDOS',
+            matchFinal: '✓ FINAL',
+            matchPending: 'PENDIENTE',
+            matchEditResult: 'EDITAR RESULTADO',
+            matchLoadResult: 'CARGAR RESULTADO',
+            matchDatetimeLabel: 'Fecha y hora del partido',
+            matchPenaltiesToggle: '+ Penales (desempate)',
+            matchAddStats: '+ Agregar estadísticas',
+            matchPossession: 'Posesión',
+            matchShots: 'Tiros',
+            matchShotsTotalA: 'Totales A',
+            matchShotsTotalB: 'Totales B',
+            matchShotsOnTargetA: 'A puerta A',
+            matchShotsOnTargetB: 'A puerta B',
+            matchCards: 'Tarjetas',
+            matchCardsA: 'A',
+            matchCardsB: 'B',
+            matchGoalScorers: 'Goleadores del partido',
+            matchAddScorer: '+ Añadir goleador',
+            matchScorerPlayer: 'Jugador',
+            matchScorerSelect: 'Seleccionar',
+            matchScorerGoals: 'Goles',
+            matchScorerMinutes: 'Minutos',
+            matchSaveResult: 'GUARDAR RESULTADO',
+            matchCancel: 'CANCELAR',
+            // standings
+            standingsTitle: 'Tabla de posiciones',
+            standingsCopied: 'Copiado!',
+            standingsCopy: 'Copiar tabla',
+            standingsColPlayer: 'Jugador',
+            standingsPts: 'PTS',
+            standingsPj: 'PJ',
+            standingsPg: 'PG',
+            standingsPe: 'PE',
+            standingsPp: 'PP',
+            standingsGf: 'GF',
+            standingsGc: 'GC',
+            standingsDg: 'DG',
+            standingsCopyHeaderPos: 'Pos',
+            legendPts: 'PTS = Puntos',
+            legendPj: 'PJ = Jugados',
+            legendPg: 'PG = Ganados',
+            legendPe: 'PE = Empatados',
+            legendPp: 'PP = Perdidos',
+            legendGf: 'GF = Goles Favor',
+            legendGc: 'GC = Goles Contra',
+            legendDg: 'DG = Diferencia',
+            // knockout / bracket
+            bracketNoGroups: 'No hay partidos de grupo para generar eliminatorias.',
+            bracketGroupInProgress: 'Fase de grupos en curso',
+            bracketGroupInProgressText: 'Completá todos los partidos de la fase de grupos para desbloquear las eliminatorias.',
+            bracketTitle: 'Fase eliminatoria',
+            bracketPhasesCount: '{phases} fase · {matches} partidos',
+            bracketPhasesCountPlural: '{phases} fases · {matches} partidos',
+            bracketTie: 'EMP',
+            bracketPending: 'PENDIENTE',
+            bracketEdit: 'EDITAR',
+            bracketSave: 'GUARDAR',
+            bracketWaitingRival: 'Esperando rival...',
+            bracketAdvance: 'avanza',
+            bracketGrandFinal: 'Gran Final',
+            bracketNoPhases: 'No hay eliminatorias generadas aún.',
+            // stats
+            statsPoints: 'Puntos',
+            statsGoalsFor: 'Goles a favor',
+            statsGoalDiff: 'Diferencia de gol',
+            statsNoData: 'Sin datos todavía',
+            statsNoDataText: 'Las gráficas aparecerán cuando cargues resultados de los partidos.',
+            // modal
+            modalTitle: 'Reemplazar jugador',
+            modalPlayerToReplace: 'Jugador a reemplazar',
+            modalSelectPlayer: 'Seleccionar jugador',
+            modalNewPlayer: 'Nuevo jugador',
+            modalNewPlaceholder: 'Nombre del reemplazo',
+            modalCancel: 'Cancelar',
+            modalReplace: 'Reemplazar',
+            modalNote: 'Los partidos pendientes del jugador saliente se asignarán al nuevo. Los historiales (goles, partidos finalizados) se mantienen.',
+        },
+        en: {
+            // header
+            headerPlayers: 'PLAYERS',
+            headerTv: 'TV',
+            headerMatches: 'MATCHES',
+            headerBack: 'Back',
+            headerReplacePlayer: 'Replace player',
+            headerDeleteConfirm: 'Delete tournament? All data will be erased.',
+            // status bar
+            statusFinished: 'FINISHED',
+            statusInProgress: 'IN PROGRESS',
+            statusMatchesPlayed: '{played} of {total} matches played',
+            // champion banner
+            champion: 'Champion',
+            championPts: '{pts} PTS',
+            championRecord: '{pg}W {pe}D {pp}L',
+            championDg: 'GD {dg}',
+            // tabs
+            tabMatches: 'Matches',
+            tabStandings: 'Standings',
+            tabKnockout: 'Knockout',
+            tabStats: 'Statistics',
+            // matches
+            round: 'Matchday {n}',
+            roundMatches: '{n} MATCHES',
+            matchFinal: '✓ FINAL',
+            matchPending: 'PENDING',
+            matchEditResult: 'EDIT RESULT',
+            matchLoadResult: 'ENTER RESULT',
+            matchDatetimeLabel: 'Match date and time',
+            matchPenaltiesToggle: '+ Penalties (tiebreaker)',
+            matchAddStats: '+ Add statistics',
+            matchPossession: 'Possession',
+            matchShots: 'Shots',
+            matchShotsTotalA: 'Total A',
+            matchShotsTotalB: 'Total B',
+            matchShotsOnTargetA: 'On target A',
+            matchShotsOnTargetB: 'On target B',
+            matchCards: 'Cards',
+            matchCardsA: 'A',
+            matchCardsB: 'B',
+            matchGoalScorers: 'Match goal scorers',
+            matchAddScorer: '+ Add scorer',
+            matchScorerPlayer: 'Player',
+            matchScorerSelect: 'Select',
+            matchScorerGoals: 'Goals',
+            matchScorerMinutes: 'Minutes',
+            matchSaveResult: 'SAVE RESULT',
+            matchCancel: 'CANCEL',
+            // standings
+            standingsTitle: 'Standings table',
+            standingsCopied: 'Copied!',
+            standingsCopy: 'Copy table',
+            standingsColPlayer: 'Player',
+            standingsPts: 'PTS',
+            standingsPj: 'MP',
+            standingsPg: 'W',
+            standingsPe: 'D',
+            standingsPp: 'L',
+            standingsGf: 'GF',
+            standingsGc: 'GA',
+            standingsDg: 'GD',
+            standingsCopyHeaderPos: 'Pos',
+            legendPts: 'PTS = Points',
+            legendPj: 'MP = Matches Played',
+            legendPg: 'W = Won',
+            legendPe: 'D = Drawn',
+            legendPp: 'L = Lost',
+            legendGf: 'GF = Goals For',
+            legendGc: 'GA = Goals Against',
+            legendDg: 'GD = Goal Difference',
+            // knockout / bracket
+            bracketNoGroups: 'There are no group matches to generate the knockout stage.',
+            bracketGroupInProgress: 'Group stage in progress',
+            bracketGroupInProgressText: 'Complete all group stage matches to unlock the knockout stage.',
+            bracketTitle: 'Knockout stage',
+            bracketPhasesCount: '{phases} phase · {matches} matches',
+            bracketPhasesCountPlural: '{phases} phases · {matches} matches',
+            bracketTie: 'TIE',
+            bracketPending: 'PENDING',
+            bracketEdit: 'EDIT',
+            bracketSave: 'SAVE',
+            bracketWaitingRival: 'Waiting for opponent...',
+            bracketAdvance: 'advances',
+            bracketGrandFinal: 'Grand Final',
+            bracketNoPhases: 'No knockout stage generated yet.',
+            // stats
+            statsPoints: 'Points',
+            statsGoalsFor: 'Goals for',
+            statsGoalDiff: 'Goal difference',
+            statsNoData: 'No data yet',
+            statsNoDataText: 'Charts will appear once you enter match results.',
+            // modal
+            modalTitle: 'Replace player',
+            modalPlayerToReplace: 'Player to replace',
+            modalSelectPlayer: 'Select player',
+            modalNewPlayer: 'New player',
+            modalNewPlaceholder: 'Replacement name',
+            modalCancel: 'Cancel',
+            modalReplace: 'Replace',
+            modalNote: 'The outgoing player\'s pending matches will be assigned to the new one. Histories (goals, finished matches) are kept.',
+        },
+    },
+});
 
 const props = defineProps({
     tournament: Object,
@@ -165,8 +376,8 @@ const bracketTotal = computed(() => props.phases ? props.phases.reduce((a, p) =>
 const allMatchesTotal = computed(() => totalMatches.value + bracketTotal.value);
 const allMatchesPlayed = computed(() => playedMatches.value + bracketPlayed.value);
 const statusText = computed(() => {
-    if (props.allPlayed) return 'FINALIZADO';
-    return 'EN CURSO';
+    if (props.allPlayed) return t('statusFinished');
+    return t('statusInProgress');
 });
 const statusClass = computed(() => {
     if (props.allPlayed) return 'status-completed';
@@ -207,7 +418,11 @@ watch(() => props.allPlayed, (val) => {
 const copiedStandings = ref(false);
 
 function copyStandings() {
-    const header = 'Pos\tJugador\tPTS\tPJ\tPG\tPE\tPP\tGF\tGC\tDG';
+    const header = [
+        t('standingsCopyHeaderPos'), t('standingsColPlayer'),
+        t('standingsPts'), t('standingsPj'), t('standingsPg'), t('standingsPe'),
+        t('standingsPp'), t('standingsGf'), t('standingsGc'), t('standingsDg'),
+    ].join('\t');
     const rows = props.standings.map((s, i) =>
         `${i + 1}\t${s.player_name}\t${s.pts}\t${s.pj}\t${s.pg}\t${s.pe}\t${s.pp}\t${s.gf}\t${s.gc}\t${s.dg > 0 ? '+' : ''}${s.dg}`
     );
@@ -275,11 +490,11 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <StatusBadge :status="tournament.status" />
                     </div>
                     <div class="flex items-center gap-3 mt-1.5 text-xs sm:text-sm text-white/30 flex-wrap">
-                        <span>{{ tournament.players.length }} JUGADORES</span>
+                        <span>{{ tournament.players.length }} {{ t('headerPlayers') }}</span>
                         <span class="w-1 h-1 rounded-full bg-white/10" />
-                        <span>{{ tournament.consoles_count }} TV</span>
+                        <span>{{ tournament.consoles_count }} {{ t('headerTv') }}</span>
                         <span class="w-1 h-1 rounded-full bg-white/10" />
-                        <span>{{ totalMatches }} PARTIDOS</span>
+                        <span>{{ totalMatches }} {{ t('headerMatches') }}</span>
                         <span class="w-1 h-1 rounded-full bg-white/10" />
                         <span class="inline-flex items-center gap-1 text-elite-secondary/80">
                             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2"/></svg>
@@ -298,9 +513,9 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <svg class="w-4 h-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                         </svg>
-                        Volver
+                        {{ t('headerBack') }}
                     </Link>
-                    <button @click="openReplaceModal" class="ucl-btn-ghost text-xs min-h-touch px-4" title="Reemplazar jugador">
+                    <button @click="openReplaceModal" class="ucl-btn-ghost text-xs min-h-touch px-4" :title="t('headerReplacePlayer')">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-4 4m0 0l-4-4m4 4V3" />
@@ -308,7 +523,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                     </button>
                     <Link :href="route('tournaments.destroy', tournament.id)" method="delete" as="button"
                           class="ucl-btn-danger text-xs min-h-touch px-4"
-                          onclick="return confirm('¿Eliminar torneo? Se borrarán todos los datos.')">
+                          :onclick="`return confirm('${t('headerDeleteConfirm')}')`">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
@@ -327,7 +542,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <div class="flex items-center gap-3">
                             <span class="status-pill" :class="statusClass">{{ statusText }}</span>
                             <span class="text-sm text-white/40 font-condensed tracking-wide">
-                                {{ allMatchesPlayed }} de {{ allMatchesTotal }} partidos jugados
+                                {{ t('statusMatchesPlayed', { played: allMatchesPlayed, total: allMatchesTotal }) }}
                             </span>
                         </div>
                         <div v-if="!allPlayed" class="flex-1 max-w-xs">
@@ -345,18 +560,18 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <div class="text-5xl sm:text-7xl mb-3 sm:mb-4">🏆</div>
                         <h2 class="font-condensed font-bold text-xl sm:text-2xl tracking-[0.08em] uppercase mb-2"
                             :style="{ color: color }">
-                            Champion
+                            {{ t('champion') }}
                         </h2>
                         <div class="ucl-title-lg text-3xl sm:text-5xl lg:text-6xl text-white animate-gold-pulse"
                              :style="{ textShadow: `0 0 20px ${color}44, 0 0 40px ${color}22` }">
                             {{ champion.player_name }}
                         </div>
                         <div class="flex items-center justify-center gap-4 sm:gap-6 mt-4 text-xs sm:text-sm text-white/40 font-medium">
-                            <span class="font-bold" :style="{ color: color }">{{ champion.pts }} PTS</span>
+                            <span class="font-bold" :style="{ color: color }">{{ t('championPts', { pts: champion.pts }) }}</span>
                             <span class="w-1 h-1 rounded-full bg-white/10" />
-                            <span>{{ champion.pg }}G {{ champion.pe }}E {{ champion.pp }}P</span>
+                            <span>{{ t('championRecord', { pg: champion.pg, pe: champion.pe, pp: champion.pp }) }}</span>
                             <span class="w-1 h-1 rounded-full bg-white/10" />
-                            <span>DG {{ champion.dg > 0 ? '+' : '' }}{{ champion.dg }}</span>
+                            <span>{{ t('championDg', { dg: (champion.dg > 0 ? '+' : '') + champion.dg }) }}</span>
                         </div>
                     </div>
                 </div>
@@ -371,7 +586,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                             <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Partidos
+                        {{ t('tabMatches') }}
                     </button>
                     <button @click="activeTab = 'standings'"
                             class="flex-1 min-h-touch flex items-center justify-center gap-2 rounded-xl font-condensed text-xs sm:text-sm uppercase tracking-[0.08em] transition-all duration-200"
@@ -380,7 +595,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        Clasificación
+                        {{ t('tabStandings') }}
                     </button>
                     <button v-if="!isLeague" @click="activeTab = 'knockout'"
                             class="flex-1 min-h-touch flex items-center justify-center gap-2 rounded-xl font-condensed text-xs sm:text-sm uppercase tracking-[0.08em] transition-all duration-200"
@@ -389,7 +604,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                         </svg>
-                        Eliminatorias
+                        {{ t('tabKnockout') }}
                     </button>
                     <button @click="activeTab = 'stats'"
                             class="flex-1 min-h-touch flex items-center justify-center gap-2 rounded-xl font-condensed text-xs sm:text-sm uppercase tracking-[0.08em] transition-all duration-200"
@@ -398,7 +613,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
-                        Estadísticas
+                        {{ t('tabStats') }}
                     </button>
                 </div>
 
@@ -415,10 +630,10 @@ function getMatchGap(phaseIndex, totalPhases) {
                                 {{ rIdx + 1 }}
                             </div>
                             <h3 class="font-condensed font-bold text-base sm:text-lg uppercase tracking-[0.06em] text-white/80">
-                                Jornada {{ rIdx + 1 }}
+                                {{ t('round', { n: rIdx + 1 }) }}
                             </h3>
                             <div class="flex-1 h-px bg-gradient-to-r from-white/5 to-transparent" />
-                            <span class="text-[10px] sm:text-xs font-condensed text-white/20 tracking-wider">{{ round.length }} PARTIDOS</span>
+                            <span class="text-[10px] sm:text-xs font-condensed text-white/20 tracking-wider">{{ t('roundMatches', { n: round.length }) }}</span>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
@@ -437,10 +652,10 @@ function getMatchGap(phaseIndex, totalPhases) {
                                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                             </svg>
-                                            TV {{ match.tv_number }}
+                                            {{ t('headerTv') }} {{ match.tv_number }}
                                         </span>
-                                        <span v-if="match.status === 'finished'" class="text-[10px] font-condensed text-ucl-gold uppercase tracking-wider">✓ FINAL</span>
-                                        <span v-else class="text-[10px] font-condensed text-white/15 uppercase tracking-wider">PENDIENTE</span>
+                                        <span v-if="match.status === 'finished'" class="text-[10px] font-condensed text-ucl-gold uppercase tracking-wider">{{ t('matchFinal') }}</span>
+                                        <span v-else class="text-[10px] font-condensed text-white/15 uppercase tracking-wider">{{ t('matchPending') }}</span>
                                     </div>
 
                                     <!-- Players row -->
@@ -481,7 +696,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                     <div v-if="match.status === 'finished'" class="pt-2 border-t border-white/5">
                                         <button @click="editMatch(match)"
                                                 class="w-full min-h-touch rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-white/10 font-condensed text-xs uppercase tracking-wider transition-all duration-200">
-                                            EDITAR RESULTADO
+                                            {{ t('matchEditResult') }}
                                         </button>
                                     </div>
 
@@ -498,7 +713,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                 <svg class="w-4 h-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                                 </svg>
-                                                CARGAR RESULTADO
+                                                {{ t('matchLoadResult') }}
                                             </button>
                                         </div>
 
@@ -519,7 +734,7 @@ function getMatchGap(phaseIndex, totalPhases) {
 
                                             <!-- Date/time -->
                                             <div>
-                                                <label class="text-[9px] text-white/30 font-condensed tracking-wider block mb-1">Fecha y hora del partido</label>
+                                                <label class="text-[9px] text-white/30 font-condensed tracking-wider block mb-1">{{ t('matchDatetimeLabel') }}</label>
                                                 <input type="datetime-local" v-model="formData.played_at"
                                                        class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-xs font-condensed focus:outline-none focus:border-white/20" />
                                             </div>
@@ -529,7 +744,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                  class="pt-1">
                                                 <details class="group">
                                                     <summary class="text-[10px] text-white/30 hover:text-white/50 font-condensed tracking-wider cursor-pointer select-none">
-                                                        + Penales (desempate)
+                                                        {{ t('matchPenaltiesToggle') }}
                                                     </summary>
                                                     <div class="mt-2 flex items-center justify-center gap-3">
                                                         <div class="flex flex-col items-center">
@@ -550,11 +765,11 @@ function getMatchGap(phaseIndex, totalPhases) {
                                             <!-- Optional stats (collapsible) -->
                                             <details class="group" @toggle="formData.showStats = $event.target.open">
                                                 <summary class="text-[10px] text-white/30 hover:text-white/50 font-condensed tracking-wider cursor-pointer select-none">
-                                                    + Agregar estadísticas
+                                                    {{ t('matchAddStats') }}
                                                 </summary>
                                                 <div class="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
                                                     <div class="col-span-2 flex items-center justify-between border-b border-white/5 pb-1 mb-1">
-                                                        <span class="text-[9px] text-white/20 font-condensed tracking-wider">Posesión</span>
+                                                        <span class="text-[9px] text-white/20 font-condensed tracking-wider">{{ t('matchPossession') }}</span>
                                                     </div>
                                                     <div>
                                                         <label class="text-[9px] text-white/30 block">{{ match.player1?.name?.split(' ')[0] || 'A' }} %</label>
@@ -568,70 +783,70 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                     </div>
 
                                                     <div class="col-span-2 flex items-center justify-between border-b border-white/5 pb-1 mb-1 mt-1">
-                                                        <span class="text-[9px] text-white/20 font-condensed tracking-wider">Tiros</span>
+                                                        <span class="text-[9px] text-white/20 font-condensed tracking-wider">{{ t('matchShots') }}</span>
                                                     </div>
                                                     <div>
-                                                        <label class="text-[9px] text-white/30 block">Totales A</label>
+                                                        <label class="text-[9px] text-white/30 block">{{ t('matchShotsTotalA') }}</label>
                                                         <input type="number" min="0" v-model.number="formData.shots_a"
                                                                class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs" />
                                                     </div>
                                                     <div>
-                                                        <label class="text-[9px] text-white/30 block">Totales B</label>
+                                                        <label class="text-[9px] text-white/30 block">{{ t('matchShotsTotalB') }}</label>
                                                         <input type="number" min="0" v-model.number="formData.shots_b"
                                                                class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs" />
                                                     </div>
                                                     <div>
-                                                        <label class="text-[9px] text-white/30 block">A puerta A</label>
+                                                        <label class="text-[9px] text-white/30 block">{{ t('matchShotsOnTargetA') }}</label>
                                                         <input type="number" min="0" v-model.number="formData.shots_on_target_a"
                                                                class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs" />
                                                     </div>
                                                     <div>
-                                                        <label class="text-[9px] text-white/30 block">A puerta B</label>
+                                                        <label class="text-[9px] text-white/30 block">{{ t('matchShotsOnTargetB') }}</label>
                                                         <input type="number" min="0" v-model.number="formData.shots_on_target_b"
                                                                class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs" />
                                                     </div>
 
                                                     <div class="col-span-2 flex items-center justify-between border-b border-white/5 pb-1 mb-1 mt-1">
-                                                        <span class="text-[9px] text-white/20 font-condensed tracking-wider">Tarjetas</span>
+                                                        <span class="text-[9px] text-white/20 font-condensed tracking-wider">{{ t('matchCards') }}</span>
                                                     </div>
                                                     <div>
-                                                        <label class="text-[9px] text-white/30 block">A</label>
+                                                        <label class="text-[9px] text-white/30 block">{{ t('matchCardsA') }}</label>
                                                         <input type="number" min="0" v-model.number="formData.cards_a"
                                                                class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs" />
                                                     </div>
                                                     <div>
-                                                        <label class="text-[9px] text-white/30 block">B</label>
+                                                        <label class="text-[9px] text-white/30 block">{{ t('matchCardsB') }}</label>
                                                         <input type="number" min="0" v-model.number="formData.cards_b"
                                                                class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs" />
                                                     </div>
 
                                                     <!-- Goal scorers -->
                                                     <div class="col-span-2 flex items-center justify-between border-b border-white/5 pb-1 mb-1 mt-1">
-                                                        <span class="text-[9px] text-white/20 font-condensed tracking-wider">Goleadores del partido</span>
+                                                        <span class="text-[9px] text-white/20 font-condensed tracking-wider">{{ t('matchGoalScorers') }}</span>
                                                         <button @click="formData.goalScorers.push({ player_id: null, goals: 1, minutes: [] })"
                                                                 class="text-[9px] text-white/30 hover:text-white font-condensed tracking-wider">
-                                                            + Añadir goleador
+                                                            {{ t('matchAddScorer') }}
                                                         </button>
                                                     </div>
                                                     <div v-for="(gs, gsIdx) in formData.goalScorers" :key="gsIdx"
                                                          class="col-span-2 grid grid-cols-12 gap-2 items-end border border-white/5 rounded-lg p-2">
                                                         <div class="col-span-5">
-                                                            <label class="text-[8px] text-white/30 font-condensed tracking-wider block">Jugador</label>
+                                                            <label class="text-[8px] text-white/30 font-condensed tracking-wider block">{{ t('matchScorerPlayer') }}</label>
                                                             <select v-model="gs.player_id"
                                                                     class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs">
-                                                                <option value="" disabled>Seleccionar</option>
+                                                                <option value="" disabled>{{ t('matchScorerSelect') }}</option>
                                                                 <option v-for="p in props.tournament.players" :key="p.id" :value="p.id">
                                                                     {{ p.name }}
                                                                 </option>
                                                             </select>
                                                         </div>
                                                         <div class="col-span-2">
-                                                            <label class="text-[8px] text-white/30 font-condensed tracking-wider block">Goles</label>
+                                                            <label class="text-[8px] text-white/30 font-condensed tracking-wider block">{{ t('matchScorerGoals') }}</label>
                                                             <input type="number" min="1" v-model.number="gs.goals"
                                                                    class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs" />
                                                         </div>
                                                         <div class="col-span-4">
-                                                            <label class="text-[8px] text-white/30 font-condensed tracking-wider block">Minutos</label>
+                                                            <label class="text-[8px] text-white/30 font-condensed tracking-wider block">{{ t('matchScorerMinutes') }}</label>
                                                             <input type="text" placeholder="12, 45, 67" :value="(gs.minutes || []).join(', ')"
                                                                    @input="e => { gs.minutes = e.target.value.split(',').map(m => parseInt(m.trim())).filter(m => !isNaN(m)) }"
                                                                    class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs" />
@@ -655,11 +870,11 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                     <svg class="w-4 h-4 mr-1.5 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
                                                     </svg>
-                                                    GUARDAR RESULTADO
+                                                    {{ t('matchSaveResult') }}
                                                 </button>
                                                 <button @click="cancelResultForm"
                                                         class="px-4 min-h-touch rounded-xl bg-white/5 text-white/30 hover:text-white/60 font-condensed text-xs uppercase tracking-wider transition-all duration-200">
-                                                    CANCELAR
+                                                    {{ t('matchCancel') }}
                                                 </button>
                                             </div>
                                         </div>
@@ -673,13 +888,13 @@ function getMatchGap(phaseIndex, totalPhases) {
                 <!-- ====== STANDINGS ====== -->
                 <div v-if="activeTab === 'standings'" class="ucl-card overflow-hidden animate-fade-up">
                     <div class="px-5 sm:px-6 py-3 border-b border-white/5 flex items-center justify-between">
-                        <h3 class="text-sm font-semibold text-white/80">Tabla de posiciones</h3>
+                        <h3 class="text-sm font-semibold text-white/80">{{ t('standingsTitle') }}</h3>
                         <button @click="copyStandings"
                                 class="text-xs px-3 py-1.5 rounded-md font-medium transition-all duration-200"
                                 :class="copiedStandings
                                     ? 'bg-emerald-500/20 text-emerald-300'
                                     : 'bg-white/10 text-white/40 hover:bg-white/20 hover:text-white/60'">
-                            {{ copiedStandings ? 'Copiado!' : 'Copiar tabla' }}
+                            {{ copiedStandings ? t('standingsCopied') : t('standingsCopy') }}
                         </button>
                     </div>
                     <div class="overflow-x-auto">
@@ -687,15 +902,15 @@ function getMatchGap(phaseIndex, totalPhases) {
                             <thead>
                                 <tr class="bg-white/[0.02]">
                                     <th class="w-10 sm:w-12 text-center">#</th>
-                                    <th>Jugador</th>
-                                    <th class="text-center">PTS</th>
-                                    <th class="text-center hidden sm:table-cell">PJ</th>
-                                    <th class="text-center hidden sm:table-cell">PG</th>
-                                    <th class="text-center hidden sm:table-cell">PE</th>
-                                    <th class="text-center hidden sm:table-cell">PP</th>
-                                    <th class="text-center">GF</th>
-                                    <th class="text-center">GC</th>
-                                    <th class="text-center">DG</th>
+                                    <th>{{ t('standingsColPlayer') }}</th>
+                                    <th class="text-center">{{ t('standingsPts') }}</th>
+                                    <th class="text-center hidden sm:table-cell">{{ t('standingsPj') }}</th>
+                                    <th class="text-center hidden sm:table-cell">{{ t('standingsPg') }}</th>
+                                    <th class="text-center hidden sm:table-cell">{{ t('standingsPe') }}</th>
+                                    <th class="text-center hidden sm:table-cell">{{ t('standingsPp') }}</th>
+                                    <th class="text-center">{{ t('standingsGf') }}</th>
+                                    <th class="text-center">{{ t('standingsGc') }}</th>
+                                    <th class="text-center">{{ t('standingsDg') }}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -729,14 +944,14 @@ function getMatchGap(phaseIndex, totalPhases) {
                         </table>
                     </div>
                     <div class="px-4 sm:px-6 py-3 border-t border-white/5 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-white/20 font-condensed tracking-wider">
-                        <span>PTS = Puntos</span>
-                        <span>PJ = Jugados</span>
-                        <span>PG = Ganados</span>
-                        <span>PE = Empatados</span>
-                        <span>PP = Perdidos</span>
-                        <span>GF = Goles Favor</span>
-                        <span>GC = Goles Contra</span>
-                        <span>DG = Diferencia</span>
+                        <span>{{ t('legendPts') }}</span>
+                        <span>{{ t('legendPj') }}</span>
+                        <span>{{ t('legendPg') }}</span>
+                        <span>{{ t('legendPe') }}</span>
+                        <span>{{ t('legendPp') }}</span>
+                        <span>{{ t('legendGf') }}</span>
+                        <span>{{ t('legendGc') }}</span>
+                        <span>{{ t('legendDg') }}</span>
                     </div>
                 </div>
 
@@ -746,7 +961,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                     <!-- No groups yet -->
                     <div v-if="!hasGroups && !localPhases.length"
                          class="ucl-card p-8 text-center">
-                        <p class="text-white/30 text-sm">No hay partidos de grupo para generar eliminatorias.</p>
+                        <p class="text-white/30 text-sm">{{ t('bracketNoGroups') }}</p>
                     </div>
 
                     <!-- Waiting for group stage -->
@@ -757,8 +972,8 @@ function getMatchGap(phaseIndex, totalPhases) {
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h3 class="text-lg font-bold text-white mb-2">Fase de grupos en curso</h3>
-                        <p class="text-sm text-white/40 max-w-md mx-auto">Completá todos los partidos de la fase de grupos para desbloquear las eliminatorias.</p>
+                        <h3 class="text-lg font-bold text-white mb-2">{{ t('bracketGroupInProgress') }}</h3>
+                        <p class="text-sm text-white/40 max-w-md mx-auto">{{ t('bracketGroupInProgressText') }}</p>
                     </div>
 
                     <!-- Bracket -->
@@ -769,10 +984,9 @@ function getMatchGap(phaseIndex, totalPhases) {
                              :style="{ borderLeftColor: color }">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <h3 class="text-sm font-semibold text-white">Fase eliminatoria</h3>
+                                    <h3 class="text-sm font-semibold text-white">{{ t('bracketTitle') }}</h3>
                                     <p class="text-xs text-white/30 mt-0.5">
-                                        {{ bracketPhases.length }} fase{{ bracketPhases.length > 1 ? 's' : '' }}
-                                        · {{ bracketPhases.reduce((a, p) => a + p.matches.length, 0) }} partidos
+                                        {{ t(bracketPhases.length > 1 ? 'bracketPhasesCountPlural' : 'bracketPhasesCount', { phases: bracketPhases.length, matches: bracketPhases.reduce((a, p) => a + p.matches.length, 0) }) }}
                                     </p>
                                 </div>
                                 <div class="flex items-center gap-2 text-xs text-white/40">
@@ -843,9 +1057,9 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                      <div class="bracket-vs">
                                                          <span class="text-[10px] font-condensed text-white/[0.07] font-bold tracking-[0.15em]">VS</span>
                                                          <span v-if="match.status === 'finished' && match.score1 === match.score2"
-                                                               class="text-[9px] text-amber-400/50 font-condensed">EMP</span>
+                                                               class="text-[9px] text-amber-400/50 font-condensed">{{ t('bracketTie') }}</span>
                                                          <span v-if="match.status === 'pending' && match.player1_id && match.player2_id"
-                                                               class="text-[9px] text-white/15 font-condensed">PENDIENTE</span>
+                                                               class="text-[9px] text-white/15 font-condensed">{{ t('bracketPending') }}</span>
                                                      </div>
 
                                                      <!-- Player 2 -->
@@ -876,19 +1090,19 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                          class="bracket-action">
                                                         <button @click="editMatch(match)"
                                                                 class="bracket-btn-edit">
-                                                            EDITAR
+                                                            {{ t('bracketEdit') }}
                                                         </button>
                                                     </div>
                                                     <div v-else-if="match.player1_id && match.player2_id && match.score1 >= 0 && match.score2 >= 0"
                                                          class="bracket-action">
                                                         <button @click="saveScore(match)"
                                                                 class="bracket-btn-save">
-                                                            GUARDAR
+                                                            {{ t('bracketSave') }}
                                                         </button>
                                                     </div>
                                                     <div v-else-if="!match.player1_id || !match.player2_id"
                                                          class="bracket-action">
-                                                        <span class="text-[9px] text-white/10 font-condensed italic tracking-wider">Esperando rival...</span>
+                                                        <span class="text-[9px] text-white/10 font-condensed italic tracking-wider">{{ t('bracketWaitingRival') }}</span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -901,7 +1115,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                 <svg class="w-6 h-6 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                                 </svg>
-                                                <span class="text-[9px] text-white/[0.07] font-condensed uppercase tracking-[0.15em]">avanza</span>
+                                                <span class="text-[9px] text-white/[0.07] font-condensed uppercase tracking-[0.15em]">{{ t('bracketAdvance') }}</span>
                                             </div>
                                         </div>
                                     </template>
@@ -944,8 +1158,8 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                 </div>
                                                 <div class="bracket-vs">
                                                     <span class="text-[10px] font-condensed text-white/[0.07] font-bold tracking-[0.15em]">VS</span>
-                                                    <span v-if="match.status === 'finished' && match.score1 === match.score2" class="text-[9px] text-amber-400/50 font-condensed">EMP</span>
-                                                    <span v-if="match.status === 'pending' && match.player1_id && match.player2_id" class="text-[9px] text-white/15 font-condensed">PENDIENTE</span>
+                                                    <span v-if="match.status === 'finished' && match.score1 === match.score2" class="text-[9px] text-amber-400/50 font-condensed">{{ t('bracketTie') }}</span>
+                                                    <span v-if="match.status === 'pending' && match.player1_id && match.player2_id" class="text-[9px] text-white/15 font-condensed">{{ t('bracketPending') }}</span>
                                                 </div>
                                                 <div class="bracket-player">
                                                     <div class="flex-1 truncate text-xs font-medium"
@@ -966,13 +1180,13 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                     <span v-if="isWinner(match, 2)" class="winner-indicator">✓</span>
                                                 </div>
                                                 <div v-if="match.status === 'finished'" class="bracket-action">
-                                                    <button @click="editMatch(match)" class="bracket-btn-edit">EDITAR</button>
+                                                    <button @click="editMatch(match)" class="bracket-btn-edit">{{ t('bracketEdit') }}</button>
                                                 </div>
                                                 <div v-else-if="match.player1_id && match.player2_id && match.score1 >= 0 && match.score2 >= 0" class="bracket-action">
-                                                    <button @click="saveScore(match)" class="bracket-btn-save">GUARDAR</button>
+                                                    <button @click="saveScore(match)" class="bracket-btn-save">{{ t('bracketSave') }}</button>
                                                 </div>
                                                 <div v-else-if="!match.player1_id || !match.player2_id" class="bracket-action">
-                                                    <span class="text-[9px] text-white/10 font-condensed italic tracking-wider">Esperando rival...</span>
+                                                    <span class="text-[9px] text-white/10 font-condensed italic tracking-wider">{{ t('bracketWaitingRival') }}</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -987,7 +1201,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                              class="ucl-card overflow-hidden text-center py-6"
                              :style="{ borderColor: `${color}33`, background: `linear-gradient(135deg, ${color}08, transparent)` }">
                             <div class="text-3xl mb-2">🏆</div>
-                            <h4 class="font-condensed font-bold text-sm uppercase tracking-[0.1em] text-white/50 mb-3">Gran Final</h4>
+                            <h4 class="font-condensed font-bold text-sm uppercase tracking-[0.1em] text-white/50 mb-3">{{ t('bracketGrandFinal') }}</h4>
                             <div v-for="m in finalPhase.matches" :key="m.id"
                                  class="inline-flex items-center gap-4 sm:gap-6 text-lg sm:text-xl font-condensed font-bold">
                                 <span :class="isWinner(m, 1) ? 'text-white' : m.status === 'finished' ? 'text-white/30' : 'text-white/60'">
@@ -1004,7 +1218,7 @@ function getMatchGap(phaseIndex, totalPhases) {
 
                     <!-- No bracket phases -->
                     <div v-else class="ucl-card p-8 text-center">
-                        <p class="text-white/30 text-sm">No hay eliminatorias generadas aún.</p>
+                        <p class="text-white/30 text-sm">{{ t('bracketNoPhases') }}</p>
                     </div>
                 </div>
 
@@ -1013,7 +1227,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                     <div v-if="standings && standings.length" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <!-- Puntos -->
                         <div class="ucl-card p-5 sm:p-6">
-                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">Puntos</h3>
+                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">{{ t('statsPoints') }}</h3>
                             <div class="space-y-3">
                                 <div v-for="(r, i) in chartPts" :key="'pts' + i">
                                     <div class="flex items-center justify-between mb-1">
@@ -1028,7 +1242,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                         </div>
                         <!-- Goles a favor -->
                         <div class="ucl-card p-5 sm:p-6">
-                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">Goles a favor</h3>
+                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">{{ t('statsGoalsFor') }}</h3>
                             <div class="space-y-3">
                                 <div v-for="(r, i) in chartGf" :key="'gf' + i">
                                     <div class="flex items-center justify-between mb-1">
@@ -1043,7 +1257,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                         </div>
                         <!-- Diferencia de gol -->
                         <div class="ucl-card p-5 sm:p-6">
-                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">Diferencia de gol</h3>
+                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">{{ t('statsGoalDiff') }}</h3>
                             <div class="space-y-3">
                                 <div v-for="(r, i) in chartDg" :key="'dg' + i">
                                     <div class="flex items-center justify-between mb-1">
@@ -1066,8 +1280,8 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <svg class="w-10 h-10 mx-auto mb-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        <h3 class="text-sm font-bold text-white/50 mb-1 font-condensed tracking-wider uppercase">Sin datos todavía</h3>
-                        <p class="text-xs text-white/20 font-condensed">Las gráficas aparecerán cuando cargues resultados de los partidos.</p>
+                        <h3 class="text-sm font-bold text-white/50 mb-1 font-condensed tracking-wider uppercase">{{ t('statsNoData') }}</h3>
+                        <p class="text-xs text-white/20 font-condensed">{{ t('statsNoDataText') }}</p>
                     </div>
                 </div>
             </div>
@@ -1078,34 +1292,34 @@ function getMatchGap(phaseIndex, totalPhases) {
             <div v-if="replaceModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
                  @click.self="replaceModalOpen = false">
                 <div class="bg-[#1b2130] border border-[#343d54] rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
-                    <h3 class="text-base font-bold text-[#f4f2ef] mb-4 font-condensed tracking-wider uppercase">Reemplazar jugador</h3>
+                    <h3 class="text-base font-bold text-[#f4f2ef] mb-4 font-condensed tracking-wider uppercase">{{ t('modalTitle') }}</h3>
                     <div class="space-y-3">
                         <div>
-                            <label class="text-[10px] text-[#7a8299] font-condensed tracking-wider block mb-1">Jugador a reemplazar</label>
+                            <label class="text-[10px] text-[#7a8299] font-condensed tracking-wider block mb-1">{{ t('modalPlayerToReplace') }}</label>
                             <select v-model="replacePlayerId"
                                     class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#ff8a3d]">
-                                <option value="" disabled>Seleccionar jugador</option>
+                                <option value="" disabled>{{ t('modalSelectPlayer') }}</option>
                                 <option v-for="p in tournament.players" :key="p.id" :value="p.id">{{ p.name }}</option>
                             </select>
                         </div>
                         <div>
-                            <label class="text-[10px] text-[#7a8299] font-condensed tracking-wider block mb-1">Nuevo jugador</label>
-                            <input type="text" v-model="replaceNewName" placeholder="Nombre del reemplazo"
+                            <label class="text-[10px] text-[#7a8299] font-condensed tracking-wider block mb-1">{{ t('modalNewPlayer') }}</label>
+                            <input type="text" v-model="replaceNewName" :placeholder="t('modalNewPlaceholder')"
                                    class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#ff8a3d]" />
                         </div>
                     </div>
                     <div class="flex gap-2 mt-5 justify-end">
                         <button @click="replaceModalOpen = false"
-                                class="px-4 py-2 text-xs text-white/50 hover:text-white/80 font-condensed tracking-wider uppercase">Cancelar</button>
+                                class="px-4 py-2 text-xs text-white/50 hover:text-white/80 font-condensed tracking-wider uppercase">{{ t('modalCancel') }}</button>
                         <button @click="submitReplace"
                                 :disabled="!replacePlayerId || !replaceNewName.trim()"
                                 class="px-4 py-2 text-xs font-bold font-condensed tracking-wider uppercase rounded-lg"
                                 :class="replacePlayerId && replaceNewName.trim() ? 'bg-[#ff8a3d] text-black hover:bg-[#ffa05e]' : 'bg-white/5 text-white/20 cursor-not-allowed'">
-                            Reemplazar
+                            {{ t('modalReplace') }}
                         </button>
                     </div>
                     <p class="mt-3 text-[10px] text-[#7a8299] font-condensed leading-relaxed">
-                        Los partidos pendientes del jugador saliente se asignarán al nuevo. Los historiales (goles, partidos finalizados) se mantienen.
+                        {{ t('modalNote') }}
                     </p>
                 </div>
             </div>

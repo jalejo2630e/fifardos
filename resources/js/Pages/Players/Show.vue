@@ -1,6 +1,43 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n({
+    useScope: 'local',
+    messages: {
+        es: {
+            backToTournaments: '← Volver a torneos',
+            noTournament: 'Sin torneo',
+            goals: 'Goles',
+            matches: 'Partidos',
+            average: 'Promedio',
+            mvp: 'MVP',
+            tournamentHistory: 'Historial de torneos',
+            nMatches: '{n} partidos',
+            nWins: '{n} victorias',
+            nLosses: '{n} derrotas',
+            finished: 'Finalizado',
+            inProgress: 'En curso',
+            noHistory: 'Sin historial de torneos.',
+        },
+        en: {
+            backToTournaments: '← Back to tournaments',
+            noTournament: 'No tournament',
+            goals: 'Goals',
+            matches: 'Matches',
+            average: 'Average',
+            mvp: 'MVP',
+            tournamentHistory: 'Tournament history',
+            nMatches: '{n} matches',
+            nWins: '{n} wins',
+            nLosses: '{n} losses',
+            finished: 'Finished',
+            inProgress: 'In progress',
+            noHistory: 'No tournament history.',
+        },
+    },
+});
 
 const props = defineProps({
     player: Object,
@@ -20,7 +57,7 @@ const initials = props.player?.name
         <div class="max-w-4xl mx-auto py-8 px-4 space-y-6">
             <!-- Back -->
             <Link :href="route('tournaments.index')" class="text-xs text-white/30 hover:text-white/60 font-condensed tracking-wider uppercase">
-                ← Volver a torneos
+                {{ t('backToTournaments') }}
             </Link>
 
             <!-- Player header -->
@@ -31,7 +68,7 @@ const initials = props.player?.name
                 <div>
                     <h1 class="text-2xl font-bold text-[#f4f2ef] font-condensed tracking-wide">{{ player.name }}</h1>
                     <p class="text-xs text-[#7a8299] mt-0.5 font-condensed tracking-wider">
-                        {{ player.tournament?.name || 'Sin torneo' }}
+                        {{ player.tournament?.name || t('noTournament') }}
                     </p>
                 </div>
             </div>
@@ -40,26 +77,26 @@ const initials = props.player?.name
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div class="bg-[#242b3d] border border-[#343d54] rounded-xl p-4 text-center">
                     <div class="text-2xl font-bold text-[#ff8a3d] font-condensed">{{ stats.total_goals }}</div>
-                    <div class="text-[10px] text-[#7a8299] font-condensed tracking-wider uppercase mt-1">Goles</div>
+                    <div class="text-[10px] text-[#7a8299] font-condensed tracking-wider uppercase mt-1">{{ t('goals') }}</div>
                 </div>
                 <div class="bg-[#242b3d] border border-[#343d54] rounded-xl p-4 text-center">
                     <div class="text-2xl font-bold text-[#3d9bff] font-condensed">{{ stats.total_matches }}</div>
-                    <div class="text-[10px] text-[#7a8299] font-condensed tracking-wider uppercase mt-1">Partidos</div>
+                    <div class="text-[10px] text-[#7a8299] font-condensed tracking-wider uppercase mt-1">{{ t('matches') }}</div>
                 </div>
                 <div class="bg-[#242b3d] border border-[#343d54] rounded-xl p-4 text-center">
                     <div class="text-2xl font-bold text-[#ffb35e] font-condensed">{{ stats.average }}</div>
-                    <div class="text-[10px] text-[#7a8299] font-condensed tracking-wider uppercase mt-1">Promedio</div>
+                    <div class="text-[10px] text-[#7a8299] font-condensed tracking-wider uppercase mt-1">{{ t('average') }}</div>
                 </div>
                 <div class="bg-[#242b3d] border border-[#343d54] rounded-xl p-4 text-center">
                     <div class="text-2xl font-bold text-[#10b981] font-condensed">{{ mvpCount }}</div>
-                    <div class="text-[10px] text-[#7a8299] font-condensed tracking-wider uppercase mt-1">MVP</div>
+                    <div class="text-[10px] text-[#7a8299] font-condensed tracking-wider uppercase mt-1">{{ t('mvp') }}</div>
                 </div>
             </div>
 
             <!-- Tournament history -->
             <div class="bg-[#242b3d] border border-[#343d54] rounded-2xl overflow-hidden">
                 <div class="px-5 py-3 border-b border-[#343d54]">
-                    <h2 class="text-sm font-bold text-[#f4f2ef] font-condensed tracking-wider uppercase">Historial de torneos</h2>
+                    <h2 class="text-sm font-bold text-[#f4f2ef] font-condensed tracking-wider uppercase">{{ t('tournamentHistory') }}</h2>
                 </div>
                 <div class="p-5">
                     <div v-if="tournaments" class="flex items-center justify-between py-2 border-b border-[#343d54]/50 last:border-0">
@@ -68,17 +105,17 @@ const initials = props.player?.name
                                 {{ tournaments.name }}
                             </Link>
                             <div class="text-[10px] text-[#7a8299] font-condensed tracking-wider mt-0.5">
-                                {{ tournaments.matches_count || 0 }} partidos
-                                · {{ tournaments.wins || 0 }} victorias
-                                · {{ (tournaments.matches_count || 0) - (tournaments.wins || 0) }} derrotas
+                                {{ t('nMatches', { n: tournaments.matches_count || 0 }) }}
+                                · {{ t('nWins', { n: tournaments.wins || 0 }) }}
+                                · {{ t('nLosses', { n: (tournaments.matches_count || 0) - (tournaments.wins || 0) }) }}
                             </div>
                         </div>
                         <span class="text-xs font-condensed tracking-wider px-3 py-1 rounded-full"
                               :class="tournaments.status === 'completed' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20' : 'bg-amber-500/10 text-amber-300 border border-amber-500/20'">
-                            {{ tournaments.status === 'completed' ? 'Finalizado' : 'En curso' }}
+                            {{ tournaments.status === 'completed' ? t('finished') : t('inProgress') }}
                         </span>
                     </div>
-                    <div v-else class="text-xs text-[#7a8299] text-center py-4">Sin historial de torneos.</div>
+                    <div v-else class="text-xs text-[#7a8299] text-center py-4">{{ t('noHistory') }}</div>
                 </div>
             </div>
         </div>
