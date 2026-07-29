@@ -10,6 +10,7 @@ import ProbabilityBar from '@/Components/Dashboard/ProbabilityBar.vue';
 
 const props = defineProps({
     activeTournaments: { type: Array, default: () => [] },
+    goleadores: { type: Array, default: () => [] },
     mvp: { type: Object, default: null },
     currentMatch: { type: Object, default: null },
     standings: { type: Array, default: () => [] },
@@ -17,7 +18,18 @@ const props = defineProps({
     needsSecurityQuestions: { type: Boolean, default: false },
 });
 
-const showSecurityPrompt = ref(props.needsSecurityQuestions);
+// El aviso de preguntas de seguridad se muestra UNA sola vez: si el usuario lo
+// descartó (o ya lo configuró), no vuelve a aparecer (recordado en localStorage).
+const SQ_DISMISS_KEY = 'fifardos_sq_prompt_dismissed';
+const sqDismissed = typeof window !== 'undefined' && window.localStorage
+    ? window.localStorage.getItem(SQ_DISMISS_KEY) === '1'
+    : false;
+const showSecurityPrompt = ref(props.needsSecurityQuestions && !sqDismissed);
+
+function dismissSecurityPrompt() {
+    showSecurityPrompt.value = false;
+    try { window.localStorage.setItem(SQ_DISMISS_KEY, '1'); } catch (e) { /* noop */ }
+}
 
 const activeTab = ref('lobby');
 const sidebarOpen = ref(false);
@@ -30,7 +42,7 @@ let refreshInterval = null;
 onMounted(() => {
     setTimeout(() => { animated.value = true; }, 100);
     refreshInterval = setInterval(() => {
-        router.reload({ only: ['activeTournaments', 'mvp', 'currentMatch', 'standings', 'stats'] });
+        router.reload({ only: ['activeTournaments', 'goleadores', 'mvp', 'currentMatch', 'standings', 'stats'] });
     }, 10000);
 });
 
@@ -240,32 +252,55 @@ const mvpScore = computed(() => {
                     </div>
                 </div>
             </aside>
+
+            <!-- GOLEADORES POR TORNEO (ancho completo) -->
+            <section class="dash-scorers">
+                <div class="scorers-head">
+                    <h2 class="scorers-title">Goleadores por torneo</h2>
+                    <Link :href="route('tournaments.index')" class="scorers-link">Ver torneos →</Link>
+                </div>
+                <div v-if="goleadores.length" class="scorers-grid">
+                    <div v-for="t in goleadores" :key="t.id" class="scorer-card">
+                        <div class="scorer-card-head">
+                            <span class="scorer-dot" :style="{ background: t.color || '#ff5f00', color: t.color || '#ff5f00' }"></span>
+                            <Link :href="route('tournaments.show', t.id)" class="scorer-tname">{{ t.name }}</Link>
+                            <span class="scorer-status" :class="t.status === 'completed' ? 'done' : 'live'">
+                                {{ t.status === 'completed' ? 'Final' : 'En curso' }}
+                            </span>
+                        </div>
+                        <Link v-for="(s, i) in t.scorers" :key="s.id"
+                              :href="route('players.show', s.id)" class="scorer-row dash-clickable">
+                            <span class="scorer-rank" :class="{ first: i === 0 }">{{ i + 1 }}</span>
+                            <span class="scorer-name">{{ s.name }}</span>
+                            <span class="scorer-goals">{{ s.goals }}<small>g</small></span>
+                        </Link>
+                    </div>
+                </div>
+                <div v-else class="scorers-empty">
+                    Cargá los resultados de tus partidos para ver la tabla de goleadores.
+                </div>
+            </section>
         </div>
 
-        <!-- Security questions prompt -->
+        <!-- Security questions prompt (se muestra una sola vez) -->
         <Teleport to="body">
-            <div v-if="showSecurityPrompt" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm"
-                 @click.self="showSecurityPrompt = false">
-                <div class="bg-[#1b2130] border border-[#343d54] rounded-2xl p-6 sm:p-8 w-full max-w-sm mx-4 shadow-2xl text-center">
-                    <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-[#ff8a3d]/10 border border-[#ff8a3d]/20 flex items-center justify-center">
-                        <svg class="w-7 h-7 text-[#ff8a3d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m0 0v2m0-2h2m-2 0H10m9-11a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <h3 class="text-base font-bold text-[#f4f2ef] mb-2 font-condensed tracking-wider uppercase">Protegé tu cuenta</h3>
-                    <p class="text-sm text-[#7a8299] leading-relaxed mb-6">
-                        Configurá tus preguntas de seguridad para poder recuperar tu cuenta si perdés la contraseña. Sin ellas, no podrás restablecer el acceso.
-                    </p>
-                    <div class="flex flex-col gap-2">
-                        <Link :href="route('security-questions.setup.form')"
-                              class="w-full py-3 rounded-xl font-condensed text-xs font-bold uppercase tracking-wider text-black transition-all duration-200"
-                              style="background: linear-gradient(135deg, #ff8a3d, #e67320); box-shadow: 0 4px 16px rgba(255, 138, 61, 0.25);">
-                            Configurar ahora
-                        </Link>
-                        <button @click="showSecurityPrompt = false"
-                                class="w-full py-3 rounded-xl font-condensed text-xs font-bold uppercase tracking-wider text-white/40 hover:text-white/70 transition-all duration-200">
-                            Ahora no
-                        </button>
+            <div v-if="showSecurityPrompt" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 backdrop-blur-sm"
+                 @click.self="dismissSecurityPrompt">
+                <div class="sq-modal">
+                    <div class="sq-accent"></div>
+                    <div class="sq-inner">
+                        <div class="sq-icon">
+                            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.6">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m0 0v2m0-2h2m-2 0H10m9-11a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="sq-title">Protegé tu cuenta</h3>
+                        <p class="sq-text">
+                            Configurá tus preguntas de seguridad para recuperar tu cuenta si perdés la contraseña.
+                            Este aviso aparece una sola vez.
+                        </p>
+                        <Link :href="route('security-questions.setup.form')" class="sq-btn-primary">Configurar ahora</Link>
+                        <button @click="dismissSecurityPrompt" class="sq-btn-ghost">Ahora no</button>
                     </div>
                 </div>
             </div>
@@ -287,6 +322,19 @@ const mvpScore = computed(() => {
     --text-secondary: #a8a8a3;
     --text-muted: #8f8f8b;
 }
+
+/* Modal de preguntas de seguridad (teleportado a body → estilos no-scoped) */
+.sq-modal { position: relative; width: 100%; max-width: 400px; margin: 0 16px; background: #0e0e11; border: 1px solid rgba(255,255,255,.1); }
+.sq-accent { height: 4px; background: linear-gradient(90deg, #ff5f00, transparent); }
+.sq-inner { padding: 30px 28px; text-align: center; }
+.sq-icon { width: 56px; height: 56px; margin: 0 auto 16px; border: 1px solid rgba(255,95,0,.3); background: rgba(255,95,0,.1); color: #ff5f00; display: flex; align-items: center; justify-content: center; }
+.sq-title { font-family: 'Anton','Bebas Neue',sans-serif; text-transform: uppercase; font-size: 24px; letter-spacing: -.5px; color: #f2f2f0; margin: 0 0 10px; }
+.sq-text { font-size: 14px; line-height: 1.55; color: #8f8f8b; margin: 0 0 22px; }
+.sq-btn-primary { display: block; width: 100%; padding: 13px; background: #ff5f00; color: #08080a; font-family: 'Barlow Condensed',sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 16px; text-decoration: none;
+    clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px); }
+.sq-btn-primary:hover { background: #ff7a26; }
+.sq-btn-ghost { display: block; width: 100%; padding: 11px; margin-top: 8px; background: none; border: none; cursor: pointer; color: rgba(255,255,255,.4); font-family: 'Barlow Condensed',sans-serif; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; font-size: 14px; }
+.sq-btn-ghost:hover { color: rgba(255,255,255,.7); }
 </style>
 
 <style scoped>
@@ -709,4 +757,28 @@ const mvpScore = computed(() => {
         z-index: 100;
     }
 }
+
+/* === GOLEADORES POR TORNEO (ancho completo) === */
+.dash-scorers { grid-column: 1 / -1; margin-top: 6px; }
+.scorers-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.scorers-title { font-family: 'Anton', 'Bebas Neue', sans-serif; text-transform: uppercase; font-size: 26px; letter-spacing: -.5px; color: var(--text-primary, #f2f2f0); }
+.scorers-link { font-family: 'Barlow Condensed', sans-serif; text-transform: uppercase; letter-spacing: .06em; color: var(--accent-orange, #ff5f00); text-decoration: none; font-size: 14px; font-weight: 600; }
+.scorers-link:hover { color: #ffb37a; }
+.scorers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.scorer-card { background: var(--card-bg, #0e0e11); border: 1px solid var(--card-border, rgba(255,255,255,.1)); padding: 16px 18px; }
+.scorer-card-head { display: flex; align-items: center; gap: 9px; padding-bottom: 12px; margin-bottom: 6px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.scorer-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 8px currentColor; }
+.scorer-tname { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--text-primary, #f2f2f0); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scorer-tname:hover { color: var(--accent-orange, #ff5f00); }
+.scorer-status { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 2px 8px; flex-shrink: 0; }
+.scorer-status.live { color: var(--accent-orange, #ff5f00); background: rgba(255,95,0,.1); }
+.scorer-status.done { color: #b6ff2e; background: rgba(182,255,46,.1); }
+.scorer-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; text-decoration: none; }
+.scorer-rank { width: 20px; text-align: center; font-family: 'Anton', sans-serif; font-size: 15px; color: var(--text-muted, #8f8f8b); }
+.scorer-rank.first { color: var(--accent-orange, #ff5f00); }
+.scorer-name { flex: 1; min-width: 0; font-size: 14px; color: var(--text-secondary, #a8a8a3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scorer-goals { font-family: 'Anton', sans-serif; font-size: 16px; color: var(--text-primary, #f2f2f0); }
+.scorer-goals small { font-size: 10px; color: var(--text-muted, #8f8f8b); margin-left: 1px; }
+.scorers-empty { background: var(--card-bg, #0e0e11); border: 1px dashed var(--card-border, rgba(255,255,255,.1)); padding: 28px; text-align: center; color: var(--text-muted, #8f8f8b); font-size: 13px; }
+@media (max-width: 900px) { .dash-scorers { margin-top: 0; } }
 </style>

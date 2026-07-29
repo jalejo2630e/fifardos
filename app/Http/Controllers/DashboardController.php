@@ -124,8 +124,52 @@ class DashboardController extends Controller
         $pressureIntensity = $finishedMatches > 0 ? round(($closeMatches / $finishedMatches) * 100) : 65;
         $pressureIntensity = min(99, max(30, $pressureIntensity));
 
+        // Goleadores por torneo (basado en marcadores de partidos finalizados)
+        $goleadores = [];
+        $userTournaments = Tournament::where('user_id', $user->id)
+            ->with(['players', 'matches' => fn($q) => $q->where('status', 'finished')])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        foreach ($userTournaments as $t) {
+            if ($t->matches->isEmpty()) continue;
+
+            $goals = [];
+            foreach ($t->players as $pl) {
+                $goals[$pl->id] = ['id' => $pl->id, 'name' => $pl->name, 'goals' => 0, 'matches' => 0];
+            }
+            foreach ($t->matches as $m) {
+                if (isset($goals[$m->player1_id])) {
+                    $goals[$m->player1_id]['goals'] += $m->score1 ?? 0;
+                    $goals[$m->player1_id]['matches']++;
+                }
+                if (isset($goals[$m->player2_id])) {
+                    $goals[$m->player2_id]['goals'] += $m->score2 ?? 0;
+                    $goals[$m->player2_id]['matches']++;
+                }
+            }
+
+            $top = collect($goals)
+                ->filter(fn($g) => $g['goals'] > 0)
+                ->sortByDesc('goals')
+                ->take(5)
+                ->values()
+                ->all();
+
+            if (count($top)) {
+                $goleadores[] = [
+                    'id' => $t->id,
+                    'name' => $t->name,
+                    'color' => $t->color,
+                    'status' => $t->status,
+                    'scorers' => $top,
+                ];
+            }
+        }
+
         return Inertia::render('Dashboard', [
             'activeTournaments' => $activeTournaments,
+            'goleadores' => $goleadores,
             'mvp' => $mvp,
             'currentMatch' => $currentMatch,
             'standings' => $standings,
