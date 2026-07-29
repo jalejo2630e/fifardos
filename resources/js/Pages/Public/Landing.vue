@@ -19,7 +19,7 @@ let revealFallback = null;
 const faqs = [
     {
         q: '¿Qué es FIFARDOS?',
-        a: 'Una plataforma gratuita para organizar torneos de FIFA (EA Sports FC) entre amigos: fase de grupos, eliminatorias, tabla de posiciones en vivo y estadísticas como el goleador del torneo.',
+        a: 'Una plataforma gratuita para organizar torneos de fútbol entre amigos —de videojuego (EA Sports FC/FIFA, eFootball) o de fútbol real (fulbito, F5, F7, F11)—: fase de grupos, eliminatorias, tabla en vivo y estadísticas como el goleador.',
     },
     {
         q: '¿Cómo organizo un torneo?',
@@ -36,7 +36,7 @@ const faqs = [
 ];
 
 const steps = [
-    { n: '01', t: 'Arma el torneo', d: 'Nombre, consolas y jugadores. El fixture de todos contra todos se genera solo.' },
+    { n: '01', t: 'Arma el torneo', d: 'Nombre, consolas o canchas y jugadores. El fixture de todos contra todos se genera solo.' },
     { n: '02', t: 'Carga los resultados', d: 'Después de cada partido cargas el marcador y la tabla se actualiza al instante.' },
     { n: '03', t: 'Corona al campeón', d: 'Al cerrar los grupos armamos las eliminatorias y avanzamos a los ganadores hasta la final.' },
 ];
@@ -46,7 +46,7 @@ const features = [
     { icon: 'trophy', t: 'Eliminatorias', d: 'Octavos, cuartos, semis, final y tercer puesto con avance automático.' },
     { icon: 'chart', t: 'Tabla en vivo', d: 'Puntos, diferencia de gol y desempates calculados en tiempo real.' },
     { icon: 'ball', t: 'Goleadores', d: 'Ranking de máximos artilleros y estadísticas por jugador.' },
-    { icon: 'tv', t: 'Multi-consola', d: 'Reparte los partidos entre varias TVs para que nadie espere.' },
+    { icon: 'tv', t: 'Multi-consola / cancha', d: 'Reparte los partidos entre varias TVs o canchas para que nadie espere.' },
     { icon: 'bot', t: 'API + MCP', d: 'Conecta Claude, ChatGPT o Copilot para consultar y crear torneos.' },
 ];
 
@@ -133,8 +133,8 @@ onBeforeUnmount(() => {
                         <em>LOS PANAS</em>
                     </h1>
                     <p class="lead">
-                        Organiza tus torneos de FIFA, carga los resultados de cada partido y mira
-                        quién es el mejor del grupo. Sin excusas, todo queda registrado.
+                        Organiza torneos de fútbol —de consola o de cancha—, carga los resultados
+                        de cada partido y mira quién es el mejor del grupo. Sin excusas, todo queda registrado.
                     </p>
                     <div class="cta-row">
                         <button class="btn-primary" @click="goRegister">

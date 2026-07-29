@@ -1,6 +1,6 @@
 # FIFARDOS
 
-> FIFARDOS es una plataforma web gratuita para organizar y gestionar torneos de FIFA (EA Sports FC) entre amigos. Permite crear torneos con fase de grupos (todos contra todos) y eliminatorias, cargar los resultados de cada partido, ver la tabla de posiciones en tiempo real y seguir estadísticas como el máximo goleador.
+> FIFARDOS es una plataforma web gratuita para organizar y gestionar torneos de fútbol entre amigos: de videojuego (EA Sports FC/FIFA, eFootball) o de fútbol real (fulbito, F5, F7, F11). Permite crear torneos con fase de grupos (todos contra todos) y eliminatorias, cargar los resultados de cada partido, ver la tabla de posiciones en tiempo real y seguir estadísticas como el máximo goleador.
 
 FIFARDOS está en español y funciona en navegador (computador y móvil, con soporte PWA/app). Crear y gestionar torneos es gratis.
 

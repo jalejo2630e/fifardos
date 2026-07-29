@@ -13,10 +13,15 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::factory()->create([
+        // forceCreate (sin factory) para no depender de fakerphp/faker, que es
+        // dependencia de desarrollo y no está instalada en producción (--no-dev).
+        // El cast 'hashed' del modelo hashea el password automáticamente.
+        $user = User::forceCreate([
             'name' => 'Alejandro',
             'email' => 'jalejo.2630e@gmail.com',
+            'password' => 'password',
             'is_admin' => true,
+            'email_verified_at' => now(),
         ]);
 
         $this->createTorneoDiego($user);

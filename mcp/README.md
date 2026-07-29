@@ -36,7 +36,7 @@ Requiere Node.js ≥ 18.
 
 El servidor se lanza con `node /ruta/al/proyecto/mcp/index.js` y lee dos variables de entorno:
 
-- `FIFARDOS_BASE_URL` — la URL de tu FIFARDOS (ej. `https://tudominio.com` o `http://127.0.0.1:8000`)
+- `FIFARDOS_BASE_URL` — la URL de tu FIFARDOS (ej. `https://tudominio.com` o `https://fifardos.com`)
 - `FIFARDOS_TOKEN` — el token del paso anterior
 
 ### Claude Desktop
@@ -51,7 +51,7 @@ Edita `claude_desktop_config.json`
       "command": "node",
       "args": ["/ruta/absoluta/al/proyecto/mcp/index.js"],
       "env": {
-        "FIFARDOS_BASE_URL": "http://127.0.0.1:8000",
+        "FIFARDOS_BASE_URL": "https://fifardos.com",
         "FIFARDOS_TOKEN": "1|tu_token_aqui"
       }
     }
@@ -72,7 +72,7 @@ En `~/.cursor/mcp.json` (global) o `.cursor/mcp.json` (por proyecto):
       "command": "node",
       "args": ["/ruta/absoluta/al/proyecto/mcp/index.js"],
       "env": {
-        "FIFARDOS_BASE_URL": "http://127.0.0.1:8000",
+        "FIFARDOS_BASE_URL": "https://fifardos.com",
         "FIFARDOS_TOKEN": "1|tu_token_aqui"
       }
     }
@@ -92,7 +92,7 @@ En `.vscode/mcp.json` del proyecto (o vía *MCP: Add Server*):
       "command": "node",
       "args": ["/ruta/absoluta/al/proyecto/mcp/index.js"],
       "env": {
-        "FIFARDOS_BASE_URL": "http://127.0.0.1:8000",
+        "FIFARDOS_BASE_URL": "https://fifardos.com",
         "FIFARDOS_TOKEN": "1|tu_token_aqui"
       }
     }
@@ -115,7 +115,7 @@ y registra `http://localhost:8787/sse` como conector MCP en ChatGPT.
 ## 4. Probar rápido (opcional)
 
 ```bash
-FIFARDOS_BASE_URL=http://127.0.0.1:8000 FIFARDOS_TOKEN=1|tu_token \
+FIFARDOS_BASE_URL=https://fifardos.com FIFARDOS_TOKEN=1|tu_token \
   node index.js
 ```
 

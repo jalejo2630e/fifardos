@@ -38,4 +38,4 @@ Allow: /
 User-agent: Applebot-Extended
 Allow: /
 
-Sitemap: /sitemap.xml
+Sitemap: https://fifardos.com/sitemap.xml

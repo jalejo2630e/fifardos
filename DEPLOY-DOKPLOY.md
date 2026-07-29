@@ -36,7 +36,7 @@ FIFARDOS se empaqueta en **un solo contenedor** (nginx + php-fpm + supervisor) q
 ## Variables imprescindibles
 
 - `APP_KEY` — genérala una vez: `php artisan key:generate --show` y pégala. **No la cambies** después (invalida sesiones).
-- `APP_URL` — tu dominio con `https://` (afecta enlaces, canonical, OG y emails).
+- `APP_URL` — tu dominio con `https://` (producción: `https://fifardos.com`). Afecta enlaces, canonical, OG, sitemap y emails.
 - `APP_ENV=production`, `APP_DEBUG=false`.
 - **Base de datos:** lo recomendado es Postgres/MySQL. Para SQLite persistente usa
   `DB_CONNECTION=sqlite` y `DB_DATABASE=/var/www/html/storage/app/database.sqlite`

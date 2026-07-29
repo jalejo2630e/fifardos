@@ -15,17 +15,15 @@ const { x: sx, y: sy, onMove, onEnter, onLeave } = useMouseSpotlight();
 
 <template>
     <div class="min-h-screen bg-elite-bg text-elite-primary font-elite-sans scanline grid-bg">
-        <Head title="FIFARDOS — Rules & Prizes" />
+        <Head title="Reglas y premios" />
 
         <!-- NAV -->
         <nav class="relative z-20 flex items-center justify-between px-4 sm:px-8 py-4 border-b border-elite-outline/30">
             <Link href="/" class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-elite-secondary to-orange-700
-                            flex items-center justify-center text-black font-bold text-sm shadow-lg shadow-elite-secondary/20">
-                    FE
-                </div>
+                <img src="/brand/icon.png" alt="FIFARDOS"
+                     class="w-9 h-9 rounded-xl shadow-lg shadow-elite-secondary/20" />
                 <span class="font-elite-condensed font-bold text-lg tracking-widest text-white/90 hidden sm:block">
-                    FIFARDOS ELITE
+                    FIFA<span class="text-elite-secondary">RDOS</span>
                 </span>
             </Link>
             <div class="flex items-center gap-3">
@@ -44,14 +42,16 @@ const { x: sx, y: sy, onMove, onEnter, onLeave } = useMouseSpotlight();
         <!-- HERO -->
         <section ref="observeHero" class="relative z-10 text-center px-4 pt-16 sm:pt-24 pb-12">
             <div class="inline-block glass-panel px-4 py-1.5 mb-4 text-xs font-elite-condensed uppercase tracking-[0.15em] text-elite-secondary">
-                Competition Guide
+                Guía de torneos
             </div>
             <h1 class="font-elite-condensed font-black text-4xl sm:text-6xl lg:text-7xl text-white leading-none mb-4">
-                RULES &<br class="sm:hidden"/>
-                <span class="text-elite-secondary"> PRIZES</span>
+                REGLAS Y<br class="sm:hidden"/>
+                <span class="text-elite-secondary"> PREMIOS</span>
             </h1>
             <p class="text-sm sm:text-base text-elite-primary/60 max-w-lg mx-auto">
-                Conoce las reglas de la competencia y lo que puedes ganar.
+                FIFARDOS organiza torneos de <strong class="text-elite-primary/80">cualquier tipo de fútbol</strong>:
+                videojuego (EA Sports FC / FIFA, eFootball) o fútbol real (fulbito, F5, F7, F11).
+                Tú defines las reglas; nosotros armamos el fixture, la tabla y las eliminatorias.
             </p>
         </section>
 
@@ -60,29 +60,37 @@ const { x: sx, y: sy, onMove, onEnter, onLeave } = useMouseSpotlight();
             <div class="glass-panel p-6 sm:p-8 md:p-10 space-y-8">
                 <div v-for="(rule, i) in [
                     {
-                        title: 'FORMATO DEL TORNEO',
+                        title: 'PARA CUALQUIER TORNEO DE FÚTBOL',
                         items: [
-                            'Todos los partidos se juegan en FIFA 25 (PlayStation 5).',
-                            'La fase de grupos es Round Robin: todos contra todos dentro del grupo.',
-                            'Los primeros 2 de cada grupo avanzan a la fase eliminatoria.',
-                            'Las semifinales y final son a partido único, con tiempo extra y penales si es necesario.',
+                            'FIFARDOS sirve para todo tipo de fútbol: videojuego (EA Sports FC / FIFA, eFootball) o fútbol real (fulbito, F5, F7, F11).',
+                            'Funciona para ligas entre amigos, torneos de oficina, del barrio, de la escuela o eventos.',
+                            'El organizador define el formato, la duración y las reglas de cada partido.',
+                            'FIFARDOS se encarga del fixture, la tabla de posiciones, los goleadores y las eliminatorias.',
                         ],
                     },
                     {
-                        title: 'REGLAS DE PARTIDO',
+                        title: 'FORMATO DEL TORNEO',
                         items: [
-                            'Duración: 6 minutos por tiempo (12 minutos total).',
-                            'Lesiones: apagadas.',
-                            'Fuera de juego: activado.',
-                            'Tarjetas amarillas/rojas: activadas. Dos amarillas = suspensión 1 partido.',
-                            'Si hay empate en fase eliminatoria: se juegan 2 tiempos extra de 3 minutos, luego penales.',
+                            'Fase de grupos Round Robin: todos contra todos dentro del grupo.',
+                            'Los mejores de cada grupo avanzan a la fase eliminatoria.',
+                            'Eliminatorias a partido único, con desempate (tiempo extra y/o penales) si hace falta.',
+                            'La cantidad de consolas o canchas define cuántos partidos se juegan en paralelo.',
+                        ],
+                    },
+                    {
+                        title: 'REGLAS DE PARTIDO (EJEMPLO)',
+                        items: [
+                            'Estas son reglas de ejemplo; el organizador las adapta a su torneo.',
+                            'Duración: en videojuego suele ser 6 min por tiempo; en fútbol real, define los tiempos (ej. 2×25 min).',
+                            'Empate en eliminatorias: tiempo extra y, si sigue igualado, penales.',
+                            'Amonestaciones (opcional): dos amarillas = suspensión de 1 partido.',
                         ],
                     },
                     {
                         title: 'CÓDIGO DE CONDUCTA',
                         items: [
-                            'Respeto total hacia los oponentes y organizadores.',
-                            'Prohibido pausar intencionalmente el juego.',
+                            'Respeto total hacia los rivales y los organizadores.',
+                            'Prohibido interrumpir el juego de mala fe.',
                             'Cualquier forma de trampa resulta en descalificación inmediata.',
                             'Los organizadores tienen la decisión final en cualquier controversia.',
                         ],

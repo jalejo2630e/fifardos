@@ -34,8 +34,8 @@ Route::get('/', function () {
             'fans' => $totalUsers > 1000 ? number_format($totalUsers / 1000, 1) . 'K' : ($totalUsers ?: '1.2M'),
         ],
         'seo' => [
-            'title' => 'FIFARDOS — Organiza torneos de FIFA con tus amigos',
-            'description' => 'Crea torneos de FIFA (EA Sports FC) en segundos: arma los grupos, carga los resultados, mira la tabla de posiciones en vivo, genera las eliminatorias automáticamente y descubre al goleador. Gratis y sin instalar nada.',
+            'title' => 'FIFARDOS — Organiza torneos de fútbol con tus amigos',
+            'description' => 'Crea torneos de fútbol en segundos —de videojuego (EA Sports FC/FIFA, eFootball) o de fútbol real (fulbito, F5, F7, F11)—: arma los grupos, carga los resultados, mira la tabla en vivo, genera las eliminatorias automáticamente y descubre al goleador. Gratis y sin instalar nada.',
             'type' => 'website',
             'jsonld' => [
                 [
@@ -46,15 +46,15 @@ Route::get('/', function () {
                             'name' => '¿Qué es FIFARDOS?',
                             'acceptedAnswer' => [
                                 '@type' => 'Answer',
-                                'text' => 'FIFARDOS es una plataforma web gratuita para organizar y gestionar torneos de FIFA (EA Sports FC) entre amigos. Permite crear torneos con fase de grupos y eliminatorias, cargar los resultados de cada partido, ver la tabla de posiciones en tiempo real y seguir estadísticas como el goleador del torneo.',
+                                'text' => 'FIFARDOS es una plataforma web gratuita para organizar y gestionar torneos de fútbol entre amigos, ya sea de videojuego (EA Sports FC/FIFA, eFootball) o de fútbol real (fulbito, F5, F7, F11). Permite crear torneos con fase de grupos y eliminatorias, cargar los resultados de cada partido, ver la tabla de posiciones en tiempo real y seguir estadísticas como el goleador del torneo.',
                             ],
                         ],
                         [
                             '@type' => 'Question',
-                            'name' => '¿Cómo organizo un torneo de FIFA?',
+                            'name' => '¿Cómo organizo un torneo de fútbol?',
                             'acceptedAnswer' => [
                                 '@type' => 'Answer',
-                                'text' => 'Crea una cuenta gratis, pulsa "Nuevo torneo", agrega el nombre del torneo, la cantidad de consolas y los jugadores. FIFARDOS genera automáticamente el fixture de la fase de grupos (todos contra todos) y, al terminar los grupos, arma las eliminatorias con los mejores clasificados.',
+                                'text' => 'Crea una cuenta gratis, pulsa "Nuevo torneo", agrega el nombre del torneo, la cantidad de consolas o canchas y los jugadores. FIFARDOS genera automáticamente el fixture de la fase de grupos (todos contra todos) y, al terminar los grupos, arma las eliminatorias con los mejores clasificados.',
                             ],
                         ],
                         [
@@ -62,7 +62,7 @@ Route::get('/', function () {
                             'name' => '¿FIFARDOS es gratis?',
                             'acceptedAnswer' => [
                                 '@type' => 'Answer',
-                                'text' => 'Sí. Crear y gestionar torneos de FIFA en FIFARDOS es completamente gratis. No necesitas instalar nada: funciona desde el navegador en computador y móvil.',
+                                'text' => 'Sí. Crear y gestionar torneos de fútbol en FIFARDOS es completamente gratis. No necesitas instalar nada: funciona desde el navegador en computador y móvil.',
                             ],
                         ],
                         [
