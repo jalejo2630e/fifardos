@@ -283,6 +283,38 @@ class TournamentController extends Controller
         return redirect()->route('dashboard');
     }
 
+    public function replacePlayer(Request $request, Tournament $tournament, Player $player)
+    {
+        $validated = $request->validate([
+            'new_name' => 'required|string|max:255',
+        ]);
+
+        $newPlayer = Player::create([
+            'tournament_id' => $tournament->id,
+            'name' => $validated['new_name'],
+        ]);
+
+        // Update all pending matches referencing the old player
+        GameMatch::where('tournament_id', $tournament->id)
+            ->where('status', 'pending')
+            ->where('player1_id', $player->id)
+            ->update(['player1_id' => $newPlayer->id]);
+
+        GameMatch::where('tournament_id', $tournament->id)
+            ->where('status', 'pending')
+            ->where('player2_id', $player->id)
+            ->update(['player2_id' => $newPlayer->id]);
+
+        // Transfer goal scorer records to the new player
+        GoalScorer::where('player_id', $player->id)->update(['player_id' => $newPlayer->id]);
+
+        // Delete the old player
+        $player->delete();
+
+        return redirect()->route('tournaments.show', $tournament)
+            ->with('success', "Jugador reemplazado por {$newPlayer->name}.");
+    }
+
     private function autoGenerateKnockout(Tournament $tournament)
     {
         $total = $tournament->players->count();

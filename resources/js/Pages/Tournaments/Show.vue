@@ -157,6 +157,24 @@ function hexToRgb(hex) {
     return `${(v >> 16) & 255}, ${(v >> 8) & 255}, ${v & 255}`;
 }
 
+const replaceModalOpen = ref(false);
+const replacePlayerId = ref(null);
+const replaceNewName = ref('');
+
+function openReplaceModal() {
+    replacePlayerId.value = null;
+    replaceNewName.value = '';
+    replaceModalOpen.value = true;
+}
+
+function submitReplace() {
+    if (!replacePlayerId.value || !replaceNewName.value.trim()) return;
+    router.post(route('tournaments.players.replace', [props.tournament.id, replacePlayerId.value]), {
+        new_name: replaceNewName.value.trim(),
+    });
+    replaceModalOpen.value = false;
+}
+
 const confettiFired = ref(false);
 watch(() => props.allPlayed, (val) => {
     if (val && !confettiFired.value) {
@@ -256,6 +274,12 @@ function getMatchGap(phaseIndex, totalPhases) {
                         </svg>
                         Volver
                     </Link>
+                    <button @click="openReplaceModal" class="ucl-btn-ghost text-xs min-h-touch px-4" title="Reemplazar jugador">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-4 4m0 0l-4-4m4 4V3" />
+                        </svg>
+                    </button>
                     <Link :href="route('tournaments.destroy', tournament.id)" method="delete" as="button"
                           class="ucl-btn-danger text-xs min-h-touch px-4"
                           onclick="return confirm('¿Eliminar torneo? Se borrarán todos los datos.')">
@@ -1009,6 +1033,44 @@ function getMatchGap(phaseIndex, totalPhases) {
                 </div>
             </div>
         </div>
+
+        <!-- Replace player modal -->
+        <Teleport to="body">
+            <div v-if="replaceModalOpen" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                 @click.self="replaceModalOpen = false">
+                <div class="bg-[#1b2130] border border-[#343d54] rounded-2xl p-6 w-full max-w-sm mx-4 shadow-2xl">
+                    <h3 class="text-base font-bold text-[#f4f2ef] mb-4 font-condensed tracking-wider uppercase">Reemplazar jugador</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="text-[10px] text-[#7a8299] font-condensed tracking-wider block mb-1">Jugador a reemplazar</label>
+                            <select v-model="replacePlayerId"
+                                    class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#ff8a3d]">
+                                <option value="" disabled>Seleccionar jugador</option>
+                                <option v-for="p in tournament.players" :key="p.id" :value="p.id">{{ p.name }}</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-[#7a8299] font-condensed tracking-wider block mb-1">Nuevo jugador</label>
+                            <input type="text" v-model="replaceNewName" placeholder="Nombre del reemplazo"
+                                   class="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#ff8a3d]" />
+                        </div>
+                    </div>
+                    <div class="flex gap-2 mt-5 justify-end">
+                        <button @click="replaceModalOpen = false"
+                                class="px-4 py-2 text-xs text-white/50 hover:text-white/80 font-condensed tracking-wider uppercase">Cancelar</button>
+                        <button @click="submitReplace"
+                                :disabled="!replacePlayerId || !replaceNewName.trim()"
+                                class="px-4 py-2 text-xs font-bold font-condensed tracking-wider uppercase rounded-lg"
+                                :class="replacePlayerId && replaceNewName.trim() ? 'bg-[#ff8a3d] text-black hover:bg-[#ffa05e]' : 'bg-white/5 text-white/20 cursor-not-allowed'">
+                            Reemplazar
+                        </button>
+                    </div>
+                    <p class="mt-3 text-[10px] text-[#7a8299] font-condensed leading-relaxed">
+                        Los partidos pendientes del jugador saliente se asignarán al nuevo. Los historiales (goles, partidos finalizados) se mantienen.
+                    </p>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
 
