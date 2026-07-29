@@ -188,7 +188,7 @@
 
     /* === FAB Mobile === */
     .ucl-fab {
-        @apply fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-ucl-glow
+        @apply fixed bottom-24 right-6 z-50 w-14 h-14 rounded-full shadow-ucl-glow
                flex items-center justify-center text-2xl text-black
                transition-all duration-200 ease-out;
         background: linear-gradient(135deg, #F97316, #c2410c);

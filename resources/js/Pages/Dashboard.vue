@@ -284,6 +284,12 @@ const mvpScore = computed(() => {
     cursor: pointer;
 }
 
+@media (max-width: 900px) {
+    .sidebar-toggle {
+        top: 62px;
+    }
+}
+
 /* === GLOBAL DASHBOARD CARD MICROINTERACTIONS === */
 .dash-clickable {
     cursor: pointer;
