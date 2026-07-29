@@ -64,6 +64,7 @@ jobs:
           \            keyPassword "fifardos123"\
           \        }\
           \    }' android/app/build.gradle
+          sed -i 's/minifyEnabled false/minifyEnabled false\n            signingConfig signingConfigs.release/' android/app/build.gradle
 
       - name: Build signed release APK
         working-directory: android
