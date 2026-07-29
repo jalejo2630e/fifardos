@@ -30,7 +30,9 @@ if (props.has_setup) {
 
 function availableQuestions(index) {
     const usedIndices = selected.value.map((s, i) => (i !== index && s >= 0) ? s : -1).filter(i => i >= 0);
-    return props.catalog.filter((_, i) => !usedIndices.includes(i));
+    return props.catalog
+        .map((text, idx) => ({ text, idx }))
+        .filter(item => !usedIndices.includes(item.idx));
 }
 
 function selectQuestion(qIndex, catIndex) {
@@ -85,8 +87,8 @@ function toggleForm() {
                 <select v-model.number="selected[n - 1]" @change="selectQuestion(n - 1, selected[n - 1])"
                         class="ucl-input text-sm py-2">
                     <option :value="-1" disabled>Selecciona una pregunta...</option>
-                    <option v-for="(q, i) in availableQuestions(n - 1)" :key="i" :value="i">
-                        {{ q }}
+                    <option v-for="item in availableQuestions(n - 1)" :key="item.idx" :value="item.idx">
+                        {{ item.text }}
                     </option>
                 </select>
 

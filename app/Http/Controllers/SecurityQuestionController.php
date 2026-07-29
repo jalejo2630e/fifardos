@@ -39,7 +39,7 @@ class SecurityQuestionController extends Controller
 
         $request->validate([
             'questions' => 'required|array|size:3',
-            'questions.*.question' => 'required|string|distinct:strict',
+            'questions.*.question' => 'required|string',
             'questions.*.answer' => 'required|string|min:2|max:100',
         ]);
 
@@ -228,7 +228,7 @@ class SecurityQuestionController extends Controller
         $request->validate([
             'current_password' => 'required|current_password',
             'questions' => 'required|array|size:3',
-            'questions.*.question' => 'required|string|distinct:strict',
+            'questions.*.question' => 'required|string',
             'questions.*.answer' => 'required|string|min:2|max:100',
         ]);
 

@@ -52,7 +52,9 @@ const form = useForm({
 
 function availableQuestions(index) {
     const usedIndices = selected.value.map((s, i) => (i !== index && s >= 0) ? s : -1).filter(i => i >= 0);
-    return props.catalog.filter((_, i) => !usedIndices.includes(i));
+    return props.catalog
+        .map((text, idx) => ({ text, idx }))
+        .filter(item => !usedIndices.includes(item.idx));
 }
 
 function selectQuestion(qIndex, catIndex) {
@@ -122,14 +124,14 @@ function submit() {
                         <div v-if="openDropdown === n"
                              class="absolute left-0 right-0 top-full mt-1 z-50 rounded-xl border border-white/10 shadow-2xl overflow-hidden"
                              style="background: #1a1a1a;">
-                            <button v-for="(q, i) in availableQuestions(n - 1)" :key="i" type="button"
-                                    @click="selectQuestion(n - 1, i)"
+                            <button v-for="item in availableQuestions(n - 1)" :key="item.idx" type="button"
+                                    @click="selectQuestion(n - 1, item.idx)"
                                     class="w-full text-left px-3 py-2.5 text-sm transition-colors duration-100"
-                                    :class="selected[n - 1] === i
+                                    :class="selected[n - 1] === item.idx
                                         ? 'text-white font-semibold'
                                         : 'text-white/60 hover:text-white hover:bg-white/5'"
-                                    :style="selected[n - 1] === i ? { background: '#2563eb' } : {}">
-                                {{ q }}
+                                    :style="selected[n - 1] === item.idx ? { background: '#2563eb' } : {}">
+                                {{ item.text }}
                             </button>
                             <div v-if="availableQuestions(n - 1).length === 0"
                                  class="px-3 py-2.5 text-sm text-white/20 text-center">
