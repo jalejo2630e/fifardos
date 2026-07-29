@@ -2,6 +2,57 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+
+const { t } = useI18n({
+    useScope: 'local',
+    messages: {
+        es: {
+            title: 'Reportes', h1Lead: 'Reportes', h1Accent: 'de administración',
+            subtitle: 'Métricas globales de la plataforma',
+            cUsers: 'Usuarios', cTournaments: 'Torneos', cPlayers: 'Jugadores',
+            cMatches: 'Partidos', cGoals: 'Goles', cAdmins: 'Admins',
+            subUsers: '+{n} en 7 días',
+            subTournaments: '{a} en curso · {b} finalizados',
+            subPlayers: '{n} por torneo',
+            subMatches: '{a} jugados · {b} pendientes',
+            subGoals: '{n} por partido',
+            subAdmins: 'de {n} usuarios',
+            signupsTitle: 'Registros · últimos 14 días',
+            signups30: '+{n} en 30 días',
+            signupsBarTitle: '{n} registros',
+            recentTournaments: 'Torneos recientes',
+            tOwnerPlayers: '{owner} · {n} jugadores',
+            noTournaments: 'Sin torneos aún.',
+            recentUsers: 'Usuarios recientes', adminBadge: 'admin',
+            noUsers: 'Sin usuarios.',
+            topScorers: 'Goleadores (global)', goals: 'goles',
+            noScorers: 'Aún no hay goleadores registrados.',
+        },
+        en: {
+            title: 'Reports', h1Lead: 'Admin', h1Accent: 'reports',
+            subtitle: 'Global platform metrics',
+            cUsers: 'Users', cTournaments: 'Tournaments', cPlayers: 'Players',
+            cMatches: 'Matches', cGoals: 'Goals', cAdmins: 'Admins',
+            subUsers: '+{n} in 7 days',
+            subTournaments: '{a} in progress · {b} finished',
+            subPlayers: '{n} per tournament',
+            subMatches: '{a} played · {b} pending',
+            subGoals: '{n} per match',
+            subAdmins: 'of {n} users',
+            signupsTitle: 'Signups · last 14 days',
+            signups30: '+{n} in 30 days',
+            signupsBarTitle: '{n} signups',
+            recentTournaments: 'Recent tournaments',
+            tOwnerPlayers: '{owner} · {n} players',
+            noTournaments: 'No tournaments yet.',
+            recentUsers: 'Recent users', adminBadge: 'admin',
+            noUsers: 'No users.',
+            topScorers: 'Top scorers (global)', goals: 'goals',
+            noScorers: 'No scorers recorded yet.',
+        },
+    },
+});
 
 const props = defineProps({
     metrics: Object,
@@ -14,12 +65,12 @@ const props = defineProps({
 const maxSignup = computed(() => Math.max(1, ...props.signups.map((s) => s.count)));
 
 const cards = computed(() => [
-    { label: 'Usuarios', value: props.metrics.users, sub: `+${props.metrics.usersLast7} en 7 días`, icon: 'users' },
-    { label: 'Torneos', value: props.metrics.tournaments, sub: `${props.metrics.inProgress} en curso · ${props.metrics.completed} finalizados`, icon: 'trophy' },
-    { label: 'Jugadores', value: props.metrics.players, sub: `${props.metrics.avgPlayers} por torneo`, icon: 'user' },
-    { label: 'Partidos', value: props.metrics.matches, sub: `${props.metrics.matchesPlayed} jugados · ${props.metrics.matchesPending} pendientes`, icon: 'ball' },
-    { label: 'Goles', value: props.metrics.goals, sub: `${props.metrics.avgGoalsPerMatch} por partido`, icon: 'net' },
-    { label: 'Admins', value: props.metrics.admins, sub: `de ${props.metrics.users} usuarios`, icon: 'shield' },
+    { label: t('cUsers'), value: props.metrics.users, sub: t('subUsers', { n: props.metrics.usersLast7 }), icon: 'users' },
+    { label: t('cTournaments'), value: props.metrics.tournaments, sub: t('subTournaments', { a: props.metrics.inProgress, b: props.metrics.completed }), icon: 'trophy' },
+    { label: t('cPlayers'), value: props.metrics.players, sub: t('subPlayers', { n: props.metrics.avgPlayers }), icon: 'user' },
+    { label: t('cMatches'), value: props.metrics.matches, sub: t('subMatches', { a: props.metrics.matchesPlayed, b: props.metrics.matchesPending }), icon: 'ball' },
+    { label: t('cGoals'), value: props.metrics.goals, sub: t('subGoals', { n: props.metrics.avgGoalsPerMatch }), icon: 'net' },
+    { label: t('cAdmins'), value: props.metrics.admins, sub: t('subAdmins', { n: props.metrics.users }), icon: 'shield' },
 ]);
 
 function fmtDay(d) {
@@ -29,13 +80,13 @@ function fmtDay(d) {
 </script>
 
 <template>
-    <Head title="Reportes" />
+    <Head :title="t('title')" />
 
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h1 class="ucl-title-lg">Reportes <span class="text-elite-secondary">de administración</span></h1>
-                <p class="ucl-meta mt-1">Métricas globales de la plataforma</p>
+                <h1 class="ucl-title-lg">{{ t('h1Lead') }} <span class="text-elite-secondary">{{ t('h1Accent') }}</span></h1>
+                <p class="ucl-meta mt-1">{{ t('subtitle') }}</p>
             </div>
         </template>
 
@@ -68,14 +119,14 @@ function fmtDay(d) {
                 <!-- Signups chart -->
                 <div class="ucl-card p-5 sm:p-6">
                     <div class="flex items-center justify-between mb-5">
-                        <h2 class="font-condensed font-bold text-lg tracking-wider text-white">Registros · últimos 14 días</h2>
-                        <span class="text-xs text-white/40">+{{ metrics.usersLast30 }} en 30 días</span>
+                        <h2 class="font-condensed font-bold text-lg tracking-wider text-white">{{ t('signupsTitle') }}</h2>
+                        <span class="text-xs text-white/40">{{ t('signups30', { n: metrics.usersLast30 }) }}</span>
                     </div>
                     <div class="flex items-end gap-1.5 h-32">
                         <div v-for="s in signups" :key="s.day" class="flex-1 flex flex-col items-center gap-1.5 group">
                             <div class="w-full rounded-t bg-gradient-to-t from-elite-secondary/40 to-elite-secondary transition-all"
                                  :style="{ height: Math.max(4, (s.count / maxSignup) * 104) + 'px' }"
-                                 :title="s.count + ' registros'"></div>
+                                 :title="t('signupsBarTitle', { n: s.count })"></div>
                             <span class="text-[9px] text-white/25 rotate-0">{{ fmtDay(s.day) }}</span>
                         </div>
                     </div>
@@ -84,23 +135,23 @@ function fmtDay(d) {
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <!-- Recent tournaments -->
                     <div class="ucl-card p-5 sm:p-6">
-                        <h2 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">Torneos recientes</h2>
+                        <h2 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">{{ t('recentTournaments') }}</h2>
                         <div class="space-y-2">
-                            <div v-for="t in recentTournaments" :key="t.id" class="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
-                                <span class="w-2.5 h-2.5 rounded-full shrink-0" :class="t.status==='completed' ? 'bg-emerald-400' : 'bg-elite-secondary'"></span>
+                            <div v-for="row in recentTournaments" :key="row.id" class="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" :class="row.status==='completed' ? 'bg-emerald-400' : 'bg-elite-secondary'"></span>
                                 <div class="min-w-0 flex-1">
-                                    <div class="text-sm font-medium text-white/90 truncate">{{ t.name }}</div>
-                                    <div class="text-xs text-white/40 truncate">{{ t.owner }} · {{ t.players }} jugadores</div>
+                                    <div class="text-sm font-medium text-white/90 truncate">{{ row.name }}</div>
+                                    <div class="text-xs text-white/40 truncate">{{ t('tOwnerPlayers', { owner: row.owner, n: row.players }) }}</div>
                                 </div>
-                                <span class="text-xs text-white/30 shrink-0">{{ t.created_at }}</span>
+                                <span class="text-xs text-white/30 shrink-0">{{ row.created_at }}</span>
                             </div>
-                            <p v-if="!recentTournaments.length" class="text-sm text-white/30 py-4 text-center">Sin torneos aún.</p>
+                            <p v-if="!recentTournaments.length" class="text-sm text-white/30 py-4 text-center">{{ t('noTournaments') }}</p>
                         </div>
                     </div>
 
                     <!-- Recent users -->
                     <div class="ucl-card p-5 sm:p-6">
-                        <h2 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">Usuarios recientes</h2>
+                        <h2 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">{{ t('recentUsers') }}</h2>
                         <div class="space-y-2">
                             <div v-for="u in recentUsers" :key="u.id" class="flex items-center gap-3 py-2 border-b border-white/5 last:border-0">
                                 <span class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white/70 shrink-0">
@@ -109,28 +160,28 @@ function fmtDay(d) {
                                 <div class="min-w-0 flex-1">
                                     <div class="text-sm font-medium text-white/90 truncate">
                                         {{ u.name }}
-                                        <span v-if="u.is_admin" class="ml-1 text-[10px] uppercase tracking-wide text-elite-secondary">admin</span>
+                                        <span v-if="u.is_admin" class="ml-1 text-[10px] uppercase tracking-wide text-elite-secondary">{{ t('adminBadge') }}</span>
                                     </div>
                                     <div class="text-xs text-white/40 truncate">{{ u.email }}</div>
                                 </div>
                                 <span class="text-xs text-white/30 shrink-0">{{ u.created_at }}</span>
                             </div>
-                            <p v-if="!recentUsers.length" class="text-sm text-white/30 py-4 text-center">Sin usuarios.</p>
+                            <p v-if="!recentUsers.length" class="text-sm text-white/30 py-4 text-center">{{ t('noUsers') }}</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Top scorers -->
                 <div class="ucl-card p-5 sm:p-6">
-                    <h2 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">Goleadores (global)</h2>
+                    <h2 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">{{ t('topScorers') }}</h2>
                     <div v-if="topScorers.length" class="space-y-2.5">
                         <div v-for="(s, i) in topScorers" :key="i" class="flex items-center gap-3">
                             <span class="font-condensed font-bold text-lg w-6 text-elite-secondary">{{ i + 1 }}</span>
                             <span class="text-sm text-white/80 flex-1 truncate">{{ s.name }}</span>
-                            <span class="text-sm font-bold text-white">{{ s.goals }} <span class="text-white/30 font-normal">goles</span></span>
+                            <span class="text-sm font-bold text-white">{{ s.goals }} <span class="text-white/30 font-normal">{{ t('goals') }}</span></span>
                         </div>
                     </div>
-                    <p v-else class="text-sm text-white/30 py-4 text-center">Aún no hay goleadores registrados.</p>
+                    <p v-else class="text-sm text-white/30 py-4 text-center">{{ t('noScorers') }}</p>
                 </div>
 
             </div>

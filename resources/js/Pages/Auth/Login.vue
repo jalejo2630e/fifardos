@@ -87,7 +87,7 @@ const submit = () => {
 .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, var(--accent), transparent); }
 
 .logo { display: inline-block; margin-bottom: 22px; }
-.logo img { height: 34px; width: auto; display: block; }
+.logo img { height: 46px; width: auto; display: block; }
 
 h1 { font-family: var(--f-anton); text-transform: uppercase; font-size: 40px; line-height: .95; letter-spacing: -.5px; margin: 0 0 8px; }
 .sub { color: var(--tm); font-size: 15px; margin: 0 0 24px; }

@@ -357,9 +357,6 @@ onBeforeUnmount(() => {
                 <button type="button" class="foot-mcp" @click="showMcp = true">
                     <span class="mcp-dot"></span> {{ $t('landing.footMcp') }}
                 </button>
-                <a href="#">X / Twitter</a>
-                <a href="#">Instagram</a>
-                <a href="#">Contacto</a>
             </div>
         </footer>
 
@@ -485,7 +482,7 @@ Authorization: Bearer 1|tu_token
 .hdr { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 32px; padding: 14px 24px; background: rgba(8, 8, 10, .82); backdrop-filter: blur(14px); border-bottom: 1px solid var(--hair); transition: background-color .2s ease, box-shadow .2s ease; }
 .hdr.scrolled { background: rgba(8, 8, 10, .94); box-shadow: 0 10px 30px -18px rgba(0, 0, 0, .9); }
 .logo { display: inline-flex; align-items: center; text-decoration: none; }
-.logo img { height: 30px; width: auto; display: block; }
+.logo img { height: 46px; width: auto; display: block; }
 .nav { margin-left: auto; display: flex; gap: 26px; }
 .nav a { color: #9a9a96; text-decoration: none; font-family: var(--f-body); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; transition: color .15s ease; }
 .nav a:hover { color: var(--tp); }

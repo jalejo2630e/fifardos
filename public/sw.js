@@ -1,18 +1,25 @@
-// FIFARDOS service worker — network-first para contenido, cache-first para íconos.
-// Bump CACHE en cada cambio de estrategia para forzar purga del caché viejo.
-const CACHE = 'fifardos-v3';
+// FIFARDOS service worker.
+//
+// IMPORTANTE (seguridad): NUNCA cachear respuestas autenticadas/dinámicas
+// (HTML de navegación ni XHR de Inertia), porque incluyen datos del usuario
+// (auth.user) y, cacheadas por URL, se filtrarían a otro usuario que abra la
+// misma ruta. Solo cacheamos assets estáticos inmutables (build hasheado,
+// íconos y fuentes). Todo lo demás va directo a la red, sin caché.
+const CACHE = 'fifardos-v4';
 const PRECACHE = ['/manifest.json', '/icon-192.png', '/icon-512.png', '/favicon.ico'];
+
+// Extensiones de assets estáticos seguros de cachear (no específicos de usuario).
+const STATIC_RE = /\.(?:js|css|png|jpe?g|gif|svg|webp|ico|woff2?|ttf|otf|mp4|webm)$/i;
 
 self.addEventListener('install', (e) => {
     self.skipWaiting();
-    e.waitUntil(
-        caches.open(CACHE).then((c) => c.addAll(PRECACHE).catch(() => {}))
-    );
+    e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE).catch(() => {})));
 });
 
 self.addEventListener('activate', (e) => {
     e.waitUntil(
         caches.keys()
+            // Purga cachés viejos (incluye v3, que cacheaba páginas autenticadas).
             .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
             .then(() => self.clients.claim())
     );
@@ -23,36 +30,35 @@ self.addEventListener('fetch', (e) => {
     if (req.method !== 'GET') return;
 
     const url = new URL(req.url);
-    const isNavigation = req.mode === 'navigate';
-    const isBuild = url.pathname.startsWith('/build/');
+    const sameOrigin = url.origin === self.location.origin;
 
-    // Network-first: navegaciones (HTML) y assets compilados → siempre lo más nuevo.
-    if (isNavigation || isBuild) {
+    // Inertia (XHR con X-Inertia) y peticiones que esperan JSON → SIEMPRE red, sin caché.
+    if (req.headers.get('X-Inertia') || (req.headers.get('Accept') || '').includes('application/json')) {
+        return; // deja que el navegador lo maneje por red
+    }
+
+    // Navegaciones HTML → SIEMPRE red, sin caché (contienen auth.user embebido).
+    if (req.mode === 'navigate') {
+        return;
+    }
+
+    // Assets estáticos inmutables → cache-first (build hasheado, íconos, fuentes).
+    const isStatic = sameOrigin && (url.pathname.startsWith('/build/') || STATIC_RE.test(url.pathname));
+    if (isStatic) {
         e.respondWith(
-            fetch(req)
-                .then((res) => {
+            caches.match(req).then((cached) =>
+                cached ||
+                fetch(req).then((res) => {
                     if (res && res.ok && res.type === 'basic') {
                         const clone = res.clone();
                         caches.open(CACHE).then((c) => c.put(req, clone));
                     }
                     return res;
-                })
-                .catch(() => caches.match(req).then((c) => c || caches.match('/')))
+                }).catch(() => cached)
+            )
         );
         return;
     }
 
-    // Cache-first: íconos y estáticos estables.
-    e.respondWith(
-        caches.match(req).then((cached) =>
-            cached ||
-            fetch(req).then((res) => {
-                if (res && res.ok && res.type === 'basic') {
-                    const clone = res.clone();
-                    caches.open(CACHE).then((c) => c.put(req, clone));
-                }
-                return res;
-            }).catch(() => cached)
-        )
-    );
+    // Cualquier otra cosa → red directa, sin caché.
 });

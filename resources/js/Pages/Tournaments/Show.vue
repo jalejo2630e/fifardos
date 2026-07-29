@@ -145,6 +145,17 @@ function editMatch(match) {
 
 const color = computed(() => props.tournament.color || '#F97316');
 const isLeague = computed(() => props.tournament?.format === 'league');
+
+// Gráficas de barras de la clasificación (pestaña Estadísticas)
+function buildBars(field) {
+    const rows = (props.standings || []).map((r) => ({ name: r.player_name, value: Number(r[field]) || 0 }));
+    rows.sort((a, b) => b.value - a.value);
+    const max = Math.max(1, ...rows.map((r) => Math.abs(r.value)));
+    return rows.map((r) => ({ ...r, pct: Math.round((Math.abs(r.value) / max) * 100) }));
+}
+const chartPts = computed(() => buildBars('pts'));
+const chartGf = computed(() => buildBars('gf'));
+const chartDg = computed(() => buildBars('dg'));
 const totalMatches = computed(() => props.rounds.reduce((a, r) => a + r.length, 0));
 const playedMatches = computed(() => props.rounds.reduce((a, r) => a + r.filter(m => m.status === 'finished').length, 0));
 const progress = computed(() => totalMatches.value ? Math.round(playedMatches.value / totalMatches.value * 100) : 0);
@@ -999,51 +1010,64 @@ function getMatchGap(phaseIndex, totalPhases) {
 
                 <!-- ====== ESTADÍSTICAS ====== -->
                 <div v-if="activeTab === 'stats'" class="animate-fade-up">
-                    <div v-if="goalScorers && goalScorers.length > 0" class="ucl-card overflow-hidden">
-                        <div class="px-5 sm:px-6 py-3 border-b border-white/5">
-                            <h3 class="text-sm font-semibold text-white/80">Tabla de goleadores</h3>
+                    <div v-if="standings && standings.length" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Puntos -->
+                        <div class="ucl-card p-5 sm:p-6">
+                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">Puntos</h3>
+                            <div class="space-y-3">
+                                <div v-for="(r, i) in chartPts" :key="'pts' + i">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-white/70 truncate pr-2">{{ r.name }}</span>
+                                        <span class="text-xs font-condensed font-bold shrink-0" :style="{ color }">{{ r.value }}</span>
+                                    </div>
+                                    <div class="h-2.5 rounded-full bg-white/5 overflow-hidden">
+                                        <div class="h-full rounded-full transition-all duration-500" :style="{ width: r.pct + '%', background: color }"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="overflow-x-auto">
-                            <table class="ucl-table">
-                                <thead>
-                                    <tr class="bg-white/[0.02]">
-                                        <th class="w-10 text-center">#</th>
-                                        <th>Jugador</th>
-                                        <th class="text-center">Goles</th>
-                                        <th class="text-center hidden sm:table-cell">Partidos</th>
-                                        <th class="text-center">Promedio</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr v-for="(gs, idx) in goalScorers" :key="gs.player_id"
-                                        :style="idx === 0 ? { background: `${color}08` } : {}">
-                                        <td class="text-center font-condensed font-bold text-lg"
-                                            :style="idx === 0 ? { color: color } : {}">
-                                            {{ idx + 1 }}
-                                        </td>
-                                        <td class="font-semibold" :style="idx === 0 ? { color: color } : {}">
-                                            {{ gs.player_name }}
-                                        </td>
-                                        <td class="text-center font-condensed font-bold text-lg sm:text-xl"
-                                            :style="idx === 0 ? { color: color } : {}">
-                                            {{ gs.goals }}
-                                        </td>
-                                        <td class="text-center text-white/40 hidden sm:table-cell">{{ gs.matches }}</td>
-                                        <td class="text-center font-semibold font-condensed" :style="idx === 0 ? { color: color } : {}">
-                                            {{ gs.average }}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <!-- Goles a favor -->
+                        <div class="ucl-card p-5 sm:p-6">
+                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">Goles a favor</h3>
+                            <div class="space-y-3">
+                                <div v-for="(r, i) in chartGf" :key="'gf' + i">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-white/70 truncate pr-2">{{ r.name }}</span>
+                                        <span class="text-xs font-condensed font-bold text-emerald-400 shrink-0">{{ r.value }}</span>
+                                    </div>
+                                    <div class="h-2.5 rounded-full bg-white/5 overflow-hidden">
+                                        <div class="h-full rounded-full bg-emerald-400/80 transition-all duration-500" :style="{ width: r.pct + '%' }"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Diferencia de gol -->
+                        <div class="ucl-card p-5 sm:p-6">
+                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">Diferencia de gol</h3>
+                            <div class="space-y-3">
+                                <div v-for="(r, i) in chartDg" :key="'dg' + i">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs text-white/70 truncate pr-2">{{ r.name }}</span>
+                                        <span class="text-xs font-condensed font-bold shrink-0"
+                                              :class="r.value > 0 ? 'text-emerald-400' : r.value < 0 ? 'text-red-400' : 'text-white/40'">
+                                            {{ r.value > 0 ? '+' : '' }}{{ r.value }}
+                                        </span>
+                                    </div>
+                                    <div class="h-2.5 rounded-full bg-white/5 overflow-hidden">
+                                        <div class="h-full rounded-full transition-all duration-500"
+                                             :class="r.value >= 0 ? 'bg-emerald-400/80' : 'bg-red-400/80'"
+                                             :style="{ width: r.pct + '%' }"></div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div v-else class="ucl-card p-8 text-center">
                         <svg class="w-10 h-10 mx-auto mb-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
-                        <h3 class="text-sm font-bold text-white/50 mb-1 font-condensed tracking-wider uppercase">Sin datos de goleadores</h3>
-                        <p class="text-xs text-white/20 font-condensed">No se han cargado goleadores individuales en este torneo. Los datos aparecerán cuando registres goleadores al cargar resultados.</p>
+                        <h3 class="text-sm font-bold text-white/50 mb-1 font-condensed tracking-wider uppercase">Sin datos todavía</h3>
+                        <p class="text-xs text-white/20 font-condensed">Las gráficas aparecerán cuando cargues resultados de los partidos.</p>
                     </div>
                 </div>
             </div>

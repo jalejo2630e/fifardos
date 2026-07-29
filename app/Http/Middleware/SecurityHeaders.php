@@ -30,6 +30,14 @@ class SecurityHeaders
             $headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
+        // Respuestas autenticadas: nunca cachear (evita filtrar datos de un usuario a
+        // otro vía caché de navegador/proxy/service worker). Los assets estáticos
+        // (/build, íconos) se sirven fuera de este middleware, así que siguen cacheables.
+        if ($request->user()) {
+            $headers->set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+            $headers->set('Pragma', 'no-cache');
+        }
+
         return $response;
     }
 }

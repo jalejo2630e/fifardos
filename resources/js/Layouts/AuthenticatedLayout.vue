@@ -217,7 +217,7 @@ const showingNav = ref(false);
 <style scoped>
 .fd-logo {
     font-family: 'Anton', Impact, sans-serif;
-    font-size: 22px;
+    font-size: 30px;
     letter-spacing: -.5px;
     color: #f2f2f0;
     text-decoration: none;
