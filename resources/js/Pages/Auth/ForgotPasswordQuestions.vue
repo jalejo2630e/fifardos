@@ -1,7 +1,7 @@
 <script setup>
 import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
     step: { type: String, default: 'email' },
@@ -11,6 +11,15 @@ const props = defineProps({
     has_setup: { type: Boolean, default: false },
     token: { type: String, default: '' },
 });
+
+const toast = ref(null);
+let toastTimer = null;
+
+function showToast(msg) {
+    toast.value = msg;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.value = null; }, 5000);
+}
 
 const emailForm = useForm({ email: '' });
 
@@ -27,19 +36,47 @@ const resetForm = useForm({
 });
 
 function submitEmail() {
+    if (!emailForm.email.trim()) {
+        showToast('Ingresá tu correo electrónico para continuar.');
+        return;
+    }
     router.post(route('security-questions.recover.verify-email'), emailForm.data());
 }
 
 function submitAnswers() {
+    const empty = answerForm.answers.some(a => !a.trim());
+    if (empty) {
+        showToast('Respondé todas las preguntas antes de verificar.');
+        return;
+    }
     answerForm.email = props.user_email;
     router.post(route('security-questions.recover.verify-answers'), answerForm.data());
 }
 
 function submitReset() {
+    if (!resetForm.password || resetForm.password.length < 4) {
+        showToast('La contraseña debe tener al menos 4 caracteres.');
+        return;
+    }
+    if (resetForm.password !== resetForm.password_confirmation) {
+        showToast('Las contraseñas no coinciden.');
+        return;
+    }
     resetForm.email = props.user_email;
     resetForm.token = props.token;
     router.post(route('security-questions.recover.reset'), resetForm.data());
 }
+
+// Watch for backend errors and show them as toast
+watch(() => emailForm.errors.email, (val) => {
+    if (val) showToast(val);
+});
+watch(() => answerForm.errors.answers, (val) => {
+    if (val) showToast(val);
+});
+watch(() => resetForm.errors.password, (val) => {
+    if (val) showToast(val);
+});
 </script>
 
 <template>
@@ -58,7 +95,6 @@ function submitReset() {
                     <label for="recover-email" class="block text-sm font-medium text-white/70 mb-1.5">Correo electrónico</label>
                     <input id="recover-email" type="email" v-model="emailForm.email"
                            class="ucl-input" placeholder="tu@email.com" required />
-                    <p v-if="emailForm.errors.email" class="text-red-400 text-xs mt-1.5">{{ emailForm.errors.email }}</p>
                 </div>
                 <button type="submit" :disabled="emailForm.processing"
                         class="ucl-btn-primary w-full justify-center">
@@ -84,7 +120,6 @@ function submitReset() {
                     <input type="text" v-model="answerForm.answers[i]"
                            class="ucl-input" placeholder="Tu respuesta" required />
                 </div>
-                <p v-if="answerForm.errors.answers" class="text-red-400 text-xs">{{ answerForm.errors.answers }}</p>
                 <button type="submit" :disabled="answerForm.processing"
                         class="ucl-btn-primary w-full justify-center">
                     Verificar respuestas
@@ -128,5 +163,23 @@ function submitReset() {
                 </p>
             </form>
         </div>
+
+        <!-- Floating toast -->
+        <Teleport to="body">
+            <Transition name="toast">
+                <div v-if="toast"
+                     class="fixed top-20 left-1/2 -translate-x-1/2 z-[70] px-5 py-3 rounded-xl shadow-2xl text-sm font-medium text-center max-w-sm"
+                     style="background: #ff8a3d; color: #1a0a03;">
+                    {{ toast }}
+                </div>
+            </Transition>
+        </Teleport>
     </GuestLayout>
 </template>
+
+<style scoped>
+.toast-enter-active { transition: all 0.25s ease-out; }
+.toast-leave-active { transition: all 0.2s ease-in; }
+.toast-enter-from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+.toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+</style>

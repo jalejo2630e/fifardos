@@ -10,6 +10,14 @@ const props = defineProps({
 
 const step = ref(1);
 const selected = ref([-1, -1, -1]);
+const toast = ref(null);
+let toastTimer = null;
+
+function showToast(msg) {
+    toast.value = msg;
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { toast.value = null; }, 4000);
+}
 
 const form = useForm({
     questions: [
@@ -34,6 +42,11 @@ const canProceed = computed(() => {
 });
 
 function submit() {
+    const empty = form.questions.some(q => !q.question || !q.answer.trim());
+    if (empty) {
+        showToast('Completá todas las preguntas y respuestas antes de guardar.');
+        return;
+    }
     router.post(route('security-questions.setup.store'), form.data());
 }
 </script>
@@ -65,8 +78,6 @@ function submit() {
                        class="ucl-input text-sm py-2" placeholder="Tu respuesta" minlength="2" maxlength="100" required />
             </div>
 
-            <p v-if="form.errors.questions" class="text-red-400 text-xs">{{ form.errors.questions }}</p>
-
             <button type="submit" :disabled="form.processing || !canProceed"
                     class="ucl-btn-primary w-full justify-center">
                 {{ is_required ? 'Guardar y continuar' : 'Guardar preguntas' }}
@@ -78,5 +89,23 @@ function submit() {
                 </a>
             </p>
         </form>
+
+        <!-- Floating toast -->
+        <Teleport to="body">
+            <Transition name="toast">
+                <div v-if="toast"
+                     class="fixed top-20 left-1/2 -translate-x-1/2 z-[70] px-5 py-3 rounded-xl shadow-2xl text-sm font-medium text-center max-w-sm"
+                     style="background: #ff8a3d; color: #1a0a03;">
+                    {{ toast }}
+                </div>
+            </Transition>
+        </Teleport>
     </GuestLayout>
 </template>
+
+<style scoped>
+.toast-enter-active { transition: all 0.25s ease-out; }
+.toast-leave-active { transition: all 0.2s ease-in; }
+.toast-enter-from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+.toast-leave-to { opacity: 0; transform: translateX(-50%) translateY(-8px); }
+</style>
