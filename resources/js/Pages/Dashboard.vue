@@ -111,7 +111,9 @@ const mvpScore = computed(() => {
             <!-- CENTER COLUMN -->
             <main class="dash-center">
                 <div class="center-header">
-                    <h1 class="page-title">Actividad del torneo</h1>
+                    <Link :href="route('tournaments.index')" class="page-title-link">
+                        <h1 class="page-title">Actividad del torneo</h1>
+                    </Link>
                 </div>
 
                 <div class="tabs-row">
@@ -189,7 +191,9 @@ const mvpScore = computed(() => {
             <aside class="dash-right">
                 <div class="right-card">
                     <div class="right-card-header">
-                        <span class="right-card-title">Torneos por finalizar</span>
+                        <Link :href="route('tournaments.index')" class="right-card-title-link">
+                            <span class="right-card-title">Torneos por finalizar</span>
+                        </Link>
                     </div>
                     <div class="right-card-body">
                         <TournamentEndingCard v-for="t in sortedTournaments" :key="t.id" :tournament="t" />
@@ -390,6 +394,14 @@ const mvpScore = computed(() => {
 .center-header {
     margin-bottom: 2px;
 }
+.page-title-link {
+    text-decoration: none;
+    display: inline-block;
+    transition: opacity 150ms ease;
+}
+.page-title-link:hover {
+    opacity: 0.75;
+}
 .page-title {
     font-size: 20px;
     font-weight: 700;
@@ -540,6 +552,13 @@ const mvpScore = computed(() => {
 .right-card-header {
     padding: 10px 12px;
     border-bottom: 1px solid var(--card-border, #343d54);
+}
+.right-card-title-link {
+    text-decoration: none;
+    transition: opacity 150ms ease;
+}
+.right-card-title-link:hover {
+    opacity: 0.75;
 }
 .right-card-title {
     font-size: 11px;

@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/jugadores/{player}', [App\Http\Controllers\PlayerController::class, 'show'])->name('players.show');
 
+    Route::get('/tournaments', [TournamentController::class, 'index'])->name('tournaments.index');
     Route::get('/tournaments/create', [TournamentController::class, 'create'])->name('tournaments.create');
     Route::post('/tournaments', [TournamentController::class, 'store'])->name('tournaments.store');
     Route::get('/tournaments/{tournament}', [TournamentController::class, 'show'])->name('tournaments.show');
