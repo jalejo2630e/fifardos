@@ -122,7 +122,9 @@ Route::get('/sitemap.xml', function () {
 })->name('sitemap');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+    // El dashboard fue retirado: al entrar se va directo a Torneos.
+    // Se mantiene el nombre 'dashboard' para que los redirects de auth sigan funcionando.
+    Route::redirect('/dashboard', '/tournaments')->name('dashboard');
 
     Route::get('/analitica', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics');
 

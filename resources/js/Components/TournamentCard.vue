@@ -14,6 +14,16 @@ const totalMatches = computed(() => props.tournament.matches_count || 0);
 const leaderPts = computed(() => props.tournament.leader?.pts || 0);
 const color = computed(() => props.tournament.color || '#F97316');
 
+const estimatedMinutes = computed(() => props.tournament.estimated_minutes || 0);
+const durationText = computed(() => {
+    const min = estimatedMinutes.value;
+    if (!min) return null;
+    const h = Math.floor(min / 60);
+    const mm = min % 60;
+    if (h === 0) return `${mm} min`;
+    return mm === 0 ? `${h} h` : `${h} h ${mm} min`;
+});
+
 const animatedPlayed = useCountUp(playedCount);
 const animatedTotal = useCountUp(totalMatches);
 const animatedLeaderPts = useCountUp(leaderPts);
@@ -82,6 +92,12 @@ const animatedLeaderPts = useCountUp(leaderPts);
                             <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                         {{ totalMatches }} partidos
+                    </span>
+                    <span v-if="durationText" class="flex items-center gap-1.5" title="Duración estimada">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <circle cx="12" cy="12" r="9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
+                        </svg>
+                        ~{{ durationText }}
                     </span>
                 </div>
                 <svg class="w-4 h-4 text-white/20 transition-all duration-200"

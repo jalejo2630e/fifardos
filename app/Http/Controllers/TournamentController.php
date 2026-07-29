@@ -44,6 +44,11 @@ class TournamentController extends Controller
             ->map(function ($tournament) {
                 $arr = $tournament->toArray();
                 unset($arr['players'], $arr['matches']);
+                $arr['estimated_minutes'] = Tournament::estimateMinutes(
+                    $tournament->players_count,
+                    $tournament->consoles_count,
+                    $tournament->minutes_per_match ?? 6,
+                );
                 $arr['leader'] = null;
                 if ($tournament->matches_played > 0) {
                     $standings = app(StandingsService::class)->calculate($tournament);
@@ -70,6 +75,7 @@ class TournamentController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'consoles_count' => 'required|integer|min:1|max:20',
+            'minutes_per_match' => 'nullable|integer|min:1|max:60',
             'players' => 'required|array|min:2',
             'players.*' => 'required|string|max:255|distinct',
             'reminder_at' => 'nullable|date|after:now',
@@ -85,6 +91,8 @@ class TournamentController extends Controller
             $validated['consoles_count'],
             $validated['players'],
         );
+
+        $tournament->update(['minutes_per_match' => $validated['minutes_per_match'] ?? 6]);
 
         if (!empty($validated['reminder_at'])) {
             $tournament->update([
@@ -191,6 +199,11 @@ class TournamentController extends Controller
             'groupAllPlayed' => $groupAllPlayed,
             'phases' => $phases,
             'goalScorers' => $goalScorersData,
+            'estimatedMinutes' => Tournament::estimateMinutes(
+                $tournament->players->count(),
+                $tournament->consoles_count,
+                $tournament->minutes_per_match ?? 6,
+            ),
         ]);
     }
 

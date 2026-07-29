@@ -6,6 +6,7 @@ import { ref, computed } from 'vue';
 const form = useForm({
     name: '',
     consoles_count: 1,
+    minutes_per_match: 6,
     players: [],
     reminder_at: '',
     notify_email: false,
@@ -13,6 +14,31 @@ const form = useForm({
 
 const newPlayer = ref('');
 const step = ref(1);
+
+// Estimador de duración: grupos (todos contra todos) + eliminatorias, en paralelo por TV
+const estimate = computed(() => {
+    const p = form.players.length;
+    const tv = Math.max(1, form.consoles_count);
+    const m = Math.max(1, form.minutes_per_match);
+    if (p < 2) return null;
+    const group = (p * (p - 1)) / 2;
+    let top = p <= 4 ? 4 : (p <= 8 ? 8 : 16);
+    top = Math.min(top, p);
+    top = Math.pow(2, Math.floor(Math.log2(top)));
+    if (top < 2) top = 2;
+    const knockout = top >= 4 ? top : 1;
+    const total = group + knockout;
+    const slots = Math.ceil(total / tv);
+    return { group, knockout, total, minutes: slots * m, tv, m };
+});
+
+function fmtDuration(min) {
+    if (!min || min <= 0) return '—';
+    const h = Math.floor(min / 60);
+    const mm = min % 60;
+    if (h === 0) return `${mm} min`;
+    return mm === 0 ? `${h} h` : `${h} h ${mm} min`;
+}
 
 const minReminder = computed(() => {
     const d = new Date();
@@ -157,6 +183,26 @@ const canNext = computed(() => {
                                     +{{ form.consoles_count - 12 }}
                                 </div>
                             </div>
+
+                            <!-- Minutos por partido -->
+                            <div class="pt-5 border-t border-white/5">
+                                <div class="text-center mb-3">
+                                    <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40">
+                                        Minutos por partido
+                                    </label>
+                                    <p class="text-xs text-white/20 mt-1">Duración de cada partido</p>
+                                </div>
+                                <div class="flex justify-center flex-wrap gap-2">
+                                    <button v-for="m in [4, 5, 6, 8, 10, 12]" :key="m" type="button"
+                                            @click="form.minutes_per_match = m"
+                                            class="px-4 py-2 rounded-xl font-condensed font-bold text-sm border transition-all"
+                                            :class="form.minutes_per_match === m
+                                                ? 'bg-elite-secondary/15 border-elite-secondary/40 text-elite-secondary'
+                                                : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:bg-white/10'">
+                                        {{ m }} min
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -214,6 +260,24 @@ const canNext = computed(() => {
                             </p>
 
                             <p v-if="form.errors.players" class="text-sm text-red-400 text-center">{{ form.errors.players }}</p>
+
+                            <!-- Simulador de duración -->
+                            <div v-if="estimate" class="rounded-2xl border border-elite-secondary/25 bg-elite-secondary/[0.06] p-4 sm:p-5">
+                                <div class="flex items-center justify-between gap-3">
+                                    <div class="flex items-center gap-2.5">
+                                        <svg class="w-5 h-5 text-elite-secondary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                            <circle cx="12" cy="12" r="9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
+                                        </svg>
+                                        <span class="font-condensed text-sm tracking-[0.1em] uppercase text-white/50">Duración estimada</span>
+                                    </div>
+                                    <span class="font-condensed font-bold text-2xl sm:text-3xl text-elite-secondary leading-none">≈ {{ fmtDuration(estimate.minutes) }}</span>
+                                </div>
+                                <p class="text-xs text-white/30 mt-3 leading-relaxed">
+                                    {{ estimate.total }} partidos ({{ estimate.group }} de grupos + {{ estimate.knockout }} de eliminatorias) ·
+                                    {{ estimate.tv }} {{ estimate.tv === 1 ? 'TV/cancha' : 'TVs/canchas' }} en paralelo · {{ estimate.m }} min por partido.
+                                </p>
+                                <p class="text-[11px] text-white/20 mt-1">Estimado aproximado, sin contar descansos entre partidos.</p>
+                            </div>
 
                             <!-- Recordatorio por email (opcional) -->
                             <div class="pt-5 mt-1 border-t border-white/5 space-y-3">

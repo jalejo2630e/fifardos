@@ -14,7 +14,16 @@ const props = defineProps({
     groupAllPlayed: Boolean,
     phases: Array,
     goalScorers: Array,
+    estimatedMinutes: { type: Number, default: 0 },
 });
+
+function fmtDuration(min) {
+    if (!min || min <= 0) return '—';
+    const h = Math.floor(min / 60);
+    const mm = min % 60;
+    if (h === 0) return `${mm} min`;
+    return mm === 0 ? `${h} h` : `${h} h ${mm} min`;
+}
 
 const activeTab = ref('matches');
 const localRounds = ref([]);
@@ -253,12 +262,17 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <h1 class="ucl-title-lg truncate" :style="{ color: 'var(--t-color)' }">{{ tournament.name }}</h1>
                         <StatusBadge :status="tournament.status" />
                     </div>
-                    <div class="flex items-center gap-3 mt-1.5 text-xs sm:text-sm text-white/30">
+                    <div class="flex items-center gap-3 mt-1.5 text-xs sm:text-sm text-white/30 flex-wrap">
                         <span>{{ tournament.players.length }} JUGADORES</span>
                         <span class="w-1 h-1 rounded-full bg-white/10" />
                         <span>{{ tournament.consoles_count }} TV</span>
                         <span class="w-1 h-1 rounded-full bg-white/10" />
                         <span>{{ totalMatches }} PARTIDOS</span>
+                        <span class="w-1 h-1 rounded-full bg-white/10" />
+                        <span class="inline-flex items-center gap-1 text-elite-secondary/80">
+                            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2"/></svg>
+                            ~{{ fmtDuration(estimatedMinutes) }}
+                        </span>
                     </div>
                 </div>
                 <div class="flex gap-2">
