@@ -12,12 +12,15 @@ const App = {
 
         onMounted(async () => {
             try {
-                const [tRes, sRes] = await Promise.all([
-                    fetch(`${API}/api/tournaments`),
-                    fetch(`${API}/api/top-scorers`),
-                ]);
-                tournaments.value = (await tRes.json()).data || [];
-                topScorers.value = (await sRes.json()).data || [];
+                const tRes = await fetch(`${API}/api/agent/tournaments`);
+                const tData = await tRes.json();
+                tournaments.value = tData.data || tData || [];
+                if (tournaments.value.length > 0) {
+                    const latestId = tournaments.value[0].id;
+                    const sRes = await fetch(`${API}/api/agent/tournaments/${latestId}/top-scorer`);
+                    const sData = await sRes.json();
+                    topScorers.value = sData.data || sData || [];
+                }
             } catch {}
             loading.value = false;
         });
