@@ -194,6 +194,10 @@ onBeforeUnmount(() => {
 
         <!-- HERO -->
         <section class="hero">
+            <video class="hero-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+                <source src="/header.mp4" type="video/mp4" />
+            </video>
+            <div class="hero-video-overlay" aria-hidden="true"></div>
             <div ref="glowRef" class="glow glow-hero" aria-hidden="true"></div>
             <div class="wrap hero-grid">
                 <div class="hero-copy">
@@ -434,6 +438,9 @@ onBeforeUnmount(() => {
 .hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; padding: 76px 24px 40px; }
 .glow { position: absolute; pointer-events: none; z-index: 0; }
 .glow-hero { width: 620px; height: 620px; top: -120px; left: -160px; background: radial-gradient(circle, rgba(255, 95, 0, .16), transparent 62%); }
+.hero-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; opacity: .32; pointer-events: none; }
+.hero-video-overlay { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(8,8,10,.72), rgba(8,8,10,.62) 45%, var(--bg-base) 100%); }
 .hero-copy { position: relative; z-index: 1; }
 .badge { display: inline-flex; align-items: center; gap: 8px; border: 1px solid rgba(255, 95, 0, .45); color: var(--accent-soft); font-weight: 700; font-size: 12px; letter-spacing: .18em; text-transform: uppercase; padding: 7px 13px; margin-bottom: 26px; }
 .hero h1 { font-family: var(--f-anton); font-size: 84px; line-height: .89; letter-spacing: -1.5px; text-transform: uppercase; margin: 0 0 22px; }
@@ -598,5 +605,6 @@ onBeforeUnmount(() => {
     [data-reveal] { opacity: 1; transform: none; transition: none; }
     .anim, .anim-card { opacity: 1; animation: none; }
     .dot-orange, .dot-lime, .ticker-track { animation: none !important; }
+    .hero-video { display: none; }
 }
 </style>
