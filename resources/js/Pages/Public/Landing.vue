@@ -63,6 +63,8 @@ const glowRef = ref(null);
 const cardRef = ref(null);
 const progressRef = ref(null);
 const heroSeconds = ref(0);
+const showMcp = ref(false);
+const mcpTab = ref('claude');
 
 let io = null, tickerIo = null, revealFallback = null, rafId = null, ticking = false;
 const reduceMotion = typeof window !== 'undefined'
@@ -361,11 +363,78 @@ onBeforeUnmount(() => {
             <a href="#top" class="logo foot-logo">FIFAR<span>DOS</span></a>
             <p class="foot-note">Hecho por fanáticos, no por EA. FIFA y EA Sports FC son marcas de sus dueños.</p>
             <div class="foot-links">
+                <button type="button" class="foot-mcp" @click="showMcp = true">
+                    <span class="mcp-dot"></span> Integración MCP
+                </button>
                 <a href="#">X / Twitter</a>
                 <a href="#">Instagram</a>
                 <a href="#">Contacto</a>
             </div>
         </footer>
+
+        <!-- MODAL: Integración MCP -->
+        <Teleport to="body">
+            <div v-if="showMcp" class="mcp-overlay" @click.self="showMcp = false">
+                <div class="mcp-modal">
+                    <div class="mcp-accent"></div>
+                    <button class="mcp-close" @click="showMcp = false" aria-label="Cerrar">✕</button>
+                    <div class="mcp-body">
+                        <span class="mcp-eyebrow">MCP · Model Context Protocol</span>
+                        <h3 class="mcp-title">Conectá FIFARDOS a tu IA</h3>
+                        <p class="mcp-lead">
+                            Pedile a <strong>Claude</strong>, <strong>ChatGPT</strong> o <strong>Gemini</strong> que consulte tus
+                            torneos, tablas y goleadores — o que <strong>arme un torneo por vos</strong> — vía MCP.
+                        </p>
+
+                        <div class="mcp-steps">
+                            <span>1 · Generá un token en <b>API tokens</b> dentro de la app.</span>
+                            <span>2 · Agregá el servidor MCP a tu asistente (config abajo).</span>
+                            <span>3 · Listo: pedile “armame un torneo con Diego, Juan y Nico”.</span>
+                        </div>
+
+                        <div class="mcp-tabs">
+                            <button :class="{ active: mcpTab === 'claude' }" @click="mcpTab = 'claude'">Claude</button>
+                            <button :class="{ active: mcpTab === 'gpt' }" @click="mcpTab = 'gpt'">ChatGPT</button>
+                            <button :class="{ active: mcpTab === 'gemini' }" @click="mcpTab = 'gemini'">Gemini</button>
+                        </div>
+
+                        <div v-if="mcpTab === 'claude'" class="mcp-pane">
+                            <p class="mcp-note">Claude Desktop / Cursor / Copilot — agregá a la config de MCP:</p>
+                            <pre class="mcp-code">{
+  "mcpServers": {
+    "fifardos": {
+      "command": "node",
+      "args": ["/ruta/al/proyecto/mcp/index.js"],
+      "env": {
+        "FIFARDOS_BASE_URL": "https://fifardos.com",
+        "FIFARDOS_TOKEN": "1|tu_token"
+      }
+    }
+  }
+}</pre>
+                        </div>
+                        <div v-else-if="mcpTab === 'gpt'" class="mcp-pane">
+                            <p class="mcp-note">ChatGPT admite conectores MCP por HTTP. Exponé el servidor con un puente:</p>
+                            <pre class="mcp-code">npx -y supergateway \
+  --stdio "node /ruta/al/proyecto/mcp/index.js" \
+  --port 8787
+# Registrá http://localhost:8787/sse como conector MCP</pre>
+                        </div>
+                        <div v-else class="mcp-pane">
+                            <p class="mcp-note">Gemini aún no tiene MCP nativo. Usá la API de agentes de FIFARDOS (o un puente MCP):</p>
+                            <pre class="mcp-code">GET  https://fifardos.com/api/agent/schema
+Authorization: Bearer 1|tu_token
+
+# El schema describe todas las herramientas para el modelo</pre>
+                        </div>
+
+                        <p class="mcp-tools">
+                            Herramientas: listar torneos · tabla de posiciones · goleadores · partidos · datos de jugador · <b>crear torneo</b>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </div>
 </template>
 
@@ -548,9 +617,12 @@ onBeforeUnmount(() => {
 .foot { background: var(--bg-alt); border-top: 1px solid var(--hair); padding: 30px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
 .foot-logo { font-size: 18px; }
 .foot-note { color: var(--tdd); font-size: 13px; margin: 0; }
-.foot-links { margin-left: auto; display: flex; gap: 22px; }
+.foot-links { margin-left: auto; display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
 .foot-links a { color: var(--tm); text-decoration: none; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; transition: color .15s ease; }
 .foot-links a:hover { color: var(--accent); }
+.foot-mcp { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; background: none; border: 1px solid rgba(255,95,0,.35); color: var(--accent-soft); font-family: var(--f-body); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; padding: 7px 12px; transition: border-color .2s, background .2s; }
+.foot-mcp:hover { border-color: var(--accent); background: rgba(255,95,0,.08); }
+.mcp-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
 
 /* Scroll reveal */
 [data-reveal] { opacity: 0; transform: translateY(24px); transition: opacity .6s cubic-bezier(.22,.61,.36,1), transform .6s cubic-bezier(.22,.61,.36,1); transition-delay: var(--reveal-delay, 0ms); will-change: opacity, transform; }
@@ -607,4 +679,29 @@ onBeforeUnmount(() => {
     .dot-orange, .dot-lime, .ticker-track { animation: none !important; }
     .hero-video { display: none; }
 }
+</style>
+
+<style>
+/* Modal MCP (teleportado a body → estilos globales) */
+.mcp-overlay { position: fixed; inset: 0; z-index: 90; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(0,0,0,.78); backdrop-filter: blur(6px); }
+.mcp-modal { position: relative; width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; background: #0e0e11; border: 1px solid rgba(255,255,255,.1); font-family: 'Chakra Petch', system-ui, sans-serif; color: #f2f2f0; }
+.mcp-accent { height: 4px; background: linear-gradient(90deg, #ff5f00, transparent); }
+.mcp-close { position: absolute; top: 12px; right: 12px; background: none; border: none; color: #8f8f8b; font-size: 16px; cursor: pointer; padding: 6px; line-height: 1; }
+.mcp-close:hover { color: #fff; }
+.mcp-body { padding: 26px 28px 28px; }
+.mcp-eyebrow { font-family: 'Anton', sans-serif; font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: #b6ff2e; }
+.mcp-title { font-family: 'Anton', sans-serif; text-transform: uppercase; font-size: 30px; letter-spacing: -.5px; margin: 8px 0 10px; }
+.mcp-lead { color: #a8a8a3; font-size: 15px; line-height: 1.6; margin: 0 0 18px; }
+.mcp-lead strong { color: #f2f2f0; }
+.mcp-steps { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+.mcp-steps span { font-size: 13.5px; color: #8f8f8b; }
+.mcp-steps b { color: #ff8a3d; }
+.mcp-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.mcp-tabs button { flex: 1; cursor: pointer; background: #131317; border: 1px solid rgba(255,255,255,.1); color: #a8a8a3; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 14px; padding: 9px; transition: all .15s ease; }
+.mcp-tabs button:hover { color: #fff; }
+.mcp-tabs button.active { background: rgba(255,95,0,.12); border-color: rgba(255,95,0,.5); color: #ff5f00; }
+.mcp-note { font-size: 13px; color: #8f8f8b; margin: 0 0 8px; }
+.mcp-code { background: #08080a; border: 1px solid rgba(255,255,255,.08); padding: 14px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.55; color: #d4d4d0; white-space: pre; overflow-x: auto; margin: 0; }
+.mcp-tools { margin: 16px 0 0; font-size: 13px; color: #8f8f8b; }
+.mcp-tools b { color: #ff8a3d; }
 </style>

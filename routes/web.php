@@ -35,7 +35,7 @@ Route::get('/', function () {
         ],
         'seo' => [
             'title' => 'FIFARDOS — Organiza torneos de fútbol con tus amigos',
-            'description' => 'Crea torneos de fútbol en segundos —de videojuego (EA Sports FC/FIFA, eFootball) o de fútbol real (fulbito, F5, F7, F11)—: arma los grupos, carga los resultados, mira la tabla en vivo, genera las eliminatorias automáticamente y descubre al goleador. Gratis y sin instalar nada.',
+            'description' => 'Crea torneos de fútbol en segundos —de videojuego (EA Sports FC/FIFA, eFootball) o de fútbol real (fulbito, F5, F7, F11)—: grupos, resultados, tabla en vivo, eliminatorias automáticas y goleador. Gratis. Con integración MCP para conectar Claude, ChatGPT o Gemini y crear torneos desde el chat.',
             'type' => 'website',
             'jsonld' => [
                 [
