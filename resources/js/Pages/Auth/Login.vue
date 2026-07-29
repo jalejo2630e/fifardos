@@ -1,12 +1,13 @@
 <script setup>
 import { Head, Link, useForm } from '@inertiajs/vue3';
 
-defineProps({
+const props = defineProps({
     canResetPassword: { type: Boolean },
     status: { type: String },
+    captcha: { type: Object, default: () => ({ a: 0, b: 0 }) },
 });
 
-const form = useForm({ email: '', password: '', remember: false });
+const form = useForm({ email: '', password: '', remember: false, captcha: '', website: '' });
 
 const submit = () => {
     form.post(route('login'), { onFinish: () => form.reset('password') });
@@ -37,6 +38,14 @@ const submit = () => {
                 <input id="password" type="password" v-model="form.password" required autocomplete="current-password"
                        class="inp" :class="{ err: form.errors.password }" placeholder="••••••••" />
                 <p v-if="form.errors.password" class="msg">{{ form.errors.password }}</p>
+
+                <!-- Honeypot anti-bots (oculto para humanos) -->
+                <input type="text" v-model="form.website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+                <label class="lbl mt" for="captcha">Verificación · ¿Cuánto es {{ captcha.a }} + {{ captcha.b }}?</label>
+                <input id="captcha" type="text" inputmode="numeric" v-model="form.captcha" required autocomplete="off"
+                       class="inp" :class="{ err: form.errors.captcha }" placeholder="Resultado" />
+                <p v-if="form.errors.captcha" class="msg">{{ form.errors.captcha }}</p>
 
                 <div class="row">
                     <label class="chk">
@@ -100,6 +109,7 @@ h1 { font-family: var(--f-anton); text-transform: uppercase; font-size: 40px; li
 .inp:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,95,0,.15); }
 .inp.err { border-color: #ff5a5a; }
 .msg { color: #ff7a7a; font-size: 13px; margin: 6px 0 0; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
 .row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin: 20px 0; }
 .chk { display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--ts); font-size: 14px; }

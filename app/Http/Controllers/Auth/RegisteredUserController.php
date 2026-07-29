@@ -18,7 +18,9 @@ class RegisteredUserController extends Controller
 {
     public function create(): Response
     {
-        return Inertia::render('Auth/Register');
+        return Inertia::render('Auth/Register', [
+            'captcha' => \App\Support\HumanChallenge::make(),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse

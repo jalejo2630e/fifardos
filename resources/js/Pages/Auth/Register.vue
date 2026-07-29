@@ -4,8 +4,12 @@ import { ref } from 'vue';
 
 const AVATARS = ['⚽', '🥅', '🏆', '⭐', '🔥', '💥', '👑', '🦁', '🐺', '🦅', '🐉', '⚡', '💀', '🎯', '🚀', '👹'];
 
+const props = defineProps({
+    captcha: { type: Object, default: () => ({ a: 0, b: 0 }) },
+});
+
 const form = useForm({
-    name: '', email: '', password: '', password_confirmation: '', avatar: '',
+    name: '', email: '', password: '', password_confirmation: '', avatar: '', captcha: '', website: '',
 });
 
 const avatarFile = ref(null);
@@ -83,6 +87,14 @@ const submit = () => {
                 </div>
                 <p v-if="form.errors.avatar" class="msg">{{ form.errors.avatar }}</p>
 
+                <!-- Honeypot anti-bots (oculto para humanos) -->
+                <input type="text" v-model="form.website" class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+                <label class="lbl mt" for="captcha">Verificación · ¿Cuánto es {{ captcha.a }} + {{ captcha.b }}?</label>
+                <input id="captcha" type="text" inputmode="numeric" v-model="form.captcha" required autocomplete="off"
+                       class="inp" :class="{ err: form.errors.captcha }" placeholder="Resultado" />
+                <p v-if="form.errors.captcha" class="msg">{{ form.errors.captcha }}</p>
+
                 <button type="submit" class="btn" :disabled="form.processing">
                     <svg v-if="form.processing" class="spin" viewBox="0 0 24 24" fill="none">
                         <circle class="o25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
@@ -135,6 +147,7 @@ h1 { font-family: var(--f-anton); text-transform: uppercase; font-size: 38px; li
 .inp:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,95,0,.15); }
 .inp.err { border-color: #ff5a5a; }
 .msg { color: #ff7a7a; font-size: 13px; margin: 6px 0 0; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 .avatar-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
