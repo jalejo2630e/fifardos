@@ -110,6 +110,9 @@ class GeminiChatController extends Controller
             if (!$config || !$config->is_active) return null;
 
             $prompt = $config->system_prompt ?? 'Eres un asistente de la FIFARDOS ELITE LEAGUE. Respondes en español de forma breve y amigable.';
+            if ($config->forbidden_topics) {
+                $prompt .= "\n\nTEMAS PROHIBIDOS: No debes hablar sobre: {$config->forbidden_topics}.";
+            }
 
             $contents = $history;
             $contents[] = ['role' => 'user', 'parts' => [['text' => $message]]];
@@ -119,8 +122,8 @@ class GeminiChatController extends Controller
                 'contents' => $contents,
                 'tools' => [['functionDeclarations' => $this->tools]],
                 'generationConfig' => [
-                    'maxOutputTokens' => 800,
-                    'temperature' => 0.7,
+                    'maxOutputTokens' => $config->max_tokens ?? 800,
+                    'temperature' => $config->temperature ?? 0.7,
                 ],
             ];
 
