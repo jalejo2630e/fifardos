@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GameMatch extends Model
 {
@@ -23,11 +24,17 @@ class GameMatch extends Model
         'played_at',
         'phase',
         'bracket_position',
+        'stats',
+        'penalties1',
+        'penalties2',
     ];
 
     protected $casts = [
         'status' => 'string',
         'played_at' => 'datetime',
+        'stats' => 'array',
+        'penalties1' => 'integer',
+        'penalties2' => 'integer',
     ];
 
     public function tournament(): BelongsTo
@@ -43,5 +50,10 @@ class GameMatch extends Model
     public function player2(): BelongsTo
     {
         return $this->belongsTo(Player::class, 'player2_id');
+    }
+
+    public function goalScorers(): HasMany
+    {
+        return $this->hasMany(GoalScorer::class, 'match_id');
     }
 }

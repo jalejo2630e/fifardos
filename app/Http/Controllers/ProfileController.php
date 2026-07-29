@@ -18,9 +18,14 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $sqs = $request->user()->securityQuestions()->get();
+
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
             'status' => session('status'),
+            'catalog' => \App\Helpers\SecurityQuestionCatalog::all(),
+            'securityQuestions' => $sqs->pluck('question')->values()->toArray() ?: ['', '', ''],
+            'hasSecuritySetup' => $sqs->count() === 3,
         ]);
     }
 

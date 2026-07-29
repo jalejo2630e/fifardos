@@ -176,6 +176,16 @@
         @apply shadow-ucl-input-focus bg-white/[0.12];
     }
 
+    .bracket-match .score-input {
+        @apply w-12 sm:w-14 h-12 sm:h-14 text-center text-xl sm:text-2xl font-bold
+               rounded-xl bg-white/[0.08] border-0 shadow-ucl-input text-white
+               outline-none transition-all duration-200;
+    }
+
+    .bracket-match .score-input:focus {
+        @apply shadow-ucl-input-focus bg-white/[0.12];
+    }
+
     /* === FAB Mobile === */
     .ucl-fab {
         @apply fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full shadow-ucl-glow
@@ -271,6 +281,93 @@
 
     .ucl-player.winner { @apply text-ucl-gold; }
     .ucl-player.loser { @apply text-white/40; }
+
+    /* === Bracket match card === */
+    .bracket-match {
+        @apply relative rounded-xl p-3 sm:p-4 border border-white/10
+               bg-gradient-to-br from-white/[0.06] to-white/[0.02]
+               transition-all duration-200 min-h-[90px];
+    }
+    .bracket-match:hover {
+        @apply border-white/20 from-white/[0.09] to-white/[0.03];
+    }
+    .bracket-match.finished {
+        border-color: rgba(255, 215, 0, 0.25);
+        background: linear-gradient(135deg, rgba(255,215,0,0.04), rgba(255,215,0,0.01));
+    }
+    .bracket-match.pending {
+        border: 1.5px dashed rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.02);
+    }
+    .bracket-match.empty {
+        opacity: 0.5;
+        border: 1.5px dashed rgba(255, 255, 255, 0.06);
+    }
+
+    /* === Bracket player row === */
+    .bracket-player {
+        @apply flex items-center gap-2 py-1.5;
+    }
+    .bracket-player .winner {
+        @apply font-bold text-white;
+    }
+    .bracket-player .winner::after {
+        content: '';
+    }
+    .bracket-player .loser {
+        @apply text-white/30;
+    }
+    .bracket-player .winner-indicator {
+        @apply text-ucl-gold text-xs shrink-0;
+    }
+
+    /* === Bracket VS separator === */
+    .bracket-vs {
+        @apply flex items-center justify-between py-0.5;
+    }
+
+    /* === Bracket action area === */
+    .bracket-action {
+        @apply pt-2.5 mt-1 border-t border-white/5 flex justify-center;
+    }
+
+    /* === Bracket score input === */
+    .bracket-score-input {
+        @apply w-9 h-8 text-center rounded-md border text-white text-xs font-bold
+               outline-none transition-all duration-200 placeholder:text-white/20;
+    }
+    .bracket-score-input:focus {
+        border-color: rgba(255, 95, 0, 0.6);
+        box-shadow: 0 0 12px rgba(255, 95, 0, 0.12);
+    }
+
+    /* === Bracket action buttons === */
+    .bracket-btn-edit {
+        @apply text-[10px] font-condensed font-bold uppercase tracking-wider
+               px-3 py-1.5 rounded-lg border border-white/10 text-white/30
+               bg-white/[0.04] hover:bg-white/[0.08] hover:text-white/70 hover:border-white/20
+               transition-all duration-200;
+    }
+    .bracket-btn-save {
+        @apply text-[10px] font-condensed font-bold uppercase tracking-wider
+               px-3 py-1.5 rounded-lg text-black
+               transition-all duration-200;
+        background: linear-gradient(135deg, #F97316, #c2410c);
+        box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+    }
+    .bracket-btn-save:hover {
+        box-shadow: 0 4px 16px rgba(249, 115, 22, 0.35);
+    }
+    .bracket-btn-save:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    .bracket-btn-advance {
+        @apply text-[10px] font-condensed font-bold uppercase tracking-wider
+               px-3 py-1.5 rounded-lg text-white border border-elite-secondary/50
+               bg-elite-secondary/15 hover:bg-elite-secondary/25 hover:border-elite-secondary/70
+               transition-all duration-200;
+    }
 }
 
 /* === Animations === */

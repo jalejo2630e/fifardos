@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
+import SecurityQuestionsForm from './Partials/SecurityQuestionsForm.vue';
 import { Head } from '@inertiajs/vue3';
 
 defineProps({
@@ -12,6 +13,18 @@ defineProps({
     status: {
         type: String,
     },
+    catalog: {
+        type: Array,
+        default: () => [],
+    },
+    securityQuestions: {
+        type: Array,
+        default: () => ['', '', ''],
+    },
+    hasSecuritySetup: {
+        type: Boolean,
+        default: false,
+    },
 });
 </script>
 
@@ -20,18 +33,14 @@ defineProps({
 
     <AuthenticatedLayout>
         <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800"
-            >
-                Profile
+            <h2 class="text-xl font-semibold leading-tight text-white/80">
+                Perfil
             </h2>
         </template>
 
         <div class="py-12">
             <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
-                >
+                <div class="ucl-card p-5 sm:p-6">
                     <UpdateProfileInformationForm
                         :must-verify-email="mustVerifyEmail"
                         :status="status"
@@ -39,15 +48,19 @@ defineProps({
                     />
                 </div>
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
-                >
+                <div class="ucl-card p-5 sm:p-6">
                     <UpdatePasswordForm class="max-w-xl" />
                 </div>
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
-                >
+                <div class="ucl-card p-5 sm:p-6">
+                    <SecurityQuestionsForm
+                        :catalog="catalog"
+                        :existing_questions="securityQuestions"
+                        :has_setup="hasSecuritySetup"
+                    />
+                </div>
+
+                <div class="ucl-card p-5 sm:p-6">
                     <DeleteUserForm class="max-w-xl" />
                 </div>
             </div>

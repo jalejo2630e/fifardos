@@ -16,12 +16,23 @@ Route::get('/', function () {
         $standings = app(StandingsService::class)->calculate($tournament);
     }
 
+    $totalPlayers = \App\Models\Player::count();
+    $totalMatches = \App\Models\GameMatch::count();
+    $totalUsers = \App\Models\User::count();
+    $totalVenues = \App\Models\Tournament::sum('consoles_count') ?: 16;
+
     return Inertia::render('Public/Landing', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
         'tournament' => $tournament,
         'prizes' => $tournament?->prizes->sortBy('position')->values() ?? [],
         'standings' => $standings,
+        'stats' => [
+            'teams' => $totalPlayers ?: 48,
+            'matches' => $totalMatches ?: 104,
+            'venues' => max($totalVenues, 16),
+            'fans' => $totalUsers > 1000 ? number_format($totalUsers / 1000, 1) . 'K' : ($totalUsers ?: '1.2M'),
+        ],
     ]);
 });
 
@@ -38,11 +49,16 @@ Route::get('/rules', function () {
 Route::get('/torneos/{tournament}/bracket', [App\Http\Controllers\PublicBracketController::class, 'show'])->name('tournaments.public.bracket');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/dashboard', [TournamentController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/analitica', [App\Http\Controllers\AnalyticsController::class, 'index'])->name('analytics');
+
+    Route::get('/jugadores/{player}', [App\Http\Controllers\PlayerController::class, 'show'])->name('players.show');
 
     Route::get('/tournaments/create', [TournamentController::class, 'create'])->name('tournaments.create');
     Route::post('/tournaments', [TournamentController::class, 'store'])->name('tournaments.store');
     Route::get('/tournaments/{tournament}', [TournamentController::class, 'show'])->name('tournaments.show');
+    Route::get('/tournaments/{tournament}/partidos/{match}', [App\Http\Controllers\MatchController::class, 'show'])->name('matches.show');
     Route::delete('/tournaments/{tournament}', [TournamentController::class, 'destroy'])->name('tournaments.destroy');
 
     Route::post('/tournaments/{tournament}/matches/{match}/score', [TournamentController::class, 'updateScore'])->name('matches.score.update');
@@ -59,6 +75,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/profile/seguridad', [App\Http\Controllers\SecurityQuestionController::class, 'profileForm'])->name('security-questions.profile.form');
+    Route::put('/profile/seguridad', [App\Http\Controllers\SecurityQuestionController::class, 'profileUpdate'])->name('security-questions.profile.update');
+
+    Route::get('/seguridad/configurar', [App\Http\Controllers\SecurityQuestionController::class, 'setupForm'])->name('security-questions.setup.form');
+    Route::post('/seguridad/configurar', [App\Http\Controllers\SecurityQuestionController::class, 'setupStore'])->name('security-questions.setup.store');
 
     Route::get('/admin/como-usar', function () {
         if (!auth()->user()->is_admin) abort(403);

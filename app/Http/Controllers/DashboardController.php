@@ -1,0 +1,140 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\GameMatch;
+use App\Models\Player;
+use App\Models\Tournament;
+use App\Services\StandingsService;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+
+class DashboardController extends Controller
+{
+    public function index()
+    {
+        $user = Auth::user();
+
+        // Active tournaments with progress
+        $activeTournaments = Tournament::where('user_id', $user->id)
+            ->where('status', 'in_progress')
+            ->withCount([
+                'matches',
+                'matches as matches_played' => fn($q) => $q->where('status', 'finished'),
+            ])
+            ->with(['players'])
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function ($t) {
+                $total = max($t->matches_count, 1);
+                $played = $t->matches_played;
+                $remaining = $total - $played;
+                $pct = round(($played / $total) * 100);
+
+                if ($remaining <= 1) $urgency = 'final';
+                elseif ($remaining <= 3) $urgency = 'soon';
+                elseif ($remaining <= 8) $urgency = 'normal';
+                else $urgency = 'relaxed';
+
+                return [
+                    'id' => $t->id,
+                    'name' => $t->name,
+                    'color' => $t->color,
+                    'played' => $played,
+                    'total' => $total,
+                    'pct' => $pct,
+                    'remaining' => $remaining,
+                    'urgency' => $urgency,
+                    'players_count' => $t->players->count(),
+                ];
+            });
+
+        // MVP: player with most goals across finished matches
+        $mvp = null;
+        $topScorers = Player::selectRaw('players.*, sum(COALESCE(m.score1, 0)) as total_goals, count(m.id) as matches_count')
+            ->join('matches as m', function ($j) {
+                $j->on('m.player1_id', '=', 'players.id')
+                  ->orOn('m.player2_id', '=', 'players.id');
+            })
+            ->where('m.status', 'finished')
+            ->where('players.tournament_id', function ($q) use ($user) {
+                $q->select('id')->from('tournaments')->where('user_id', $user->id)->limit(1);
+            })
+            ->groupBy('players.id')
+            ->orderBy('total_goals', 'desc')
+            ->first();
+
+        if ($topScorers) {
+            $mvp = [
+                'id' => $topScorers->id,
+                'name' => $topScorers->name,
+                'goals' => (int) $topScorers->total_goals,
+                'matches' => (int) $topScorers->matches_count,
+                'initials' => collect(explode(' ', $topScorers->name))->map(fn($w) => mb_substr($w, 0, 1))->take(2)->join(''),
+            ];
+        }
+
+        // Current/last match for live simulation
+        $currentMatch = null;
+        $lastMatch = GameMatch::with(['player1', 'player2', 'tournament'])
+            ->where('status', 'finished')
+            ->whereHas('tournament', fn($q) => $q->where('user_id', $user->id))
+            ->latest('played_at')
+            ->first();
+
+        if ($lastMatch) {
+            $currentMatch = [
+                'id' => $lastMatch->id,
+                'tournament_id' => $lastMatch->tournament_id,
+                'home' => $lastMatch->player1?->name ?? '—',
+                'away' => $lastMatch->player2?->name ?? '—',
+                'home_score' => $lastMatch->score1 ?? 0,
+                'away_score' => $lastMatch->score2 ?? 0,
+                'minute' => rand(70, 90),
+                'tournament' => $lastMatch->tournament?->name ?? '',
+            ];
+        }
+
+        // Standings for first active tournament
+        $primaryTournament = Tournament::where('user_id', $user->id)
+            ->where('status', 'in_progress')
+            ->with('matches')
+            ->first();
+
+        $standings = [];
+        if ($primaryTournament) {
+            $standings = app(StandingsService::class)->calculate($primaryTournament);
+        }
+
+        // Stats
+        $totalMatches = GameMatch::whereHas('tournament', fn($q) => $q->where('user_id', $user->id))->count();
+        $totalGoals = GameMatch::whereHas('tournament', fn($q) => $q->where('user_id', $user->id))
+            ->where('status', 'finished')
+            ->selectRaw('sum(COALESCE(score1, 0) + COALESCE(score2, 0)) as total')
+            ->value('total') ?? 0;
+
+        // Pressure intensity (fake metric based on how many close matches exist)
+        $closeMatches = GameMatch::whereHas('tournament', fn($q) => $q->where('user_id', $user->id))
+            ->where('status', 'finished')
+            ->whereRaw('ABS(COALESCE(score1, 0) - COALESCE(score2, 0)) <= 1')
+            ->count();
+        $finishedMatches = GameMatch::whereHas('tournament', fn($q) => $q->where('user_id', $user->id))
+            ->where('status', 'finished')
+            ->count();
+        $pressureIntensity = $finishedMatches > 0 ? round(($closeMatches / $finishedMatches) * 100) : 65;
+        $pressureIntensity = min(99, max(30, $pressureIntensity));
+
+        return Inertia::render('Dashboard', [
+            'activeTournaments' => $activeTournaments,
+            'mvp' => $mvp,
+            'currentMatch' => $currentMatch,
+            'standings' => $standings,
+            'stats' => [
+                'totalMatches' => $totalMatches,
+                'totalGoals' => $totalGoals,
+                'pressureIntensity' => $pressureIntensity,
+                'advanceProbability' => round(($pressureIntensity + rand(-10, 10)) / 100, 2),
+            ],
+        ]);
+    }
+}

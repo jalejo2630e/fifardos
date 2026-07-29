@@ -33,6 +33,18 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+
+    Route::get('recuperar-con-preguntas', [App\Http\Controllers\SecurityQuestionController::class, 'showRecoverForm'])
+        ->name('security-questions.recover.form');
+
+    Route::post('recuperar-con-preguntas/verificar-email', [App\Http\Controllers\SecurityQuestionController::class, 'verifyEmail'])
+        ->name('security-questions.recover.verify-email');
+
+    Route::post('recuperar-con-preguntas/verificar-respuestas', [App\Http\Controllers\SecurityQuestionController::class, 'verifyAnswers'])
+        ->name('security-questions.recover.verify-answers');
+
+    Route::post('recuperar-con-preguntas/restablecer', [App\Http\Controllers\SecurityQuestionController::class, 'resetPassword'])
+        ->name('security-questions.recover.reset');
 });
 
 Route::middleware('auth')->group(function () {
