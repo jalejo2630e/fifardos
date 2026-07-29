@@ -101,6 +101,45 @@ function closeModal() {
     showTokenModal.value = false;
     generatedToken.value = '';
 }
+
+// Snippets de configuración MCP con el token embebido (para copiar y pegar)
+const mcpBase = computed(() => (props.baseUrl || 'https://fifardos.com').replace('/api/agent', '').replace(/\/+$/, ''));
+const mcpSnippets = computed(() => {
+    const base = mcpBase.value;
+    const tok = generatedToken.value || 'TU_TOKEN';
+    return [
+        {
+            key: 'claude',
+            label: 'Claude / Cursor / Copilot',
+            code: `{
+  "mcpServers": {
+    "fifardos": {
+      "command": "node",
+      "args": ["/ruta/al/proyecto/mcp/index.js"],
+      "env": {
+        "FIFARDOS_BASE_URL": "${base}",
+        "FIFARDOS_TOKEN": "${tok}"
+      }
+    }
+  }
+}`,
+        },
+        {
+            key: 'gpt',
+            label: 'ChatGPT (puente HTTP)',
+            code: `FIFARDOS_BASE_URL=${base} FIFARDOS_TOKEN=${tok} \\
+npx -y supergateway --stdio "node /ruta/al/proyecto/mcp/index.js" --port 8787
+# Registrá http://localhost:8787/sse como conector MCP en ChatGPT`,
+        },
+        {
+            key: 'gemini',
+            label: 'Gemini (API de agentes)',
+            code: `curl ${base}/api/agent/schema \\
+  -H "Authorization: Bearer ${tok}"
+# El schema describe todas las herramientas para el modelo`,
+        },
+    ];
+});
 </script>
 
 <template>
@@ -314,7 +353,7 @@ function closeModal() {
         <div v-if="showTokenModal"
              class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
              @click.self="closeModal">
-            <div class="w-full max-w-lg rounded-xl border border-white/10 bg-elite-dark/95 backdrop-blur-xl p-6 shadow-2xl">
+            <div class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-xl border border-white/10 bg-elite-dark/95 backdrop-blur-xl p-6 shadow-2xl">
                 <div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-4">
                     <svg class="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -337,6 +376,30 @@ function closeModal() {
                                    bg-white/5 hover:bg-white/10 transition-all duration-200">
                         Cerrar
                     </button>
+                </div>
+
+                <!-- Cómo usarlo en MCP -->
+                <div class="mt-6 pt-5 border-t border-white/10">
+                    <h4 class="text-sm font-bold text-white mb-1 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#b6ff2e]"></span>
+                        Cómo usarlo en tu IA (MCP)
+                    </h4>
+                    <p class="text-xs text-white/40 mb-4">Copiá la configuración con tu token ya incluido y pegala en tu asistente.</p>
+
+                    <div class="space-y-3">
+                        <div v-for="s in mcpSnippets" :key="s.key"
+                             class="rounded-lg border border-white/10 bg-white/[0.02] overflow-hidden">
+                            <div class="flex items-center justify-between px-3 py-2 bg-white/[0.03] border-b border-white/10">
+                                <span class="text-xs font-semibold text-white/80">{{ s.label }}</span>
+                                <button @click="copy(s.code, 'mcp-' + s.key)"
+                                        class="text-[11px] font-semibold px-3 py-1 rounded-md transition-all duration-200"
+                                        :class="copiedId === 'mcp-' + s.key ? 'bg-emerald-500/20 text-emerald-300' : 'bg-elite-secondary/20 text-elite-secondary hover:bg-elite-secondary/30'">
+                                    {{ copiedId === 'mcp-' + s.key ? '✓ Copiado' : 'Copiar código' }}
+                                </button>
+                            </div>
+                            <pre class="p-3 text-[11px] leading-relaxed font-mono text-white/70 overflow-x-auto whitespace-pre">{{ s.code }}</pre>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
