@@ -1,43 +1,58 @@
-const CACHE = 'fifardos-v1';
-const ASSETS = [
-    '/',
-    '/manifest.json',
-    '/build/assets/app-DpNRPhzq.css',
-    '/build/assets/app-CFIU-nDu.js',
-    '/build/assets/ChatBot-COChJV3l.js',
-    '/build/assets/ChatBot-BvWIeDMA.css',
-    '/build/assets/Dashboard-CsDPFieh.js',
-    '/build/assets/Dashboard-h3Kav66u.css',
-];
+// FIFARDOS service worker — network-first para contenido, cache-first para íconos.
+// Bump CACHE en cada cambio de estrategia para forzar purga del caché viejo.
+const CACHE = 'fifardos-v3';
+const PRECACHE = ['/manifest.json', '/icon-192.png', '/icon-512.png', '/favicon.ico'];
 
 self.addEventListener('install', (e) => {
-    e.waitUntil(
-        caches.open(CACHE).then((c) => c.addAll(ASSETS))
-    );
     self.skipWaiting();
+    e.waitUntil(
+        caches.open(CACHE).then((c) => c.addAll(PRECACHE).catch(() => {}))
+    );
 });
 
 self.addEventListener('activate', (e) => {
     e.waitUntil(
-        caches.keys().then((keys) =>
-            Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-        )
+        caches.keys()
+            .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+            .then(() => self.clients.claim())
     );
-    self.clients.claim();
 });
 
 self.addEventListener('fetch', (e) => {
-    if (e.request.method !== 'GET') return;
+    const req = e.request;
+    if (req.method !== 'GET') return;
+
+    const url = new URL(req.url);
+    const isNavigation = req.mode === 'navigate';
+    const isBuild = url.pathname.startsWith('/build/');
+
+    // Network-first: navegaciones (HTML) y assets compilados → siempre lo más nuevo.
+    if (isNavigation || isBuild) {
+        e.respondWith(
+            fetch(req)
+                .then((res) => {
+                    if (res && res.ok && res.type === 'basic') {
+                        const clone = res.clone();
+                        caches.open(CACHE).then((c) => c.put(req, clone));
+                    }
+                    return res;
+                })
+                .catch(() => caches.match(req).then((c) => c || caches.match('/')))
+        );
+        return;
+    }
+
+    // Cache-first: íconos y estáticos estables.
     e.respondWith(
-        caches.match(e.request).then((cached) => {
-            const fetchPromise = fetch(e.request).then((res) => {
-                if (res.ok && res.type === 'basic') {
+        caches.match(req).then((cached) =>
+            cached ||
+            fetch(req).then((res) => {
+                if (res && res.ok && res.type === 'basic') {
                     const clone = res.clone();
-                    caches.open(CACHE).then((c) => c.put(e.request, clone));
+                    caches.open(CACHE).then((c) => c.put(req, clone));
                 }
                 return res;
-            }).catch(() => cached);
-            return cached || fetchPromise;
-        })
+            }).catch(() => cached)
+        )
     );
 });

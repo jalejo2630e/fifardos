@@ -7,10 +7,18 @@ const form = useForm({
     name: '',
     consoles_count: 1,
     players: [],
+    reminder_at: '',
+    notify_email: false,
 });
 
 const newPlayer = ref('');
 const step = ref(1);
+
+const minReminder = computed(() => {
+    const d = new Date();
+    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0, 16);
+});
 
 function addPlayer() {
     const name = newPlayer.value.trim();
@@ -36,7 +44,12 @@ function prevStep() {
 
 function submit() {
     if (form.players.length < 2) return;
-    form.post(route('tournaments.store'));
+    // El input datetime-local entrega hora LOCAL sin zona; la convertimos a ISO/UTC
+    // para que el servidor (TZ UTC) la guarde y compare en el instante correcto.
+    form.transform((data) => ({
+        ...data,
+        reminder_at: data.reminder_at ? new Date(data.reminder_at).toISOString() : null,
+    })).post(route('tournaments.store'));
 }
 
 const playerCountText = computed(() => {
@@ -201,6 +214,30 @@ const canNext = computed(() => {
                             </p>
 
                             <p v-if="form.errors.players" class="text-sm text-red-400 text-center">{{ form.errors.players }}</p>
+
+                            <!-- Recordatorio por email (opcional) -->
+                            <div class="pt-5 mt-1 border-t border-white/5 space-y-3">
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-elite-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                    <label class="font-condensed text-sm tracking-[0.1em] uppercase text-white/40">
+                                        Recordatorio por email
+                                        <span class="text-white/20 normal-case tracking-normal">· opcional</span>
+                                    </label>
+                                </div>
+                                <input v-model="form.reminder_at" type="datetime-local" :min="minReminder"
+                                       class="ucl-input w-full" />
+                                <p class="text-xs text-white/25 leading-relaxed">
+                                    Te enviaremos un correo en esta fecha recordándote que tienes un torneo pendiente.
+                                </p>
+                                <label class="flex items-center gap-3 cursor-pointer select-none">
+                                    <input v-model="form.notify_email" type="checkbox"
+                                           class="w-4 h-4 rounded accent-elite-secondary bg-white/10" />
+                                    <span class="text-sm text-white/60">Enviarme un email de confirmación ahora</span>
+                                </label>
+                                <p v-if="form.errors.reminder_at" class="text-sm text-red-400">{{ form.errors.reminder_at }}</p>
+                            </div>
                         </div>
                     </div>
 

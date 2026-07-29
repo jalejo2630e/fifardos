@@ -1,0 +1,33 @@
+# FIFARDOS
+
+> FIFARDOS es una plataforma web gratuita para organizar y gestionar torneos de FIFA (EA Sports FC) entre amigos. Permite crear torneos con fase de grupos (todos contra todos) y eliminatorias, cargar los resultados de cada partido, ver la tabla de posiciones en tiempo real y seguir estadísticas como el máximo goleador.
+
+FIFARDOS está en español y funciona en navegador (computador y móvil, con soporte PWA/app). Crear y gestionar torneos es gratis.
+
+## Cómo funciona
+
+- Registra una cuenta gratuita.
+- Crea un torneo indicando nombre, número de consolas y la lista de jugadores.
+- El sistema genera automáticamente el fixture de la fase de grupos.
+- Cargas los resultados de cada partido y la tabla de posiciones se actualiza en vivo.
+- Al terminar los grupos, FIFARDOS arma las eliminatorias (octavos, cuartos, semifinales, final y tercer puesto) con los mejores clasificados y avanza a los ganadores automáticamente.
+
+## Páginas principales
+
+- [Inicio](/): qué es FIFARDOS y cómo empezar.
+- [Reglas](/rules): formatos de torneo, sistema de puntos y desempates.
+- [Inscripción de jugadores](/inscribirse): registro público de participantes.
+
+## Para agentes y asistentes de IA (MCP + API)
+
+FIFARDOS expone una API para agentes y un servidor MCP (Model Context Protocol), de modo que asistentes como Claude, ChatGPT o GitHub Copilot puedan consultar y crear torneos.
+
+- Autenticación: Bearer token (Laravel Sanctum). El usuario genera su token en la app.
+- Documento de esquema (para que un LLM descubra las herramientas): `GET /api/agent/schema`
+- Herramientas disponibles: listar torneos, tabla de posiciones, máximo goleador, partidos, datos de jugador, búsqueda narrativa y **crear un torneo nuevo**.
+
+Un usuario puede pedirle a su asistente de IA algo como: "Ármame un torneo de FIFA llamado 'Copa Sábado' con Diego, Julián, Javier y Sebas en 2 consolas" y el asistente lo crea vía el servidor MCP de FIFARDOS.
+
+## Contacto
+
+- Sitio: /

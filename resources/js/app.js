@@ -9,23 +9,25 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
+import Toaster from '@/Components/Toast/Toaster.vue';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'FIFARDOS';
 
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
+    title: (title) => (title ? `${title} · ${appName}` : appName),
     resolve: (name) =>
         resolvePageComponent(
             `./Pages/${name}.vue`,
             import.meta.glob('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
-        return createApp({ render: () => h(App, props) })
+        // Renderiza la página de Inertia + el Toaster global (persistente entre navegaciones)
+        return createApp({ render: () => [h(App, props), h(Toaster)] })
             .use(plugin)
             .use(ZiggyVue)
             .mount(el);
     },
     progress: {
-        color: '#00f0ff',
+        color: '#ff5f00',
     },
 });

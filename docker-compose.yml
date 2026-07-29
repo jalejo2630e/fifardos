@@ -1,0 +1,47 @@
+# FIFARDOS — Docker Compose para Dokploy
+# Puedes usar este archivo (tipo "Compose" en Dokploy) o desplegar solo el
+# Dockerfile (tipo "Application"). Las variables sensibles se configuran en el
+# panel de Dokploy (Environment) — aquí solo van valores por defecto.
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fifardos-app
+    restart: unless-stopped
+    # En Dokploy define las variables en el panel "Environment".
+    # Para pruebas locales:  docker compose --env-file .env up --build
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      # Recomendado en producción: usar Postgres/MySQL (ver servicio 'db' abajo).
+      # Para SQLite persistente:  DB_CONNECTION=sqlite  y
+      #   DB_DATABASE=/var/www/html/storage/app/database.sqlite  (queda en el volumen 'storage').
+    volumes:
+      - storage:/var/www/html/storage
+    expose:
+      - "80"
+    # Dokploy enruta el tráfico vía Traefik hacia el puerto 80 del contenedor.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/up"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    # depends_on:
+    #   - db
+
+  # --- Base de datos recomendada para producción (descomenta si la usas) ---
+  # db:
+  #   image: postgres:16-alpine
+  #   restart: unless-stopped
+  #   environment:
+  #     POSTGRES_DB: ${DB_DATABASE:-fifardos}
+  #     POSTGRES_USER: ${DB_USERNAME:-fifardos}
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+  #   volumes:
+  #     - db:/var/lib/postgresql/data
+
+volumes:
+  storage:
+  # db:

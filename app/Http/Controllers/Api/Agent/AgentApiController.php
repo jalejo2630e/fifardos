@@ -7,6 +7,7 @@ use App\Models\Tournament;
 use App\Models\Player;
 use App\Models\GameMatch;
 use App\Services\StandingsService;
+use App\Services\TournamentFactoryService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -58,6 +59,48 @@ class AgentApiController extends Controller
             'data' => $tournaments,
             'count' => $tournaments->count(),
         ]);
+    }
+
+    /**
+     * POST /api/agent/tournaments
+     * Crea un torneo nuevo con su lista de jugadores y genera el fixture de fase de grupos.
+     * Pensado para que un LLM/agente "arme un torneo" a pedido del usuario.
+     */
+    public function createTournament(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'consoles_count' => 'nullable|integer|min:1|max:20',
+            'players' => 'required|array|min:2|max:32',
+            'players.*' => 'required|string|max:255|distinct',
+        ]);
+
+        $user = $request->user();
+
+        $tournament = app(TournamentFactoryService::class)->make(
+            $user->id,
+            $validated['name'],
+            $validated['consoles_count'] ?? 1,
+            $validated['players'],
+        );
+
+        $tournament->loadCount(['players', 'matches']);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Torneo «{$tournament->name}» creado con {$tournament->players_count} jugadores y {$tournament->matches_count} partidos de fase de grupos.",
+            'data' => [
+                'id' => $tournament->id,
+                'name' => $tournament->name,
+                'status' => $tournament->status,
+                'color' => $tournament->color,
+                'consoles_count' => $tournament->consoles_count,
+                'players_count' => $tournament->players_count,
+                'total_matches' => $tournament->matches_count,
+                'url' => url("/tournaments/{$tournament->id}"),
+                'public_bracket_url' => url("/torneos/{$tournament->id}/bracket"),
+            ],
+        ], 201);
     }
 
     /**
@@ -332,6 +375,31 @@ class AgentApiController extends Controller
                             'created_at' => 'string (datetime)',
                         ]],
                         'count' => 'int',
+                    ],
+                ],
+                [
+                    'method' => 'POST',
+                    'path' => '/api/agent/tournaments',
+                    'description' => 'Crea un torneo nuevo con su lista de jugadores. El sistema genera automáticamente el fixture de la fase de grupos (todos contra todos) repartido entre las consolas indicadas. Úsalo cuando el usuario pida "arma/crea un torneo" (ej. "créame un torneo llamado Copa Sábado con Diego, Julián, Javier y Sebas en 2 consolas"). El torneo queda asociado al usuario dueño del token.',
+                    'parameters' => [
+                        ['name' => 'name', 'type' => 'string', 'description' => 'Nombre del torneo (obligatorio)', 'required' => true, 'in' => 'body'],
+                        ['name' => 'players', 'type' => 'string[]', 'description' => 'Lista de nombres de jugadores (obligatorio, mínimo 2, máximo 32, sin repetidos)', 'required' => true, 'in' => 'body'],
+                        ['name' => 'consoles_count', 'type' => 'integer', 'description' => 'Número de consolas/TVs disponibles para repartir los partidos (opcional, por defecto 1, entre 1 y 20)', 'required' => false, 'in' => 'body'],
+                    ],
+                    'example_response' => [
+                        'success' => true,
+                        'message' => 'string',
+                        'data' => [
+                            'id' => 'int',
+                            'name' => 'string',
+                            'status' => 'string',
+                            'color' => 'string (hex)',
+                            'consoles_count' => 'int',
+                            'players_count' => 'int',
+                            'total_matches' => 'int',
+                            'url' => 'string (url)',
+                            'public_bracket_url' => 'string (url)',
+                        ],
                     ],
                 ],
                 [

@@ -18,10 +18,15 @@ class Tournament extends Model
         'color',
         'max_players',
         'finished_at',
+        'reminder_at',
+        'reminder_email',
+        'reminder_sent_at',
     ];
 
     protected $casts = [
         'finished_at' => 'datetime',
+        'reminder_at' => 'datetime',
+        'reminder_sent_at' => 'datetime',
     ];
 
     public function user(): BelongsTo

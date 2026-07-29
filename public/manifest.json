@@ -1,28 +1,40 @@
 {
-    "name": "FIFARDOS ELITE LEAGUE",
+    "id": "/",
+    "name": "FIFARDOS — Torneos de FIFA",
     "short_name": "FIFARDOS",
-    "description": "Liga competitiva de FIFA — torneos, standings, estadísticas",
+    "description": "Organiza y gestiona torneos de FIFA (EA Sports FC): grupos, resultados, tabla de posiciones en vivo, eliminatorias y goleadores.",
+    "lang": "es",
+    "dir": "ltr",
+    "categories": ["sports", "games", "utilities"],
     "start_url": "/",
+    "scope": "/",
     "display": "standalone",
-    "background_color": "#0a0a0f",
-    "theme_color": "#f97316",
+    "background_color": "#0a0a0c",
+    "theme_color": "#ff5f00",
     "orientation": "portrait",
     "icons": [
         {
             "src": "/favicon.ico",
-            "sizes": "64x64",
+            "sizes": "32x32",
             "type": "image/x-icon"
         },
         {
             "src": "/icon-192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any"
         },
         {
             "src": "/icon-512.png",
             "sizes": "512x512",
             "type": "image/png",
             "purpose": "any maskable"
+        },
+        {
+            "src": "/icon-1024.png",
+            "sizes": "1024x1024",
+            "type": "image/png",
+            "purpose": "any"
         }
     ]
 }

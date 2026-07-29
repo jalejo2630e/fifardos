@@ -28,3 +28,6 @@ Thumbs.db
 /capacitor/dist/
 /android/.gradle/
 /android/app/build/
+
+/mcp/node_modules
+/mcp/.env

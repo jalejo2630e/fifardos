@@ -33,6 +33,50 @@ Route::get('/', function () {
             'venues' => max($totalVenues, 16),
             'fans' => $totalUsers > 1000 ? number_format($totalUsers / 1000, 1) . 'K' : ($totalUsers ?: '1.2M'),
         ],
+        'seo' => [
+            'title' => 'FIFARDOS — Organiza torneos de FIFA con tus amigos',
+            'description' => 'Crea torneos de FIFA (EA Sports FC) en segundos: arma los grupos, carga los resultados, mira la tabla de posiciones en vivo, genera las eliminatorias automáticamente y descubre al goleador. Gratis y sin instalar nada.',
+            'type' => 'website',
+            'jsonld' => [
+                [
+                    '@type' => 'FAQPage',
+                    'mainEntity' => [
+                        [
+                            '@type' => 'Question',
+                            'name' => '¿Qué es FIFARDOS?',
+                            'acceptedAnswer' => [
+                                '@type' => 'Answer',
+                                'text' => 'FIFARDOS es una plataforma web gratuita para organizar y gestionar torneos de FIFA (EA Sports FC) entre amigos. Permite crear torneos con fase de grupos y eliminatorias, cargar los resultados de cada partido, ver la tabla de posiciones en tiempo real y seguir estadísticas como el goleador del torneo.',
+                            ],
+                        ],
+                        [
+                            '@type' => 'Question',
+                            'name' => '¿Cómo organizo un torneo de FIFA?',
+                            'acceptedAnswer' => [
+                                '@type' => 'Answer',
+                                'text' => 'Crea una cuenta gratis, pulsa "Nuevo torneo", agrega el nombre del torneo, la cantidad de consolas y los jugadores. FIFARDOS genera automáticamente el fixture de la fase de grupos (todos contra todos) y, al terminar los grupos, arma las eliminatorias con los mejores clasificados.',
+                            ],
+                        ],
+                        [
+                            '@type' => 'Question',
+                            'name' => '¿FIFARDOS es gratis?',
+                            'acceptedAnswer' => [
+                                '@type' => 'Answer',
+                                'text' => 'Sí. Crear y gestionar torneos de FIFA en FIFARDOS es completamente gratis. No necesitas instalar nada: funciona desde el navegador en computador y móvil.',
+                            ],
+                        ],
+                        [
+                            '@type' => 'Question',
+                            'name' => '¿Puedo pedirle a un asistente de IA que me arme el torneo?',
+                            'acceptedAnswer' => [
+                                '@type' => 'Answer',
+                                'text' => 'Sí. FIFARDOS ofrece un servidor MCP y una API para agentes, de modo que asistentes como Claude, ChatGPT o GitHub Copilot pueden consultar torneos, tablas de posiciones y goleadores, e incluso crear un torneo nuevo por ti.',
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ],
     ]);
 });
 
@@ -47,6 +91,35 @@ Route::get('/rules', function () {
 });
 
 Route::get('/torneos/{tournament}/bracket', [App\Http\Controllers\PublicBracketController::class, 'show'])->name('tournaments.public.bracket');
+
+Route::get('/sitemap.xml', function () {
+    $urls = [
+        ['loc' => url('/'), 'priority' => '1.0', 'changefreq' => 'daily'],
+        ['loc' => url('/rules'), 'priority' => '0.6', 'changefreq' => 'monthly'],
+        ['loc' => url('/inscribirse'), 'priority' => '0.7', 'changefreq' => 'weekly'],
+    ];
+
+    foreach (Tournament::orderBy('updated_at', 'desc')->get(['id', 'updated_at']) as $t) {
+        $urls[] = [
+            'loc' => url("/torneos/{$t->id}/bracket"),
+            'lastmod' => optional($t->updated_at)->toAtomString(),
+            'priority' => '0.8',
+            'changefreq' => 'daily',
+        ];
+    }
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+    foreach ($urls as $u) {
+        $xml .= "  <url>\n    <loc>" . htmlspecialchars($u['loc']) . "</loc>\n";
+        if (!empty($u['lastmod'])) $xml .= "    <lastmod>{$u['lastmod']}</lastmod>\n";
+        $xml .= "    <changefreq>{$u['changefreq']}</changefreq>\n";
+        $xml .= "    <priority>{$u['priority']}</priority>\n  </url>\n";
+    }
+    $xml .= '</urlset>';
+
+    return response($xml, 200, ['Content-Type' => 'application/xml']);
+})->name('sitemap');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');

@@ -27,16 +27,10 @@ const showingNav = ref(false);
                     <!-- Logo + Desktop Nav -->
                     <div class="flex items-center gap-6 sm:gap-10">
                         <Link :href="route('dashboard')" class="flex items-center gap-2.5 shrink-0">
-                            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-gradient-to-br from-elite-secondary to-orange-700
-                                        flex items-center justify-center text-black shadow-lg shadow-elite-secondary/20">
-                                <svg class="w-5 h-5 sm:w-6 sm:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="2" y="6" width="20" height="12" rx="3"/>
-                                    <circle cx="8" cy="12" r="1.5"/>
-                                    <circle cx="16" cy="12" r="1.5"/>
-                                </svg>
-                            </div>
+                            <img src="/brand/icon.png" alt="FIFARDOS"
+                                 class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl shadow-lg shadow-elite-secondary/20" />
                             <span class="hidden sm:block font-condensed font-bold text-base tracking-wider text-white/90">
-                                FIFARDOS
+                                FIFA<span class="text-elite-secondary">RDOS</span>
                             </span>
                         </Link>
 

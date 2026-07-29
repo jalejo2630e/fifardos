@@ -6,9 +6,12 @@ use App\Models\Tournament;
 use App\Models\Player;
 use App\Models\GameMatch;
 use App\Models\GoalScorer;
+use App\Mail\TournamentCreatedMail;
 use App\Services\StandingsService;
+use App\Services\TournamentFactoryService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 
 class TournamentController extends Controller
@@ -63,30 +66,40 @@ class TournamentController extends Controller
             'consoles_count' => 'required|integer|min:1|max:20',
             'players' => 'required|array|min:2',
             'players.*' => 'required|string|max:255|distinct',
+            'reminder_at' => 'nullable|date|after:now',
+            'reminder_email' => 'nullable|email',
+            'notify_email' => 'boolean',
         ]);
 
-        $usedColors = Tournament::where('user_id', auth()->id())->pluck('color')->toArray();
-        $available = array_values(array_diff(self::COLORS, $usedColors));
-        $color = empty($available) ? self::COLORS[array_rand(self::COLORS)] : $available[array_rand($available)];
+        $reminderEmail = $validated['reminder_email'] ?? auth()->user()->email;
 
-        $tournament = Tournament::create([
-            'user_id' => auth()->id(),
-            'name' => $validated['name'],
-            'consoles_count' => $validated['consoles_count'],
-            'status' => 'in_progress',
-            'color' => $color,
-        ]);
+        $tournament = app(TournamentFactoryService::class)->make(
+            auth()->id(),
+            $validated['name'],
+            $validated['consoles_count'],
+            $validated['players'],
+        );
 
-        foreach ($validated['players'] as $playerName) {
-            Player::create([
-                'tournament_id' => $tournament->id,
-                'name' => $playerName,
+        if (!empty($validated['reminder_at'])) {
+            $tournament->update([
+                'reminder_at' => $validated['reminder_at'],
+                'reminder_email' => $reminderEmail,
             ]);
         }
 
-        $this->generateMatches($tournament);
+        // Email de confirmación inmediato (opcional)
+        if (!empty($validated['notify_email']) && $reminderEmail) {
+            try {
+                Mail::to($reminderEmail)->send(new TournamentCreatedMail($tournament));
+            } catch (\Throwable $e) {
+                Log::warning('No se pudo enviar el email de torneo creado', ['error' => $e->getMessage()]);
+            }
+        }
 
-        return redirect()->route('tournaments.show', $tournament);
+        $extra = !empty($validated['reminder_at']) ? ' Te recordaremos por email.' : '';
+
+        return redirect()->route('tournaments.show', $tournament)
+            ->with('success', "Torneo «{$tournament->name}» creado con " . count($validated['players']) . " jugadores.{$extra}");
     }
 
     public function show(Tournament $tournament)
@@ -187,7 +200,7 @@ class TournamentController extends Controller
 
         $this->buildKnockoutBracket($tournament, $top);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Eliminatorias generadas.');
     }
 
     public function updateScore(Request $request, Tournament $tournament, GameMatch $match)
@@ -254,7 +267,8 @@ class TournamentController extends Controller
             $this->updateTournamentProgress($tournament);
         }
 
-        return redirect()->route('tournaments.show', $tournament);
+        return redirect()->route('tournaments.show', $tournament)
+            ->with('success', 'Marcador guardado.');
     }
 
     public function editScore(Request $request, Tournament $tournament, GameMatch $match)
@@ -274,13 +288,15 @@ class TournamentController extends Controller
             $this->clearSubsequentPhases($tournament, $match->phase);
         }
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Marcador reabierto para editar.');
     }
 
     public function destroy(Tournament $tournament)
     {
+        $name = $tournament->name;
         $tournament->delete();
-        return redirect()->route('dashboard');
+        return redirect()->route('dashboard')
+            ->with('success', "Torneo «{$name}» eliminado.");
     }
 
     public function replacePlayer(Request $request, Tournament $tournament, Player $player)
@@ -612,56 +628,4 @@ class TournamentController extends Controller
         return $winner === $match->player1_id ? $match->player2_id : $match->player1_id;
     }
 
-    private function generateMatches(Tournament $tournament)
-    {
-        $players = $tournament->players()->pluck('id', 'name')->toArray();
-        $playerNames = array_keys($players);
-        $playerIds = array_values($players);
-
-        if (count($playerNames) % 2 !== 0) {
-            $playerNames[] = 'BYE';
-            $playerIds[] = null;
-        }
-
-        $numPlayers = count($playerNames);
-        $rounds = $numPlayers - 1;
-        $half = $numPlayers / 2;
-        $tvCount = $tournament->consoles_count;
-
-        for ($round = 0; $round < $rounds; $round++) {
-            $roundMatches = [];
-            for ($i = 0; $i < $half; $i++) {
-                $p1Name = $playerNames[$i];
-                $p2Name = $playerNames[$numPlayers - 1 - $i];
-                $p1Id = $playerIds[$i];
-                $p2Id = $playerIds[$numPlayers - 1 - $i];
-
-                if ($p1Name !== 'BYE' && $p2Name !== 'BYE') {
-                    $roundMatches[] = [
-                        'p1' => $p1Id,
-                        'p2' => $p2Id,
-                    ];
-                }
-            }
-
-            $tvIndex = 0;
-            foreach ($roundMatches as $matchData) {
-                GameMatch::create([
-                    'tournament_id' => $tournament->id,
-                    'round' => $round + 1,
-                    'player1_id' => $matchData['p1'],
-                    'player2_id' => $matchData['p2'],
-                    'phase' => 'group',
-                    'status' => 'pending',
-                    'tv_number' => ($tvIndex % $tvCount) + 1,
-                ]);
-                $tvIndex++;
-            }
-
-            $lastName = array_pop($playerNames);
-            $lastId = array_pop($playerIds);
-            array_splice($playerNames, 1, 0, [$lastName]);
-            array_splice($playerIds, 1, 0, [$lastId]);
-        }
-    }
 }

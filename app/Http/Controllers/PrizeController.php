@@ -32,7 +32,7 @@ class PrizeController extends Controller
 
         $tournament->prizes()->create($validated);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Premio agregado.');
     }
 
     public function update(Request $request, Tournament $tournament, TournamentPrize $prize)
@@ -48,13 +48,13 @@ class PrizeController extends Controller
 
         $prize->update($validated);
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Premio actualizado.');
     }
 
     public function destroy(Tournament $tournament, TournamentPrize $prize)
     {
         $prize->delete();
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Premio eliminado.');
     }
 }
