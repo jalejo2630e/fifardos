@@ -31,3 +31,6 @@ Thumbs.db
 
 /mcp/node_modules
 /mcp/.env
+# Fuentes multimedia pesadas en raíz (se usan las de public/)
+/header.png
+/header.mp4

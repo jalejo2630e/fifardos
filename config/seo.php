@@ -18,6 +18,9 @@ return [
     'twitter_handle' => '@fifardos',
     'twitter_card'   => 'summary_large_image',
 
+    // Analytics (GA4). Se carga sólo en producción. Sobrescribible con GA_MEASUREMENT_ID.
+    'ga_id'       => env('GA_MEASUREMENT_ID', 'G-CFD0MY34R1'),
+
     // Branding
     'author'      => 'FIFARDOS',
     'theme_color' => '#ff5f00',

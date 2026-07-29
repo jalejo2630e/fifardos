@@ -65,8 +65,11 @@ const progressRef = ref(null);
 const heroSeconds = ref(0);
 const showMcp = ref(false);
 const mcpTab = ref('claude');
+// En móvil no cargamos el video del hero (solo la imagen webp liviana)
+const isMobile = ref(typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(max-width: 899px)').matches : false);
 
-let io = null, tickerIo = null, revealFallback = null, rafId = null, ticking = false;
+let io = null, tickerIo = null, revealFallback = null, rafId = null, ticking = false, mql = null, onMql = null;
 const reduceMotion = typeof window !== 'undefined'
     && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -126,6 +129,14 @@ function onScroll() {
 }
 
 onMounted(() => {
+    // Detectar móvil (para no cargar el video del hero)
+    if (window.matchMedia) {
+        mql = window.matchMedia('(max-width: 899px)');
+        isMobile.value = mql.matches;
+        onMql = (e) => { isMobile.value = e.matches; };
+        mql.addEventListener('change', onMql);
+    }
+
     // Reveal on-scroll (one-shot)
     const reveals = document.querySelectorAll('[data-reveal]');
     if ('IntersectionObserver' in window && !reduceMotion) {
@@ -173,6 +184,7 @@ onBeforeUnmount(() => {
     if (tickerIo) tickerIo.disconnect();
     if (revealFallback) clearTimeout(revealFallback);
     if (rafId) cancelAnimationFrame(rafId);
+    if (mql && onMql) mql.removeEventListener('change', onMql);
     window.removeEventListener('scroll', onScroll);
     document.documentElement.style.scrollBehavior = '';
 });
@@ -203,9 +215,10 @@ onBeforeUnmount(() => {
 
         <!-- HERO -->
         <section class="hero">
-            <video class="hero-video" autoplay muted loop playsinline preload="metadata" aria-hidden="true">
+            <video v-if="!isMobile && !reduceMotion" class="hero-video" autoplay muted loop playsinline preload="metadata" poster="/header.webp" aria-hidden="true">
                 <source src="/header.mp4" type="video/mp4" />
             </video>
+            <img v-else class="hero-video" src="/header.webp" alt="" aria-hidden="true" />
             <div class="hero-video-overlay" aria-hidden="true"></div>
             <div ref="glowRef" class="glow glow-hero" aria-hidden="true"></div>
             <div class="wrap hero-grid">
@@ -687,7 +700,6 @@ Authorization: Bearer 1|tu_token
     [data-reveal] { opacity: 1; transform: none; transition: none; }
     .anim, .anim-card { opacity: 1; animation: none; }
     .dot-orange, .dot-lime, .ticker-track { animation: none !important; }
-    .hero-video { display: none; }
 }
 </style>
 

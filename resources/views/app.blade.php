@@ -4,6 +4,17 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
+
+        {{-- Google Analytics (GA4) — sólo en producción --}}
+        @if(app()->isProduction() && config('seo.ga_id'))
+        <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('seo.ga_id') }}"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '{{ config('seo.ga_id') }}');
+        </script>
+        @endif
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
