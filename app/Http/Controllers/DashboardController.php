@@ -135,6 +135,7 @@ class DashboardController extends Controller
                 'pressureIntensity' => $pressureIntensity,
                 'advanceProbability' => round(($pressureIntensity + rand(-10, 10)) / 100, 2),
             ],
+            'needsSecurityQuestions' => $user->securityQuestions()->count() < 3,
         ]);
     }
 }

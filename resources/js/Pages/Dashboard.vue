@@ -14,7 +14,10 @@ const props = defineProps({
     currentMatch: { type: Object, default: null },
     standings: { type: Array, default: () => [] },
     stats: { type: Object, default: () => ({ totalMatches: 0, totalGoals: 0, pressureIntensity: 65, advanceProbability: 0.5 }) },
+    needsSecurityQuestions: { type: Boolean, default: false },
 });
+
+const showSecurityPrompt = ref(props.needsSecurityQuestions);
 
 const activeTab = ref('lobby');
 const sidebarOpen = ref(false);
@@ -238,6 +241,35 @@ const mvpScore = computed(() => {
                 </div>
             </aside>
         </div>
+
+        <!-- Security questions prompt -->
+        <Teleport to="body">
+            <div v-if="showSecurityPrompt" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm"
+                 @click.self="showSecurityPrompt = false">
+                <div class="bg-[#1b2130] border border-[#343d54] rounded-2xl p-6 sm:p-8 w-full max-w-sm mx-4 shadow-2xl text-center">
+                    <div class="w-14 h-14 mx-auto mb-4 rounded-full bg-[#ff8a3d]/10 border border-[#ff8a3d]/20 flex items-center justify-center">
+                        <svg class="w-7 h-7 text-[#ff8a3d]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m0 0v2m0-2h2m-2 0H10m9-11a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-base font-bold text-[#f4f2ef] mb-2 font-condensed tracking-wider uppercase">Protegé tu cuenta</h3>
+                    <p class="text-sm text-[#7a8299] leading-relaxed mb-6">
+                        Configurá tus preguntas de seguridad para poder recuperar tu cuenta si perdés la contraseña. Sin ellas, no podrás restablecer el acceso.
+                    </p>
+                    <div class="flex flex-col gap-2">
+                        <Link :href="route('security-questions.setup.form')"
+                              class="w-full py-3 rounded-xl font-condensed text-xs font-bold uppercase tracking-wider text-black transition-all duration-200"
+                              style="background: linear-gradient(135deg, #ff8a3d, #e67320); box-shadow: 0 4px 16px rgba(255, 138, 61, 0.25);">
+                            Configurar ahora
+                        </Link>
+                        <button @click="showSecurityPrompt = false"
+                                class="w-full py-3 rounded-xl font-condensed text-xs font-bold uppercase tracking-wider text-white/40 hover:text-white/70 transition-all duration-200">
+                            Ahora no
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </Teleport>
     </AuthenticatedLayout>
 </template>
 
