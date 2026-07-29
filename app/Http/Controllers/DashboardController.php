@@ -60,7 +60,7 @@ class DashboardController extends Controller
             ->where('players.tournament_id', function ($q) use ($user) {
                 $q->select('id')->from('tournaments')->where('user_id', $user->id)->limit(1);
             })
-            ->groupBy('players.id')
+            ->groupBy('players.id', 'players.name')
             ->orderBy('total_goals', 'desc')
             ->first();
 
