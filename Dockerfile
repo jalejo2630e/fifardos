@@ -30,10 +30,10 @@ FROM php:8.3-fpm-alpine AS app
 # Dependencias del sistema + extensiones PHP
 RUN apk add --no-cache \
         nginx supervisor bash tzdata \
-        icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev freetype-dev \
+        icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev freetype-dev libwebp-dev \
         sqlite sqlite-dev postgresql-dev \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_mysql pdo_pgsql pdo_sqlite mbstring intl zip bcmath opcache pcntl gd \
     && apk del .build-deps
