@@ -17,6 +17,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'avatar',
+    ];
+
+    protected $appends = [
+        'avatar_url',
     ];
 
     protected $hidden = [
@@ -36,5 +41,26 @@ class User extends Authenticatable
     public function securityQuestions()
     {
         return $this->hasMany(UserSecurityQuestion::class);
+    }
+
+    public function getAvatarUrlAttribute(): string
+    {
+        if (!$this->avatar) {
+            $initials = collect(explode(' ', $this->name))
+                ->map(fn($w) => mb_substr($w, 0, 1))
+                ->take(2)
+                ->join('');
+            return 'https://ui-avatars.com/api/?name=' . urlencode($initials) . '&color=f97316&background=1a1a2e&bold=true';
+        }
+
+        if (str_starts_with($this->avatar, 'http') || str_starts_with($this->avatar, '/')) {
+            return $this->avatar;
+        }
+
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($this->avatar)) {
+            return \Illuminate\Support\Facades\Storage::disk('public')->url($this->avatar);
+        }
+
+        return $this->avatar;
     }
 }

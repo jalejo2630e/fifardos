@@ -77,8 +77,10 @@ const showingNav = ref(false);
                         <!-- Desktop User -->
                         <div class="hidden sm:flex items-center gap-3">
                             <div class="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-white/5">
-                                <div class="w-7 h-7 rounded-full bg-gradient-to-br from-elite-secondary to-orange-700 flex items-center justify-center text-xs font-bold text-black">
-                                    {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
+                                <div class="w-7 h-7 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-xs overflow-hidden flex-shrink-0">
+                                    <img v-if="$page.props.auth.user.avatar_url && $page.props.auth.user.avatar_url.startsWith('http')" :src="$page.props.auth.user.avatar_url" class="w-full h-full object-cover" />
+                                    <span v-else-if="$page.props.auth.user.avatar" class="text-sm">{{ $page.props.auth.user.avatar }}</span>
+                                    <span v-else class="text-xs font-bold text-black bg-gradient-to-br from-elite-secondary to-orange-700 w-full h-full flex items-center justify-center">{{ $page.props.auth.user.name.charAt(0).toUpperCase() }}</span>
                                 </div>
                                 <span class="text-sm text-white/60 font-medium max-w-[100px] truncate">{{ $page.props.auth.user.name }}</span>
                             </div>
@@ -177,8 +179,10 @@ const showingNav = ref(false);
                     </Link>
                 </div>
                 <div class="border-t border-white/5 px-4 py-3 flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-elite-secondary to-orange-700 flex items-center justify-center text-sm font-bold text-black shrink-0">
-                        {{ $page.props.auth.user.name.charAt(0).toUpperCase() }}
+                    <div class="w-9 h-9 rounded-full bg-white/10 border border-white/10 flex items-center justify-center text-sm overflow-hidden shrink-0">
+                        <img v-if="$page.props.auth.user.avatar_url && $page.props.auth.user.avatar_url.startsWith('http')" :src="$page.props.auth.user.avatar_url" class="w-full h-full object-cover" />
+                        <span v-else-if="$page.props.auth.user.avatar" class="text-base">{{ $page.props.auth.user.avatar }}</span>
+                        <span v-else class="text-sm font-bold text-black bg-gradient-to-br from-elite-secondary to-orange-700 w-full h-full flex items-center justify-center">{{ $page.props.auth.user.name.charAt(0).toUpperCase() }}</span>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="text-sm font-semibold text-white truncate">{{ $page.props.auth.user.name }}</div>

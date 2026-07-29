@@ -5,18 +5,50 @@ import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
+
+const AVATARS = ['⚽', '🥅', '🏆', '⭐', '🔥', '💥', '👑', '🦁', '🐺', '🦅', '🐉', '⚡', '💀', '🎯', '🚀', '👹'];
 
 const form = useForm({
     name: '',
     email: '',
     password: '',
     password_confirmation: '',
+    avatar: '',
 });
 
+const avatarFile = ref(null);
+const avatarPreview = ref('');
+const showEmojiPicker = ref(false);
+
+function selectEmoji(emoji) {
+    form.avatar = emoji;
+    avatarFile.value = null;
+    avatarPreview.value = emoji;
+    showEmojiPicker.value = false;
+}
+
+function onFileChange(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    avatarFile.value = file;
+    form.avatar = '';
+    const reader = new FileReader();
+    reader.onload = (ev) => { avatarPreview.value = ev.target.result; };
+    reader.readAsDataURL(file);
+}
+
 const submit = () => {
-    form.post(route('register'), {
-        onFinish: () => form.reset('password', 'password_confirmation'),
-    });
+    if (avatarFile.value) {
+        form.post(route('register'), {
+            onFinish: () => form.reset('password', 'password_confirmation'),
+            forceFormData: true,
+        });
+    } else {
+        form.post(route('register'), {
+            onFinish: () => form.reset('password', 'password_confirmation'),
+        });
+    }
 };
 </script>
 
@@ -81,6 +113,33 @@ const submit = () => {
                     autocomplete="new-password"
                 />
                 <InputError class="mt-2" :message="form.errors.password_confirmation" />
+            </div>
+
+            <div>
+                <InputLabel value="Avatar (opcional)" />
+                <div class="mt-1.5 flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-2xl overflow-hidden flex-shrink-0">
+                        <img v-if="avatarPreview && avatarPreview.startsWith('data:')" :src="avatarPreview" class="w-full h-full object-cover" />
+                        <span v-else>{{ avatarPreview || '?' }}</span>
+                    </div>
+                    <button type="button" @click="showEmojiPicker = !showEmojiPicker"
+                        class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white/70 hover:bg-white/10 transition-colors">
+                        😀 Emoji
+                    </button>
+                    <label class="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm text-white/70 hover:bg-white/10 transition-colors cursor-pointer">
+                        📷 Subir foto
+                        <input type="file" accept="image/*" class="hidden" @change="onFileChange" />
+                    </label>
+                </div>
+                <div v-if="showEmojiPicker" class="mt-2 grid grid-cols-8 gap-1.5 p-3 rounded-lg bg-white/5 border border-white/10">
+                    <button type="button" v-for="emoji in AVATARS" :key="emoji"
+                        @click="selectEmoji(emoji)"
+                        class="w-8 h-8 flex items-center justify-center rounded-md hover:bg-white/10 transition-colors text-lg"
+                        :class="{ 'bg-orange-500/20 ring-1 ring-orange-500': form.avatar === emoji }">
+                        {{ emoji }}
+                    </button>
+                </div>
+                <InputError class="mt-2" :message="form.errors.avatar" />
             </div>
 
             <PrimaryButton

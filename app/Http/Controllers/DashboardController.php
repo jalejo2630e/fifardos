@@ -51,7 +51,7 @@ class DashboardController extends Controller
 
         // MVP: player with most goals across finished matches
         $mvp = null;
-        $topScorers = Player::selectRaw('players.*, sum(COALESCE(m.score1, 0)) as total_goals, count(m.id) as matches_count')
+        $topScorers = Player::selectRaw('players.id, players.name, sum(COALESCE(m.score1, 0)) as total_goals, count(m.id) as matches_count')
             ->join('matches as m', function ($j) {
                 $j->on('m.player1_id', '=', 'players.id')
                   ->orOn('m.player2_id', '=', 'players.id');

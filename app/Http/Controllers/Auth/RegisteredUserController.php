@@ -16,31 +16,36 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
-    /**
-     * Display the registration view.
-     */
     public function create(): Response
     {
         return Inertia::render('Auth/Register');
     }
 
-    /**
-     * Handle an incoming registration request.
-     *
-     * @throws ValidationException
-     */
     public function store(Request $request): RedirectResponse
     {
-        $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+        ];
+
+        $rules['avatar'] = $request->hasFile('avatar')
+            ? 'nullable|image|max:2048'
+            : 'nullable|string|max:255';
+
+        $request->validate($rules);
+
+        $avatar = $request->input('avatar');
+
+        if ($request->hasFile('avatar')) {
+            $avatar = $request->file('avatar')->store('avatars', 'public');
+        }
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'avatar' => $avatar,
         ]);
 
         event(new Registered($user));
