@@ -292,12 +292,15 @@ const mvpScore = computed(() => {
 <style scoped>
 .dashboard {
     display: grid;
-    grid-template-columns: 220px minmax(0, 1fr) 240px;
-    gap: 14px;
-    padding: 16px;
-    max-width: 1200px;
+    grid-template-columns: 300px minmax(0, 1fr) 340px;
+    gap: 24px;
+    padding: 28px 28px 64px;
+    max-width: 1560px;
     margin: 0 auto;
     position: relative;
+}
+@media (max-width: 1280px) {
+    .dashboard { grid-template-columns: 260px minmax(0, 1fr) 300px; gap: 18px; padding: 20px 20px 48px; }
 }
 
 .sidebar-toggle {
@@ -344,7 +347,7 @@ const mvpScore = computed(() => {
 .dash-left {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 18px;
 }
 .left-header {
     display: flex;
@@ -364,7 +367,7 @@ const mvpScore = computed(() => {
     font-size: 12px;
     font-weight: 700;
     color: var(--text-primary, #f4f2ef);
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
     letter-spacing: 0.05em;
 }
 .metric-grid {
@@ -409,13 +412,13 @@ const mvpScore = computed(() => {
 }
 .prob-bd-label {
     color: var(--text-muted, #7a8299);
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
     letter-spacing: 0.05em;
 }
 .prob-bd-value {
     font-weight: 700;
     color: var(--text-primary, #f4f2ef);
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
 }
 
 @keyframes slideDown {
@@ -427,7 +430,7 @@ const mvpScore = computed(() => {
 .dash-center {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 18px;
     min-width: 0;
 }
 .center-header {
@@ -442,11 +445,13 @@ const mvpScore = computed(() => {
     opacity: 0.75;
 }
 .page-title {
-    font-size: 20px;
-    font-weight: 700;
+    font-size: 34px;
+    font-weight: 400;
     color: var(--text-primary, #f4f2ef);
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
-    letter-spacing: 0.03em;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+    line-height: 1;
 }
 .tabs-row {
     display: flex;
@@ -463,7 +468,7 @@ const mvpScore = computed(() => {
     font-weight: 600;
     cursor: pointer;
     transition: transform 150ms ease, background 200ms ease, color 200ms ease, border-color 200ms ease;
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
     letter-spacing: 0.05em;
 }
 .tab-btn:hover {
@@ -490,7 +495,7 @@ const mvpScore = computed(() => {
     text-transform: uppercase;
     letter-spacing: 0.1em;
     color: var(--text-muted, #7a8299);
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
     margin-top: 4px;
 }
 .empty-match {
@@ -530,7 +535,7 @@ const mvpScore = computed(() => {
 .sim-pct {
     font-size: 11px;
     color: var(--text-muted, #7a8299);
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
 }
 .sim-bar-track {
     height: 6px;
@@ -551,7 +556,7 @@ const mvpScore = computed(() => {
     justify-content: space-between;
     font-size: 9px;
     color: var(--text-muted, #7a8299);
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
     transition: opacity 300ms ease;
 }
 .sim-empty {
@@ -605,7 +610,7 @@ const mvpScore = computed(() => {
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--text-secondary, #9aa3bb);
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
 }
 .right-card-body {
     padding: 10px 12px;
@@ -638,7 +643,7 @@ const mvpScore = computed(() => {
     color: var(--text-muted, #7a8299);
     font-size: 11px;
     text-align: center;
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
 }
 .standing-pos.pos-first {
     color: var(--accent-gold, #ffb35e);
@@ -653,7 +658,7 @@ const mvpScore = computed(() => {
 .standing-pts {
     font-weight: 700;
     color: var(--text-secondary, #9aa3bb);
-    font-family: 'Bebas Neue', 'Oswald', sans-serif;
+    font-family: 'Anton', 'Bebas Neue', sans-serif;
     min-width: 22px;
     text-align: right;
 }

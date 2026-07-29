@@ -113,3 +113,11 @@ function submit() {
         </div>
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+/* Retheme esports (landing) para páginas de administración */
+:deep(.ucl-card) { background: #0e0e11; border: 1px solid rgba(255,255,255,.1); border-radius: 0; box-shadow: none; }
+:deep(.ucl-card)::before { display: none; }
+:deep(.ucl-title-lg), :deep(.font-condensed) { font-family: 'Anton', 'Bebas Neue', sans-serif; letter-spacing: 0; }
+h1, h2 { font-family: 'Anton', 'Bebas Neue', sans-serif; text-transform: uppercase; letter-spacing: -.5px; }
+</style>
