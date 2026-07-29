@@ -20,8 +20,8 @@ const metricTitle = computed(() => {
     <Head :title="metricTitle" />
     <AuthenticatedLayout>
         <div class="max-w-4xl mx-auto py-8 px-4 space-y-6">
-            <Link :href="route('dashboard')" class="text-xs text-white/30 hover:text-white/60 font-condensed tracking-wider uppercase">
-                ← Volver al dashboard
+            <Link :href="route('tournaments.index')" class="text-xs text-white/30 hover:text-white/60 font-condensed tracking-wider uppercase">
+                ← Volver a torneos
             </Link>
 
             <h1 class="text-2xl font-bold text-[#f4f2ef] font-condensed tracking-wide">{{ metricTitle }}</h1>

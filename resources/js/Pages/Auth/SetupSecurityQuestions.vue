@@ -152,7 +152,7 @@ function submit() {
             </button>
 
             <p v-if="!is_required" class="text-center text-xs text-white/30">
-                <a :href="route('dashboard')" class="text-elite-secondary hover:text-orange-300 transition-colors">
+                <a :href="route('tournaments.index')" class="text-elite-secondary hover:text-orange-300 transition-colors">
                     Saltar por ahora
                 </a>
             </p>

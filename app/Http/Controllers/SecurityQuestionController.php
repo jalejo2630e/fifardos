@@ -24,7 +24,7 @@ class SecurityQuestionController extends Controller
     {
         $existing = $request->user()->securityQuestions()->count();
         if ($existing >= 3) {
-            return redirect()->route('dashboard')->with('status', 'Ya tienes preguntas de seguridad configuradas.');
+            return redirect()->route('tournaments.index')->with('status', 'Ya tienes preguntas de seguridad configuradas.');
         }
 
         return Inertia::render('Auth/SetupSecurityQuestions', [
@@ -64,7 +64,7 @@ class SecurityQuestionController extends Controller
             ]);
         }
 
-        return redirect()->route('dashboard')->with('status', 'Preguntas de seguridad configuradas correctamente.');
+        return redirect()->route('tournaments.index')->with('status', 'Preguntas de seguridad configuradas correctamente.');
     }
 
     public function showRecoverForm()

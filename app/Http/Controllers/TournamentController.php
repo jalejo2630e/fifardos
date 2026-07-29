@@ -329,7 +329,7 @@ class TournamentController extends Controller
 
         $name = $tournament->name;
         $tournament->delete();
-        return redirect()->route('dashboard')
+        return redirect()->route('tournaments.index')
             ->with('success', "Torneo «{$name}» eliminado.");
     }
 

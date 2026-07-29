@@ -19,8 +19,8 @@ const initials = props.player?.name
     <AuthenticatedLayout>
         <div class="max-w-4xl mx-auto py-8 px-4 space-y-6">
             <!-- Back -->
-            <Link :href="route('dashboard')" class="text-xs text-white/30 hover:text-white/60 font-condensed tracking-wider uppercase">
-                ← Volver al dashboard
+            <Link :href="route('tournaments.index')" class="text-xs text-white/30 hover:text-white/60 font-condensed tracking-wider uppercase">
+                ← Volver a torneos
             </Link>
 
             <!-- Player header -->
