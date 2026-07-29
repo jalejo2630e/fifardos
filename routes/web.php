@@ -165,6 +165,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/admin/reportes', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('admin.reportes');
 
+        Route::get('/admin/usuarios', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('admin.usuarios');
+        Route::post('/admin/usuarios/{user}/toggle-admin', [App\Http\Controllers\Admin\UserController::class, 'toggleAdmin'])->name('admin.usuarios.toggle-admin');
+
         Route::get('/admin/chat-config', [App\Http\Controllers\Admin\ChatConfigController::class, 'edit'])->name('admin.chat-config.edit');
         Route::put('/admin/chat-config', [App\Http\Controllers\Admin\ChatConfigController::class, 'update'])->name('admin.chat-config.update');
     });

@@ -43,6 +43,11 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(UserSecurityQuestion::class);
     }
 
+    public function tournaments()
+    {
+        return $this->hasMany(Tournament::class);
+    }
+
     public function getAvatarUrlAttribute(): string
     {
         if (!$this->avatar) {

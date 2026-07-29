@@ -21,7 +21,7 @@ const messages = {
         },
         nav: {
             tournaments: 'Torneos', new: 'Nuevo', apiMcp: 'API · MCP', reports: 'Reportes',
-            chatbot: 'Chatbot', myTournaments: 'Mis Torneos', newTournament: 'Nuevo Torneo',
+            chatbot: 'Chatbot', users: 'Usuarios', myTournaments: 'Mis Torneos', newTournament: 'Nuevo Torneo',
         },
         landing: {
             badge: 'Gratis · sin instalar nada',
@@ -91,7 +91,7 @@ const messages = {
         },
         nav: {
             tournaments: 'Tournaments', new: 'New', apiMcp: 'API · MCP', reports: 'Reports',
-            chatbot: 'Chatbot', myTournaments: 'My tournaments', newTournament: 'New tournament',
+            chatbot: 'Chatbot', users: 'Users', myTournaments: 'My tournaments', newTournament: 'New tournament',
         },
         landing: {
             badge: 'Free · nothing to install',

@@ -53,6 +53,12 @@ const showingNav = ref(false);
                                 {{ $t('nav.reports') }}
                             </Link>
                             <Link v-if="$page.props.auth.user?.is_admin"
+                                  :href="route('admin.usuarios')"
+                                  class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                                  :class="route().current('admin.usuarios') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
+                                {{ $t('nav.users') }}
+                            </Link>
+                            <Link v-if="$page.props.auth.user?.is_admin"
                                   :href="route('admin.chat-config.edit')"
                                   class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                                   :class="route().current('admin.chat-config.*') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
@@ -156,6 +162,16 @@ const showingNav = ref(false);
                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
                         </svg>
                         {{ $t('nav.reports') }}
+                    </Link>
+                    <Link v-if="$page.props.auth.user?.is_admin"
+                          :href="route('admin.usuarios')"
+                          class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all"
+                          :class="route().current('admin.usuarios') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/60 hover:text-white hover:bg-white/5'"
+                          @click="showingNav = false">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-1a4 4 0 0 0-3-3.87M9 20H4v-1a4 4 0 0 1 3-3.87m6-5.13a3 3 0 1 0-4 0M17 8a3 3 0 1 0-2 0" />
+                        </svg>
+                        {{ $t('nav.users') }}
                     </Link>
                     <Link v-if="$page.props.auth.user?.is_admin"
                           :href="route('admin.chat-config.edit')"
