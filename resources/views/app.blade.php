@@ -5,6 +5,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
+        {{-- Verificación de Google Search Console --}}
+        @if(config('seo.google_site_verification'))
+        <meta name="google-site-verification" content="{{ config('seo.google_site_verification') }}">
+        @endif
+
         {{-- Google Analytics (GA4) — sólo en producción --}}
         @if(app()->isProduction() && config('seo.ga_id'))
         <script async src="https://www.googletagmanager.com/gtag/js?id={{ config('seo.ga_id') }}"></script>

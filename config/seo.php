@@ -21,6 +21,9 @@ return [
     // Analytics (GA4). Se carga sólo en producción. Sobrescribible con GA_MEASUREMENT_ID.
     'ga_id'       => env('GA_MEASUREMENT_ID', 'G-CFD0MY34R1'),
 
+    // Google Search Console — valor del meta tag de verificación (la parte tras "google-site-verification=").
+    'google_site_verification' => env('GOOGLE_SITE_VERIFICATION', 'm-4GcArWl1atpxSBpNFXhClfmnokNYiRCeCpIsDTeM0'),
+
     // Branding
     'author'      => 'FIFARDOS',
     'theme_color' => '#ff5f00',
