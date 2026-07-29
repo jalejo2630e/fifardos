@@ -2,10 +2,12 @@ const CACHE = 'fifardos-v1';
 const ASSETS = [
     '/',
     '/manifest.json',
-    '/build/assets/app-DC0gO5lx.css',
-    '/build/assets/app-BQU2eIFw.js',
-    '/build/assets/ChatBot-Csy2ookk.js',
+    '/build/assets/app-DpNRPhzq.css',
+    '/build/assets/app-CFIU-nDu.js',
+    '/build/assets/ChatBot-COChJV3l.js',
     '/build/assets/ChatBot-BvWIeDMA.css',
+    '/build/assets/Dashboard-CsDPFieh.js',
+    '/build/assets/Dashboard-h3Kav66u.css',
 ];
 
 self.addEventListener('install', (e) => {
