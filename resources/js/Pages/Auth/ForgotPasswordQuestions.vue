@@ -89,6 +89,11 @@ function submitReset() {
                         class="ucl-btn-primary w-full justify-center">
                     Verificar respuestas
                 </button>
+                <p class="text-center text-xs text-white/30">
+                    <Link :href="route('login')" class="text-elite-secondary hover:text-orange-300 transition-colors">
+                        Volver al inicio de sesión
+                    </Link>
+                </p>
             </form>
         </div>
 
@@ -116,6 +121,11 @@ function submitReset() {
                         class="ucl-btn-primary w-full justify-center">
                     Restablecer contraseña
                 </button>
+                <p class="text-center text-xs text-white/30">
+                    <Link :href="route('login')" class="text-elite-secondary hover:text-orange-300 transition-colors">
+                        Volver al inicio de sesión
+                    </Link>
+                </p>
             </form>
         </div>
     </GuestLayout>

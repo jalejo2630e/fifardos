@@ -79,14 +79,15 @@ const submit = () => {
                         <Checkbox name="remember" v-model:checked="form.remember" />
                         <span class="text-sm text-white/50">Recordarme</span>
                     </label>
-                    <Link
-                        :href="route('security-questions.recover.form')"
-                        class="text-sm transition-colors"
-                        style="color: var(--accent-orange, #ff8a3d)"
-                        hover-class="brightness-110"
-                    >
-                        ¿Olvidaste tus datos?
-                    </Link>
+                    <div class="text-right">
+                        <Link :href="route('password.request')" class="text-sm transition-colors" style="color: var(--accent-orange, #ff8a3d)">
+                            ¿Olvidaste tu contraseña?
+                        </Link>
+                        <br>
+                        <Link :href="route('security-questions.recover.form')" class="text-xs transition-colors" style="color: var(--accent-orange, #ff8a3d); opacity: 0.7;">
+                            Recuperar con preguntas
+                        </Link>
+                    </div>
                 </div>
 
                 <PrimaryButton
