@@ -144,6 +144,7 @@ function editMatch(match) {
 }
 
 const color = computed(() => props.tournament.color || '#F97316');
+const isLeague = computed(() => props.tournament?.format === 'league');
 const totalMatches = computed(() => props.rounds.reduce((a, r) => a + r.length, 0));
 const playedMatches = computed(() => props.rounds.reduce((a, r) => a + r.filter(m => m.status === 'finished').length, 0));
 const progress = computed(() => totalMatches.value ? Math.round(playedMatches.value / totalMatches.value * 100) : 0);
@@ -370,7 +371,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                         </svg>
                         Clasificación
                     </button>
-                    <button @click="activeTab = 'knockout'"
+                    <button v-if="!isLeague" @click="activeTab = 'knockout'"
                             class="flex-1 min-h-touch flex items-center justify-center gap-2 rounded-xl font-condensed text-xs sm:text-sm uppercase tracking-[0.08em] transition-all duration-200"
                             :class="activeTab === 'knockout' ? 'text-white' : 'text-white/30 hover:text-white/60'"
                             :style="activeTab === 'knockout' ? { background: color + '18', color: color } : {}">

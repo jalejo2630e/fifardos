@@ -18,13 +18,21 @@ class TournamentFactoryService
     /**
      * @param  string[]  $playerNames
      */
-    public function make(int $userId, string $name, int $consolesCount, array $playerNames): Tournament
-    {
+    public function make(
+        int $userId,
+        string $name,
+        int $consolesCount,
+        array $playerNames,
+        string $format = 'groups_knockout',
+        bool $homeAndAway = false,
+    ): Tournament {
         $tournament = Tournament::create([
             'user_id' => $userId,
             'name' => $name,
             'consoles_count' => $consolesCount,
             'status' => 'in_progress',
+            'format' => in_array($format, ['groups_knockout', 'league'], true) ? $format : 'groups_knockout',
+            'home_and_away' => $homeAndAway,
             'color' => $this->pickColor($userId),
         ]);
 
@@ -51,8 +59,9 @@ class TournamentFactoryService
     }
 
     /**
-     * Genera el fixture de todos contra todos (round-robin) de la fase de grupos,
-     * repartiendo los partidos entre las consolas disponibles.
+     * Genera el fixture de todos contra todos (round-robin) de la fase de grupos / liga,
+     * repartiendo los partidos entre las consolas disponibles. Si el torneo es de ida y
+     * vuelta (home_and_away), agrega una segunda rueda con los cruces invertidos.
      */
     public function generateMatches(Tournament $tournament): void
     {
@@ -68,8 +77,10 @@ class TournamentFactoryService
         $numPlayers = count($playerNames);
         $rounds = $numPlayers - 1;
         $half = $numPlayers / 2;
-        $tvCount = $tournament->consoles_count;
+        $tvCount = max(1, $tournament->consoles_count);
 
+        // 1) Construye el calendario de la primera rueda (método del círculo).
+        $schedule = []; // [ [ ['p1'=>id,'p2'=>id], ... ], ... ]
         for ($round = 0; $round < $rounds; $round++) {
             $roundMatches = [];
             for ($i = 0; $i < $half; $i++) {
@@ -82,25 +93,38 @@ class TournamentFactoryService
                     $roundMatches[] = ['p1' => $p1Id, 'p2' => $p2Id];
                 }
             }
-
-            $tvIndex = 0;
-            foreach ($roundMatches as $matchData) {
-                GameMatch::create([
-                    'tournament_id' => $tournament->id,
-                    'round' => $round + 1,
-                    'player1_id' => $matchData['p1'],
-                    'player2_id' => $matchData['p2'],
-                    'phase' => 'group',
-                    'status' => 'pending',
-                    'tv_number' => ($tvIndex % $tvCount) + 1,
-                ]);
-                $tvIndex++;
-            }
+            $schedule[] = $roundMatches;
 
             $lastName = array_pop($playerNames);
             $lastId = array_pop($playerIds);
             array_splice($playerNames, 1, 0, [$lastName]);
             array_splice($playerIds, 1, 0, [$lastId]);
+        }
+
+        // 2) Persiste la(s) rueda(s). En ida y vuelta se duplica invirtiendo local/visitante.
+        $legs = $tournament->home_and_away ? 2 : 1;
+        $roundNumber = 0;
+        for ($leg = 0; $leg < $legs; $leg++) {
+            foreach ($schedule as $roundMatches) {
+                $roundNumber++;
+                $tvIndex = 0;
+                foreach ($roundMatches as $matchData) {
+                    [$p1, $p2] = $leg === 0
+                        ? [$matchData['p1'], $matchData['p2']]
+                        : [$matchData['p2'], $matchData['p1']];
+
+                    GameMatch::create([
+                        'tournament_id' => $tournament->id,
+                        'round' => $roundNumber,
+                        'player1_id' => $p1,
+                        'player2_id' => $p2,
+                        'phase' => 'group',
+                        'status' => 'pending',
+                        'tv_number' => ($tvIndex % $tvCount) + 1,
+                    ]);
+                    $tvIndex++;
+                }
+            }
         }
     }
 }

@@ -7,6 +7,8 @@ const form = useForm({
     name: '',
     consoles_count: 1,
     minutes_per_match: 6,
+    format: 'groups_knockout',
+    home_and_away: false,
     players: [],
     reminder_at: '',
     notify_email: false,
@@ -15,18 +17,23 @@ const form = useForm({
 const newPlayer = ref('');
 const step = ref(1);
 
-// Estimador de duración: grupos (todos contra todos) + eliminatorias, en paralelo por TV
+// Estimador de duración: round-robin (liga o fase de grupos, ida/vuelta si aplica)
+// + eliminatorias (solo en groups_knockout), en paralelo por TV.
 const estimate = computed(() => {
     const p = form.players.length;
     const tv = Math.max(1, form.consoles_count);
     const m = Math.max(1, form.minutes_per_match);
     if (p < 2) return null;
-    const group = (p * (p - 1)) / 2;
-    let top = p <= 4 ? 4 : (p <= 8 ? 8 : 16);
-    top = Math.min(top, p);
-    top = Math.pow(2, Math.floor(Math.log2(top)));
-    if (top < 2) top = 2;
-    const knockout = top >= 4 ? top : 1;
+    let group = (p * (p - 1)) / 2;
+    if (form.home_and_away) group *= 2;
+    let knockout = 0;
+    if (form.format === 'groups_knockout') {
+        let top = p <= 4 ? 4 : (p <= 8 ? 8 : 16);
+        top = Math.min(top, p);
+        top = Math.pow(2, Math.floor(Math.log2(top)));
+        if (top < 2) top = 2;
+        knockout = top >= 4 ? top : 1;
+    }
     const total = group + knockout;
     const slots = Math.ceil(total / tv);
     return { group, knockout, total, minutes: slots * m, tv, m };
@@ -148,7 +155,46 @@ const canNext = computed(() => {
                     <div v-show="step === 2" class="ucl-card p-6 sm:p-8 animate-fade-up">
                         <div class="stars-overlay" />
                         <div class="relative space-y-6">
-                            <div class="text-center">
+                            <!-- Formato del torneo -->
+                            <div>
+                                <div class="text-center mb-3">
+                                    <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40">
+                                        Formato del torneo
+                                    </label>
+                                    <p class="text-xs text-white/20 mt-1">¿Cómo se define el campeón?</p>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <button type="button" @click="form.format = 'groups_knockout'"
+                                            class="p-3 rounded-xl border text-left transition-all"
+                                            :class="form.format === 'groups_knockout' ? 'bg-elite-secondary/15 border-elite-secondary/40' : 'bg-white/5 border-white/5 hover:bg-white/10'">
+                                        <span class="block font-condensed font-bold text-sm"
+                                              :class="form.format === 'groups_knockout' ? 'text-elite-secondary' : 'text-white/70'">
+                                            Grupos + eliminatorias
+                                        </span>
+                                        <span class="block text-[11px] text-white/30 mt-0.5">Todos contra todos y luego llaves hasta la final.</span>
+                                    </button>
+                                    <button type="button" @click="form.format = 'league'"
+                                            class="p-3 rounded-xl border text-left transition-all"
+                                            :class="form.format === 'league' ? 'bg-elite-secondary/15 border-elite-secondary/40' : 'bg-white/5 border-white/5 hover:bg-white/10'">
+                                        <span class="block font-condensed font-bold text-sm"
+                                              :class="form.format === 'league' ? 'text-elite-secondary' : 'text-white/70'">
+                                            Liga · todos contra todos
+                                        </span>
+                                        <span class="block text-[11px] text-white/30 mt-0.5">Una sola tabla; campeón = primero al final.</span>
+                                    </button>
+                                </div>
+                                <!-- Ida y vuelta -->
+                                <label class="mt-2 flex items-center gap-3 cursor-pointer select-none rounded-xl border border-white/5 bg-white/5 p-3">
+                                    <input v-model="form.home_and_away" type="checkbox"
+                                           class="w-4 h-4 rounded accent-elite-secondary bg-white/10" />
+                                    <span>
+                                        <span class="block text-sm text-white/80 font-medium">Ida y vuelta</span>
+                                        <span class="block text-[11px] text-white/30">Cada cruce se juega dos veces (local y visitante).</span>
+                                    </span>
+                                </label>
+                            </div>
+
+                            <div class="text-center pt-5 border-t border-white/5">
                                 <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40 mb-3">
                                     Televisores / Consolas
                                 </label>
@@ -273,8 +319,13 @@ const canNext = computed(() => {
                                     <span class="font-condensed font-bold text-2xl sm:text-3xl text-elite-secondary leading-none">≈ {{ fmtDuration(estimate.minutes) }}</span>
                                 </div>
                                 <p class="text-xs text-white/30 mt-3 leading-relaxed">
-                                    {{ estimate.total }} partidos ({{ estimate.group }} de grupos + {{ estimate.knockout }} de eliminatorias) ·
-                                    {{ estimate.tv }} {{ estimate.tv === 1 ? 'TV/cancha' : 'TVs/canchas' }} en paralelo · {{ estimate.m }} min por partido.
+                                    <template v-if="form.format === 'league'">
+                                        {{ estimate.total }} partidos de liga{{ form.home_and_away ? ' (ida y vuelta)' : '' }}
+                                    </template>
+                                    <template v-else>
+                                        {{ estimate.total }} partidos ({{ estimate.group }} de grupos{{ form.home_and_away ? ' ida y vuelta' : '' }} + {{ estimate.knockout }} de eliminatorias)
+                                    </template>
+                                    · {{ estimate.tv }} {{ estimate.tv === 1 ? 'TV/cancha' : 'TVs/canchas' }} en paralelo · {{ estimate.m }} min por partido.
                                 </p>
                                 <p class="text-[11px] text-white/20 mt-1">Estimado aproximado, sin contar descansos entre partidos.</p>
                             </div>

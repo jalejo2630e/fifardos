@@ -48,6 +48,8 @@ class TournamentController extends Controller
                     $tournament->players_count,
                     $tournament->consoles_count,
                     $tournament->minutes_per_match ?? 6,
+                    $tournament->format ?? 'groups_knockout',
+                    (bool) $tournament->home_and_away,
                 );
                 $arr['leader'] = null;
                 if ($tournament->matches_played > 0) {
@@ -76,6 +78,8 @@ class TournamentController extends Controller
             'name' => 'required|string|max:255',
             'consoles_count' => 'required|integer|min:1|max:20',
             'minutes_per_match' => 'nullable|integer|min:1|max:60',
+            'format' => 'nullable|in:groups_knockout,league',
+            'home_and_away' => 'boolean',
             'players' => 'required|array|min:2',
             'players.*' => 'required|string|max:255|distinct',
             'reminder_at' => 'nullable|date|after:now',
@@ -90,6 +94,8 @@ class TournamentController extends Controller
             $validated['name'],
             $validated['consoles_count'],
             $validated['players'],
+            $validated['format'] ?? 'groups_knockout',
+            (bool) ($validated['home_and_away'] ?? false),
         );
 
         $tournament->update(['minutes_per_match' => $validated['minutes_per_match'] ?? 6]);
@@ -142,8 +148,10 @@ class TournamentController extends Controller
         $groupRounds = $tournament->matches->where('phase', 'group')->groupBy('round')->values();
         $groupAllPlayed = $tournament->matches->where('phase', 'group')->every(fn($m) => $m->status === 'finished');
 
-        // Auto-generate knockout when groups finish
-        if ($groupAllPlayed && !$tournament->matches->whereIn('phase', self::PHASE_ORDER)->count()) {
+        // Auto-generate knockout when groups finish (solo en formato con eliminatorias)
+        if ($tournament->format === 'groups_knockout'
+            && $groupAllPlayed
+            && !$tournament->matches->whereIn('phase', self::PHASE_ORDER)->count()) {
             $this->autoGenerateKnockout($tournament);
             $tournament->refresh();
             $tournament->load(['players', 'matches' => function ($q) {
@@ -203,6 +211,8 @@ class TournamentController extends Controller
                 $tournament->players->count(),
                 $tournament->consoles_count,
                 $tournament->minutes_per_match ?? 6,
+                $tournament->format ?? 'groups_knockout',
+                (bool) $tournament->home_and_away,
             ),
         ]);
     }
