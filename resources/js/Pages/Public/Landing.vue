@@ -1,6 +1,10 @@
 <script setup>
 import { Head, Link, router } from '@inertiajs/vue3';
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
+import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
+
+const { t } = useI18n();
 
 const props = defineProps({
     canLogin: Boolean,
@@ -20,36 +24,28 @@ const tableRows = [
     { pos: 5, name: 'Tincho', ini: 'TI', team: 'Newcastle', pj: 4, dg: '-9', pts: 1 },
 ];
 
-const steps = [
-    { n: '01', t: 'Cargá los nombres', d: 'Escribí quién juega y con qué equipo. Dos personas o treinta y dos.' },
-    { n: '02', t: 'Elegí el formato', d: 'Liga, grupos + eliminatorias o mata-mata directo. Ida y vuelta opcional.' },
-    { n: '03', t: 'Anotá resultados', d: 'Termina el partido, cargás el 3-2 y la tabla se acomoda sola.' },
-    { n: '04', t: 'Coroná al campeón', d: 'Bracket, goleador y palmarés listos para el chat del grupo.' },
-];
+const steps = computed(() => [0, 1, 2, 3].map((i) => ({
+    n: String(i + 1).padStart(2, '0'),
+    t: t(`landing.steps.${i}.t`),
+    d: t(`landing.steps.${i}.d`),
+})));
 
-const features = [
-    { tag: 'Fixture', t: 'Grupos armados en segundos', d: 'Sorteo balanceado, fechas ordenadas y nadie repite rival dos veces seguidas.' },
-    { tag: 'Live', t: 'Tabla que se actualiza sola', d: 'Puntos, diferencia de gol y desempates calculados al instante, sin planillas.' },
-    { tag: 'Playoffs', t: 'Eliminatorias automáticas', d: 'Los clasificados se cruzan solos: cuartos, semis y final sin dibujar nada.' },
-    { tag: 'Stats', t: 'Bota de oro y récords', d: 'Goleador, mejor defensa, goleadas históricas y la racha del que no gana nunca.' },
-    { tag: 'Share', t: 'Un link para todo el grupo', d: 'Mandás el link y todos ven la tabla desde el celular. Sin cuentas ni claves.' },
-    { tag: 'Mobile', t: 'Se carga desde el sillón', d: 'Pensado para usarlo con una mano mientras el otro elige equipo.' },
-];
+const features = computed(() => [0, 1, 2, 3, 4, 5].map((i) => ({
+    tag: t(`landing.features.${i}.tag`),
+    t: t(`landing.features.${i}.t`),
+    d: t(`landing.features.${i}.d`),
+})));
 
-const quotes = [
-    { q: 'Se terminaron las discusiones de quién iba puntero. Está escrito.', a: 'Torneo del barrio · 12 jugadores' },
-    { q: 'Lo armé en el entretiempo y ya estábamos jugando la fecha 1.', a: 'Liga de oficina · 8 jugadores' },
-    { q: 'El bracket salió solo y quedó mejor que el del Mundial.', a: 'Copa de vacaciones · 16 jugadores' },
-];
+const quotes = computed(() => [0, 1, 2].map((i) => ({
+    q: t(`landing.quotes.${i}.q`),
+    a: t(`landing.quotes.${i}.a`),
+})));
 
-const faqs = [
-    { q: '¿Hay que registrarse?', a: 'No. Creás el torneo y compartís el link. Listo.' },
-    { q: '¿Sirve para FIFA viejo?', a: 'Sirve para cualquier edición: FIFA, EA Sports FC, y también para PES si insistís.' },
-    { q: '¿Cuántos jugadores entran?', a: 'De 2 a 32, con o sin fase de grupos, partidos de ida y vuelta opcionales.' },
-    { q: '¿Es gratis de verdad?', a: 'Sí. Sin límites de torneos ni funciones bloqueadas.' },
-];
+const faqs = computed(() => [0, 1, 2, 3].map((i) => ({
+    q: t(`landing.faqs.${i}.q`),
+    a: t(`landing.faqs.${i}.a`),
+})));
 
-const tickerItems = ['Tabla en vivo', 'Goleadores', 'Grupos automáticos', 'Eliminatorias', 'Link para compartir', 'Sin instalar nada', 'PS5', 'Xbox', 'PC'];
 
 const bracket = {
     quarters: [{ name: 'Nico', score: 3 }, { name: 'Juanma', score: 1 }, { name: 'Maru', score: 2 }, { name: 'El Chino', score: 0 }],
@@ -69,7 +65,7 @@ const mcpTab = ref('claude');
 const isMobile = ref(typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(max-width: 899px)').matches : false);
 
-let io = null, tickerIo = null, revealFallback = null, rafId = null, ticking = false, mql = null, onMql = null;
+let io = null, revealFallback = null, rafId = null, ticking = false, mql = null, onMql = null;
 const reduceMotion = typeof window !== 'undefined'
     && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -154,20 +150,9 @@ onMounted(() => {
             reveals.forEach((el) => el.classList.add('is-in'));
             animateBracketScores();
         }, 2600);
-
-        // Ticker: iniciar sólo cuando es visible
-        const ticker = document.querySelector('[data-ticker]');
-        if (ticker) {
-            tickerIo = new IntersectionObserver((entries) => {
-                entries.forEach((e) => e.target.classList.toggle('running', e.isIntersecting));
-            }, { threshold: 0 });
-            tickerIo.observe(ticker);
-        }
     } else {
         reveals.forEach((el) => el.classList.add('is-in'));
         animateBracketScores();
-        const ticker = document.querySelector('[data-ticker]');
-        if (ticker) ticker.classList.add('running');
     }
 
     // Count-up del stat del hero (entra en load)
@@ -181,7 +166,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
     if (io) io.disconnect();
-    if (tickerIo) tickerIo.disconnect();
     if (revealFallback) clearTimeout(revealFallback);
     if (rafId) cancelAnimationFrame(rafId);
     if (mql && onMql) mql.removeEventListener('change', onMql);
@@ -192,7 +176,7 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="fd">
-        <Head title="Se armó el torneo de la casa" />
+        <Head :title="$t('landing.heroL1') + ' ' + $t('landing.heroL2') + ' ' + $t('landing.heroL3')" />
 
         <div ref="progressRef" class="progress" aria-hidden="true"></div>
 
@@ -200,14 +184,15 @@ onBeforeUnmount(() => {
         <header class="hdr" :class="{ scrolled }">
             <a href="#top" class="logo" aria-label="FIFARDOS inicio"><img src="/brand/logo-horizontal-dark.png" alt="FIFARDOS" /></a>
             <nav class="nav">
-                <a href="#como">Cómo va</a>
-                <a href="#modos">Modos</a>
-                <a href="#tabla">En vivo</a>
-                <a href="#faq">FAQ</a>
+                <a href="#como">{{ $t('landing.navComoVa') }}</a>
+                <a href="#modos">{{ $t('landing.navModos') }}</a>
+                <a href="#tabla">{{ $t('landing.navEnVivo') }}</a>
+                <a href="#faq">{{ $t('landing.navFaq') }}</a>
             </nav>
             <div class="nav-cta-group">
-                <button v-if="canLogin" class="btn btn-ghost-nav" @click="goLogin">Iniciar sesión</button>
-                <button class="btn btn-solid btn-nav" @click="goRegister">Crear torneo</button>
+                <LanguageSwitcher />
+                <button v-if="canLogin" class="btn btn-ghost-nav" @click="goLogin">{{ $t('common.login') }}</button>
+                <button class="btn btn-solid btn-nav" @click="goRegister">{{ $t('common.createTournament') }}</button>
             </div>
         </header>
 
@@ -223,32 +208,29 @@ onBeforeUnmount(() => {
             <div ref="glowRef" class="glow glow-hero" aria-hidden="true"></div>
             <div class="wrap hero-grid">
                 <div class="hero-copy">
-                    <span class="badge anim" style="--d:0ms"><i class="dot dot-orange"></i>Gratis · sin instalar nada</span>
-                    <h1 class="anim" style="--d:70ms">Se armó<br /><span class="accent">el torneo</span><br />de la casa.</h1>
-                    <p class="lead anim" style="--d:140ms">
-                        Grupos, resultados, tabla en vivo, eliminatorias automáticas y goleador.
-                        Vos jugás el FC, nosotros llevamos las cuentas — para que nadie discuta quién iba puntero.
-                    </p>
+                    <span class="badge anim" style="--d:0ms"><i class="dot dot-orange"></i>{{ $t('landing.badge') }}</span>
+                    <h1 class="anim" style="--d:70ms">{{ $t('landing.heroL1') }}<br /><span class="accent">{{ $t('landing.heroL2') }}</span><br />{{ $t('landing.heroL3') }}</h1>
+                    <p class="lead anim" style="--d:140ms">{{ $t('landing.lead') }}</p>
                     <div class="hero-btns anim" style="--d:210ms">
-                        <button class="btn btn-solid btn-hero" @click="goRegister">Armar mi torneo <span aria-hidden="true">→</span></button>
-                        <button class="btn btn-outline btn-hero" @click="goLogin">Iniciar sesión</button>
+                        <button class="btn btn-solid btn-hero" @click="goRegister">{{ $t('landing.ctaArm') }} <span aria-hidden="true">→</span></button>
+                        <button class="btn btn-outline btn-hero" @click="goLogin">{{ $t('landing.ctaLogin') }}</button>
                     </div>
                     <div class="stats anim" style="--d:280ms">
-                        <div class="stat"><span class="num">{{ heroSeconds }} s</span><span class="lbl">en armar el fixture</span></div>
-                        <div class="stat"><span class="num">2–32</span><span class="lbl">jugadores por torneo</span></div>
-                        <div class="stat"><span class="num">$0</span><span class="lbl">para siempre</span></div>
+                        <div class="stat"><span class="num">{{ heroSeconds }} {{ $t('landing.statSeconds') }}</span><span class="lbl">{{ $t('landing.statSecondsLbl') }}</span></div>
+                        <div class="stat"><span class="num">{{ $t('landing.stat2') }}</span><span class="lbl">{{ $t('landing.stat2Lbl') }}</span></div>
+                        <div class="stat"><span class="num">{{ $t('landing.stat3') }}</span><span class="lbl">{{ $t('landing.stat3Lbl') }}</span></div>
                     </div>
                 </div>
 
                 <!-- Card Tabla en vivo -->
                 <div ref="cardRef" id="tabla" class="live-card anim-card" style="--d:200ms">
                     <div class="live-head">
-                        <span class="live-tag"><i class="dot dot-lime"></i>Tabla en vivo</span>
-                        <span class="live-meta">Grupo A · J4</span>
+                        <span class="live-tag"><i class="dot dot-lime"></i>{{ $t('landing.liveTag') }}</span>
+                        <span class="live-meta">{{ $t('landing.liveMeta') }}</span>
                     </div>
                     <div class="tbl">
                         <div class="tbl-h">
-                            <span>#</span><span>Jugador</span><span class="c">PJ</span><span class="c">DG</span><span class="r">PTS</span>
+                            <span>#</span><span>{{ $t('landing.thPlayer') }}</span><span class="c">PJ</span><span class="c">DG</span><span class="r">PTS</span>
                         </div>
                         <div v-for="row in tableRows" :key="row.pos" class="tbl-row">
                             <span class="pos">{{ row.pos }}</span>
@@ -262,30 +244,19 @@ onBeforeUnmount(() => {
                         </div>
                     </div>
                     <div class="boot">
-                        <span class="boot-lbl">Bota de oro</span>
-                        <span class="boot-val">Nico — 11 goles</span>
+                        <span class="boot-lbl">{{ $t('landing.boot') }}</span>
+                        <span class="boot-val">{{ $t('landing.bootVal') }}</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- TICKER -->
-        <div class="ticker" data-ticker aria-hidden="true">
-            <div class="ticker-track">
-                <template v-for="rep in 2" :key="rep">
-                    <span v-for="(it, i) in tickerItems" :key="rep + '-' + i" class="ticker-item">
-                        {{ it }} <b>✦</b>
-                    </span>
-                </template>
-            </div>
-        </div>
-
         <!-- CÓMO FUNCIONA -->
         <section id="como" class="sec">
             <div class="wrap">
                 <div class="sec-head" data-reveal>
-                    <h2>Cuatro pasos<br /><span class="accent">y a jugar</span></h2>
-                    <p class="sec-note">Sin cuentas, sin app, sin planilla de Excel del primo que se ofende.</p>
+                    <h2>{{ $t('landing.howH1') }}<br /><span class="accent">{{ $t('landing.howH2') }}</span></h2>
+                    <p class="sec-note">{{ $t('landing.howNote') }}</p>
                 </div>
                 <div class="steps">
                     <div v-for="(s, i) in steps" :key="s.n" class="step" data-reveal :style="{ '--reveal-delay': (i * 90) + 'ms' }">
@@ -300,7 +271,7 @@ onBeforeUnmount(() => {
         <!-- FEATURES -->
         <section id="modos" class="sec sec-alt">
             <div class="wrap">
-                <h2 class="feat-h2" data-reveal>Todo lo que<br /><span class="accent">el grupo pide</span></h2>
+                <h2 class="feat-h2" data-reveal>{{ $t('landing.featH1') }}<br /><span class="accent">{{ $t('landing.featH2') }}</span></h2>
                 <div class="feats">
                     <div v-for="(f, i) in features" :key="f.t" class="feat" data-reveal
                          :style="{ '--reveal-delay': ((Math.floor(i / 3) * 120) + ((i % 3) * 80)) + 'ms' }">
@@ -316,10 +287,10 @@ onBeforeUnmount(() => {
         <section class="sec">
             <div class="wrap br-grid">
                 <div class="br-copy" data-reveal>
-                    <span class="eyebrow lime">Eliminatorias</span>
-                    <h2 class="br-h2">El bracket se<br /><span class="accent">arma solo.</span></h2>
-                    <p>Cuando termina la fase de grupos, FIFARDOS cruza los clasificados y genera las llaves. Cargás el resultado y el ganador avanza al toque.</p>
-                    <button class="link-btn" @click="goRegister">Probarlo ahora</button>
+                    <span class="eyebrow lime">{{ $t('landing.brKicker') }}</span>
+                    <h2 class="br-h2">{{ $t('landing.brH1') }}<br /><span class="accent">{{ $t('landing.brH2') }}</span></h2>
+                    <p>{{ $t('landing.brP') }}</p>
+                    <button class="link-btn" @click="goRegister">{{ $t('landing.brLink') }}</button>
                 </div>
                 <div class="br-card" data-reveal data-bracket>
                     <div class="br-col">
@@ -336,7 +307,7 @@ onBeforeUnmount(() => {
                     </div>
                     <div class="br-col br-col-final">
                         <div class="br-champ">
-                            <span class="br-champ-lbl">Campeón</span>
+                            <span class="br-champ-lbl">{{ $t('landing.champion') }}</span>
                             <span class="br-champ-name">{{ bracket.champion }}</span>
                         </div>
                     </div>
@@ -357,7 +328,7 @@ onBeforeUnmount(() => {
         <!-- FAQ -->
         <section id="faq" class="sec">
             <div class="wrap wrap-narrow">
-                <h2 class="faq-h2" data-reveal>Preguntas<br /><span class="accent">rápidas</span></h2>
+                <h2 class="faq-h2" data-reveal>{{ $t('landing.faqH1') }}<br /><span class="accent">{{ $t('landing.faqH2') }}</span></h2>
                 <div class="faq">
                     <div v-for="(f, i) in faqs" :key="i" class="faq-row" data-reveal :style="{ '--reveal-delay': (i * 60) + 'ms' }">
                         <div class="faq-q">{{ f.q }}</div>
@@ -371,20 +342,20 @@ onBeforeUnmount(() => {
         <section id="crear" class="cta">
             <div class="glow glow-cta" aria-hidden="true"></div>
             <div class="wrap wrap-cta" data-reveal>
-                <h2>Dejá de discutir.<br /><span class="accent">Jugá el torneo.</span></h2>
-                <p>Creá el torneo, mandá el link al grupo y que gane el mejor (o el que agarre al Madrid).</p>
-                <button class="btn btn-solid btn-cta" @click="goRegister">Crear torneo gratis</button>
-                <span class="cta-sub">Sin registro · sin descargas · PS5, Xbox y PC</span>
+                <h2>{{ $t('landing.ctaH1') }}<br /><span class="accent">{{ $t('landing.ctaH2') }}</span></h2>
+                <p>{{ $t('landing.ctaP') }}</p>
+                <button class="btn btn-solid btn-cta" @click="goRegister">{{ $t('landing.ctaBtn') }}</button>
+                <span class="cta-sub">{{ $t('landing.ctaSub') }}</span>
             </div>
         </section>
 
         <!-- FOOTER -->
         <footer class="foot">
             <a href="#top" class="logo foot-logo"><img src="/brand/logo-horizontal-dark.png" alt="FIFARDOS" /></a>
-            <p class="foot-note">Hecho por fanáticos, no por EA. FIFA y EA Sports FC son marcas de sus dueños.</p>
+            <p class="foot-note">{{ $t('landing.footNote') }}</p>
             <div class="foot-links">
                 <button type="button" class="foot-mcp" @click="showMcp = true">
-                    <span class="mcp-dot"></span> Integración MCP
+                    <span class="mcp-dot"></span> {{ $t('landing.footMcp') }}
                 </button>
                 <a href="#">X / Twitter</a>
                 <a href="#">Instagram</a>
@@ -397,19 +368,16 @@ onBeforeUnmount(() => {
             <div v-if="showMcp" class="mcp-overlay" @click.self="showMcp = false">
                 <div class="mcp-modal">
                     <div class="mcp-accent"></div>
-                    <button class="mcp-close" @click="showMcp = false" aria-label="Cerrar">✕</button>
+                    <button class="mcp-close" @click="showMcp = false" :aria-label="$t('common.close')">✕</button>
                     <div class="mcp-body">
-                        <span class="mcp-eyebrow">MCP · Model Context Protocol</span>
-                        <h3 class="mcp-title">Conectá FIFARDOS a tu IA</h3>
-                        <p class="mcp-lead">
-                            Pedile a <strong>Claude</strong>, <strong>ChatGPT</strong> o <strong>Gemini</strong> que consulte tus
-                            torneos, tablas y goleadores — o que <strong>arme un torneo por vos</strong> — vía MCP.
-                        </p>
+                        <span class="mcp-eyebrow">{{ $t('mcp.eyebrow') }}</span>
+                        <h3 class="mcp-title">{{ $t('mcp.title') }}</h3>
+                        <p class="mcp-lead">{{ $t('mcp.lead') }}</p>
 
                         <div class="mcp-steps">
-                            <span>1 · Generá un token en <b>API tokens</b> dentro de la app.</span>
-                            <span>2 · Agregá el servidor MCP a tu asistente (config abajo).</span>
-                            <span>3 · Listo: pedile “armame un torneo con Diego, Juan y Nico”.</span>
+                            <span>1 · {{ $t('mcp.step1') }}</span>
+                            <span>2 · {{ $t('mcp.step2') }}</span>
+                            <span>3 · {{ $t('mcp.step3') }}</span>
                         </div>
 
                         <div class="mcp-tabs">
@@ -419,7 +387,7 @@ onBeforeUnmount(() => {
                         </div>
 
                         <div v-if="mcpTab === 'claude'" class="mcp-pane">
-                            <p class="mcp-note">Claude Desktop / Cursor / Copilot — agregá a la config de MCP:</p>
+                            <p class="mcp-note">{{ $t('mcp.noteClaude') }}</p>
                             <pre class="mcp-code">{
   "mcpServers": {
     "fifardos": {
@@ -434,23 +402,21 @@ onBeforeUnmount(() => {
 }</pre>
                         </div>
                         <div v-else-if="mcpTab === 'gpt'" class="mcp-pane">
-                            <p class="mcp-note">ChatGPT admite conectores MCP por HTTP. Exponé el servidor con un puente:</p>
+                            <p class="mcp-note">{{ $t('mcp.noteGpt') }}</p>
                             <pre class="mcp-code">npx -y supergateway \
   --stdio "node /ruta/al/proyecto/mcp/index.js" \
   --port 8787
 # Registrá http://localhost:8787/sse como conector MCP</pre>
                         </div>
                         <div v-else class="mcp-pane">
-                            <p class="mcp-note">Gemini aún no tiene MCP nativo. Usá la API de agentes de FIFARDOS (o un puente MCP):</p>
+                            <p class="mcp-note">{{ $t('mcp.noteGemini') }}</p>
                             <pre class="mcp-code">GET  https://fifardos.com/api/agent/schema
 Authorization: Bearer 1|tu_token
 
 # El schema describe todas las herramientas para el modelo</pre>
                         </div>
 
-                        <p class="mcp-tools">
-                            Herramientas: listar torneos · tabla de posiciones · goleadores · partidos · datos de jugador · <b>crear torneo</b>.
-                        </p>
+                        <p class="mcp-tools">{{ $t('mcp.tools') }}</p>
                     </div>
                 </div>
             </div>
@@ -564,14 +530,6 @@ Authorization: Bearer 1|tu_token
 .boot-lbl { font-family: var(--f-anton); font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-soft); }
 .boot-val { font-size: 15px; font-weight: 700; }
 
-/* Ticker */
-.ticker { background: var(--bg-alt); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); padding: 15px 0; overflow: hidden; white-space: nowrap; }
-.ticker-track { display: inline-flex; gap: 34px; animation: fd-marquee 26s linear infinite; animation-play-state: paused; }
-.ticker.running .ticker-track { animation-play-state: running; }
-.ticker.running:hover .ticker-track { animation-play-state: paused; }
-.ticker-item { font-family: var(--f-barlow); font-weight: 600; font-size: 17px; letter-spacing: .16em; text-transform: uppercase; color: var(--ttick); }
-.ticker-item b { color: var(--accent); margin-left: 34px; }
-
 /* Sections */
 .sec { padding: 92px 0; }
 .sec-alt { background: var(--bg-alt); border-top: 1px solid var(--hair); border-bottom: 1px solid var(--hair); }
@@ -655,7 +613,6 @@ Authorization: Bearer 1|tu_token
 .anim { opacity: 0; animation: fd-in .5s ease forwards; animation-delay: var(--d, 0ms); }
 .anim-card { opacity: 0; animation: fd-in-x .55s ease forwards; animation-delay: var(--d, 0ms); }
 
-@keyframes fd-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 @keyframes fd-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
 @keyframes fd-in { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 @keyframes fd-in-x { from { opacity: 0; transform: translateX(28px); } to { opacity: 1; transform: none; } }
@@ -699,7 +656,7 @@ Authorization: Bearer 1|tu_token
 @media (prefers-reduced-motion: reduce) {
     [data-reveal] { opacity: 1; transform: none; transition: none; }
     .anim, .anim-card { opacity: 1; animation: none; }
-    .dot-orange, .dot-lime, .ticker-track { animation: none !important; }
+    .dot-orange, .dot-lime { animation: none !important; }
 }
 </style>
 
