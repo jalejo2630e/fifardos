@@ -36,9 +36,20 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install Android SDK 35
+      - name: Install Android SDK 34
         run: |
-          yes | $ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager "platforms;android-35" 2>&1
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -f "$SDKMANAGER" ]; then
+            SDKMANAGER="$ANDROID_HOME/cmdline-tools/16.0/bin/sdkmanager"
+          fi
+          if [ ! -f "$SDKMANAGER" ]; then
+            SDKMANAGER="$ANDROID_HOME/cmdline-tools/15.0/bin/sdkmanager"
+          fi
+          if [ ! -f "$SDKMANAGER" ]; then
+            SDKMANAGER="$ANDROID_HOME/tools/bin/sdkmanager"
+          fi
+          echo "Using sdkmanager: $SDKMANAGER"
+          yes | $SDKMANAGER "platforms;android-34" 2>&1
 
       - name: Make gradlew executable
         working-directory: android
@@ -53,22 +64,14 @@ jobs:
             -storepass fifardos123 -keypass fifardos123 \
             -dname "CN=FIFARDOS, OU=, O=, L=, S=, C="
 
-      - name: Inject signing config into build.gradle
-        run: |
-          sed -i '/android {/a\
-          \    signingConfigs {\
-          \        release {\
-          \            storeFile file("../../fifardos.keystore")\
-          \            storePassword "fifardos123"\
-          \            keyAlias "fifardos"\
-          \            keyPassword "fifardos123"\
-          \        }\
-          \    }' android/app/build.gradle
-          sed -i 's/minifyEnabled false/minifyEnabled false\n            signingConfig signingConfigs.release/' android/app/build.gradle
-
       - name: Build signed release APK
         working-directory: android
-        run: ./gradlew assembleRelease
+        run: |
+          ./gradlew assembleRelease \
+            -PKEYSTORE_PATH=../../fifardos.keystore \
+            -PKEYSTORE_PASSWORD=fifardos123 \
+            -PKEY_ALIAS=fifardos \
+            -PKEY_PASSWORD=fifardos123
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

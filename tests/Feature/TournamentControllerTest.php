@@ -29,7 +29,7 @@ class TournamentControllerTest extends TestCase
     public function test_index_shows_empty_state(): void
     {
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tournaments.index'))
             ->assertInertia(fn($page) => $page
                 ->component('Tournaments/Index')
                 ->where('tournaments', [])
@@ -41,7 +41,7 @@ class TournamentControllerTest extends TestCase
         Tournament::factory()->for($this->user)->create(['name' => 'My Tournament']);
 
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tournaments.index'))
             ->assertInertia(fn($page) => $page
                 ->component('Tournaments/Index')
                 ->has('tournaments', 1)
@@ -56,7 +56,7 @@ class TournamentControllerTest extends TestCase
         Tournament::factory()->for($other)->create(['name' => 'Theirs']);
 
         $this->actingAs($this->user)
-            ->get(route('dashboard'))
+            ->get(route('tournaments.index'))
             ->assertInertia(fn($page) => $page
                 ->component('Tournaments/Index')
                 ->has('tournaments', 1)
