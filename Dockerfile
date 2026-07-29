@@ -48,6 +48,7 @@ COPY --from=assets /app/public/build /var/www/html/public/build
 # Configuración de servicios
 COPY docker/nginx.conf       /etc/nginx/nginx.conf
 COPY docker/php.ini          /usr/local/etc/php/conf.d/zz-fifardos.ini
+COPY docker/www.conf         /usr/local/etc/php-fpm.d/www.conf
 COPY docker/supervisord.conf /etc/supervisor/supervisord.conf
 COPY docker/entrypoint.sh    /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh \

@@ -79,33 +79,36 @@ class SecurityQuestionController extends Controller
     public function verifyEmail(Request $request)
     {
         $request->validate(['email' => 'required|email']);
+        $email = strtolower($request->email);
 
-        $key = 'recover-questions:' . $request->ip();
+        // Throttle por IP Y por cuenta (evita fuerza bruta distribuida contra una víctima)
+        $keys = ['recover-q-ip:' . $request->ip(), 'recover-q-email:' . sha1($email)];
+        $decay = SecurityQuestionCatalog::DECAY_MINUTES * 60;
 
-        if (RateLimiter::tooManyAttempts($key, SecurityQuestionCatalog::MAX_ATTEMPTS)) {
-            $seconds = RateLimiter::availableIn($key);
+        foreach ($keys as $k) {
+            if (RateLimiter::tooManyAttempts($k, SecurityQuestionCatalog::MAX_ATTEMPTS)) {
+                $seconds = RateLimiter::availableIn($k);
+                return back()->withErrors([
+                    'email' => 'Demasiados intentos. Intenta de nuevo en ' . ceil($seconds / 60) . ' minutos.',
+                ]);
+            }
+        }
+
+        $user = User::where('email', $email)->first();
+        $sqs = $user ? $user->securityQuestions()->get() : collect();
+
+        // Mensaje genérico: no revelamos si la cuenta existe o si tiene preguntas.
+        if (!$user || $sqs->count() !== 3) {
+            foreach ($keys as $k) RateLimiter::hit($k, $decay);
+            Log::warning('Recuperación: correo inválido o sin preguntas', ['ip' => $request->ip()]);
             return back()->withErrors([
-                'email' => "Demasiados intentos. Intenta de nuevo en " . ceil($seconds / 60) . " minutos.",
+                'email' => 'No pudimos continuar con ese correo. Verificá los datos e intentá de nuevo.',
             ]);
-        }
-
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            RateLimiter::hit($key, SecurityQuestionCatalog::DECAY_MINUTES * 60);
-            Log::warning('Recuperación: email no encontrado', ['email' => $request->email, 'ip' => $request->ip()]);
-            return back()->withErrors(['email' => 'No encontramos una cuenta con ese correo.']);
-        }
-
-        $sqs = $user->securityQuestions()->get();
-        if ($sqs->count() !== 3) {
-            RateLimiter::hit($key, SecurityQuestionCatalog::DECAY_MINUTES * 60);
-            Log::warning('Recuperación: preguntas no configuradas', ['user_id' => $user->id, 'ip' => $request->ip()]);
-            return back()->withErrors(['email' => 'Este usuario no tiene preguntas de seguridad configuradas.']);
         }
 
         return Inertia::render('Auth/ForgotPasswordQuestions', [
             'step' => 'questions',
-            'user_email' => $request->email,
+            'user_email' => $email,
             'questions' => $sqs->pluck('question')->values()->toArray(),
             'has_setup' => true,
         ]);
@@ -119,49 +122,46 @@ class SecurityQuestionController extends Controller
             'answers.*' => 'required|string|min:1|max:100',
         ]);
 
-        $key = 'recover-answers:' . $request->ip();
+        $email = strtolower($request->email);
+        $keys = ['recover-a-ip:' . $request->ip(), 'recover-a-email:' . sha1($email)];
+        $decay = SecurityQuestionCatalog::DECAY_MINUTES * 60;
 
-        if (RateLimiter::tooManyAttempts($key, SecurityQuestionCatalog::MAX_ATTEMPTS)) {
-            $seconds = RateLimiter::availableIn($key);
-            return back()->withErrors([
-                'answers' => "Demasiados intentos. Intenta de nuevo en " . ceil($seconds / 60) . " minutos.",
-            ]);
+        foreach ($keys as $k) {
+            if (RateLimiter::tooManyAttempts($k, SecurityQuestionCatalog::MAX_ATTEMPTS)) {
+                $seconds = RateLimiter::availableIn($k);
+                return back()->withErrors([
+                    'answers' => 'Demasiados intentos. Intenta de nuevo en ' . ceil($seconds / 60) . ' minutos.',
+                ]);
+            }
         }
 
-        $user = User::where('email', $request->email)->first();
-        if (!$user) {
-            return back()->withErrors(['email' => 'No encontramos una cuenta con ese correo.']);
-        }
+        $user = User::where('email', $email)->first();
+        $sqs = $user ? $user->securityQuestions()->get() : collect();
 
-        $sqs = $user->securityQuestions()->get();
-        if ($sqs->count() !== 3) {
-            return back()->withErrors(['email' => 'Preguntas de seguridad no configuradas.']);
-        }
-
-        $allCorrect = true;
-        foreach ($sqs as $i => $sq) {
-            $normalized = SecurityQuestionCatalog::normalizeAnswer($request->answers[$i]);
-            if (!SecurityQuestionCatalog::checkAnswer($request->answers[$i], $sq->answer_hash)) {
-                $allCorrect = false;
-                break;
+        // Cuenta inexistente / sin preguntas → mismo mensaje que respuestas incorrectas
+        // (no revela si la cuenta existe).
+        $allCorrect = $user && $sqs->count() === 3;
+        if ($allCorrect) {
+            foreach ($sqs as $i => $sq) {
+                if (!SecurityQuestionCatalog::checkAnswer($request->answers[$i] ?? '', $sq->answer_hash)) {
+                    $allCorrect = false;
+                    break;
+                }
             }
         }
 
         if (!$allCorrect) {
-            RateLimiter::hit($key, SecurityQuestionCatalog::DECAY_MINUTES * 60);
-            Log::warning('Recuperación: respuestas incorrectas', [
-                'user_id' => $user->id,
-                'ip' => $request->ip(),
-            ]);
+            foreach ($keys as $k) RateLimiter::hit($k, $decay);
+            Log::warning('Recuperación: respuestas incorrectas o cuenta inválida', ['ip' => $request->ip()]);
             return back()->withErrors(['answers' => 'Una o más respuestas son incorrectas.']);
         }
 
-        RateLimiter::clear($key);
+        foreach ($keys as $k) RateLimiter::clear($k);
 
         $token = Str::random(60);
         DB::table('password_reset_tokens')->updateOrInsert(
-            ['email' => $request->email],
-            ['email' => $request->email, 'token' => Hash::make($token), 'created_at' => now()]
+            ['email' => $email],
+            ['email' => $email, 'token' => Hash::make($token), 'created_at' => now()]
         );
 
         Log::info('Recuperación exitosa vía preguntas de seguridad', [
@@ -171,7 +171,7 @@ class SecurityQuestionController extends Controller
 
         return Inertia::render('Auth/ForgotPasswordQuestions', [
             'step' => 'reset',
-            'user_email' => $request->email,
+            'user_email' => $email,
             'user_name' => $user->name,
             'token' => $token,
         ]);
@@ -185,8 +185,10 @@ class SecurityQuestionController extends Controller
             'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
         ]);
 
+        $email = strtolower($request->email);
+
         $record = DB::table('password_reset_tokens')
-            ->where('email', $request->email)
+            ->where('email', $email)
             ->first();
 
         if (!$record || !Hash::check($request->token, $record->token)) {
@@ -194,19 +196,19 @@ class SecurityQuestionController extends Controller
         }
 
         if (now()->diffInMinutes($record->created_at) > 60) {
-            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
             return back()->withErrors(['token' => 'El enlace ha expirado. Intenta de nuevo.']);
         }
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $email)->first();
         if (!$user) {
             return back()->withErrors(['email' => 'Usuario no encontrado.']);
         }
 
-        $user->password = Hash::make($request->password);
+        $user->password = $request->password; // el cast 'hashed' del modelo lo hashea
         $user->save();
 
-        DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
 
         return redirect()->route('login')->with('status', 'Contraseña restablecida correctamente.');
     }
