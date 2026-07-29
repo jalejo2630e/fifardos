@@ -20,7 +20,7 @@ const submit = () => {
         <div class="grid-lines" aria-hidden="true"></div>
 
         <div class="card">
-            <Link href="/" class="logo" aria-label="FIFARDOS inicio">FIFAR<span>DOS</span></Link>
+            <Link href="/" class="logo" aria-label="FIFARDOS inicio"><img src="/brand/logo-horizontal-dark.png" alt="FIFARDOS" /></Link>
 
             <h1>Iniciá sesión</h1>
             <p class="sub">Entrá a tu cuenta y seguí el torneo.</p>
@@ -45,7 +45,6 @@ const submit = () => {
                     </label>
                     <div class="links">
                         <Link :href="route('password.request')">¿Olvidaste tu contraseña?</Link>
-                        <Link :href="route('security-questions.recover.form')" class="dim">Recuperar con preguntas</Link>
                     </div>
                 </div>
 
@@ -87,8 +86,8 @@ const submit = () => {
 .card { position: relative; z-index: 1; width: 100%; max-width: 420px; background: var(--card); border: 1px solid var(--hair); padding: 36px 32px 32px; }
 .card::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, var(--accent), transparent); }
 
-.logo { display: inline-block; font-family: var(--f-anton); font-size: 26px; letter-spacing: -.5px; color: var(--tp); text-decoration: none; transform: skewX(-8deg); margin-bottom: 22px; }
-.logo span { color: var(--accent); }
+.logo { display: inline-block; margin-bottom: 22px; }
+.logo img { height: 34px; width: auto; display: block; }
 
 h1 { font-family: var(--f-anton); text-transform: uppercase; font-size: 40px; line-height: .95; letter-spacing: -.5px; margin: 0 0 8px; }
 .sub { color: var(--tm); font-size: 15px; margin: 0 0 24px; }

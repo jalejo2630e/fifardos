@@ -167,9 +167,10 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/admin/chat-config', [App\Http\Controllers\Admin\ChatConfigController::class, 'edit'])->name('admin.chat-config.edit');
         Route::put('/admin/chat-config', [App\Http\Controllers\Admin\ChatConfigController::class, 'update'])->name('admin.chat-config.update');
-
-        Route::get('/dashboard/api-docs', fn () => app(App\Http\Controllers\ApiDocsController::class)->index())->name('dashboard.api-docs');
     });
+
+    // API docs + creación de token — disponible para CUALQUIER usuario (para conectar por MCP)
+    Route::get('/dashboard/api-docs', fn () => app(App\Http\Controllers\ApiDocsController::class)->index())->name('dashboard.api-docs');
 
     Route::prefix('api-tokens')->group(function () {
         Route::get('/', [App\Http\Controllers\ApiTokenController::class, 'index'])->name('api-tokens.index');

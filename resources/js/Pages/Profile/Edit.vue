@@ -3,7 +3,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
-import SecurityQuestionsForm from './Partials/SecurityQuestionsForm.vue';
 import { Head } from '@inertiajs/vue3';
 
 defineProps({
@@ -50,14 +49,6 @@ defineProps({
 
                 <div class="ucl-card p-5 sm:p-6">
                     <UpdatePasswordForm class="max-w-xl" />
-                </div>
-
-                <div class="ucl-card p-5 sm:p-6">
-                    <SecurityQuestionsForm
-                        :catalog="catalog"
-                        :existing_questions="securityQuestions"
-                        :has_setup="hasSecuritySetup"
-                    />
                 </div>
 
                 <div class="ucl-card p-5 sm:p-6">

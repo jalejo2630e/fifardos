@@ -30,8 +30,8 @@
             background-image: linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
             background-size: 60px 60px; mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 30%, transparent 100%); }
         .wrap { position: relative; z-index: 1; max-width: 560px; }
-        .logo { font-family: var(--f-anton); font-size: 26px; letter-spacing: -.5px; color: var(--tp); text-decoration: none; transform: skewX(-8deg); display: inline-block; margin-bottom: 30px; }
-        .logo span { color: var(--accent); }
+        .logo { display: inline-block; margin-bottom: 30px; }
+        .logo img { height: 40px; width: auto; display: block; }
         .code { font-family: var(--f-anton); font-size: clamp(96px, 22vw, 190px); line-height: .85; letter-spacing: -3px;
             background: linear-gradient(120deg, var(--accent), #ffb37a); -webkit-background-clip: text; background-clip: text; color: transparent; }
         h1 { font-family: var(--f-anton); text-transform: uppercase; font-size: clamp(26px, 5vw, 40px); letter-spacing: -.5px; margin: 6px 0 12px; }
@@ -50,7 +50,7 @@
     <div class="glow"></div>
     <div class="grid"></div>
     <div class="wrap">
-        <a href="/" class="logo">FIFAR<span>DOS</span></a>
+        <a href="/" class="logo"><img src="/brand/logo-horizontal-dark.png" alt="FIFARDOS"></a>
         <div class="code">@yield('code')</div>
         <h1>@yield('title')</h1>
         <p>@yield('message')</p>

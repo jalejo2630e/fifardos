@@ -105,6 +105,68 @@ class AgentApiController extends Controller
     }
 
     /**
+     * POST /api/agent/tournaments/{id}/matches/{matchId}/score
+     * Registra el marcador de un partido (usado por la app móvil al guardar/sincronizar).
+     * La generación/avance de eliminatorias se reconcilia al abrir el torneo en la web.
+     */
+    public function recordScore(Request $request, $id, $matchId)
+    {
+        $tournament = Tournament::where('user_id', $request->user()->id)->findOrFail($id);
+        $match = GameMatch::where('tournament_id', $tournament->id)->findOrFail($matchId);
+
+        $validated = $request->validate([
+            'score1' => 'required|integer|min:0',
+            'score2' => 'required|integer|min:0',
+            'penalties1' => 'nullable|integer|min:0',
+            'penalties2' => 'nullable|integer|min:0',
+            'played_at' => 'nullable|date',
+            'goal_scorers' => 'nullable|array',
+            'goal_scorers.*.player_id' => [
+                'required', 'integer',
+                \Illuminate\Validation\Rule::exists('players', 'id')->where('tournament_id', $tournament->id),
+            ],
+            'goal_scorers.*.goals' => 'required|integer|min:1',
+        ]);
+
+        $data = [
+            'score1' => $validated['score1'],
+            'score2' => $validated['score2'],
+            'status' => 'finished',
+            'played_at' => $validated['played_at'] ?? now(),
+        ];
+        if (isset($validated['penalties1'], $validated['penalties2'])) {
+            $data['penalties1'] = $validated['penalties1'];
+            $data['penalties2'] = $validated['penalties2'];
+        }
+        $match->update($data);
+
+        if (!empty($validated['goal_scorers'])) {
+            $match->goalScorers()->delete();
+            foreach ($validated['goal_scorers'] as $gs) {
+                $match->goalScorers()->create(['player_id' => $gs['player_id'], 'goals' => $gs['goals']]);
+            }
+        }
+
+        // Estado del torneo (completado si todos los partidos están jugados)
+        $allPlayed = $tournament->matches()->count() > 0
+            && $tournament->matches()->where('status', '!=', 'finished')->count() === 0;
+        if ($allPlayed && $tournament->status !== 'completed') {
+            $tournament->update(['status' => 'completed', 'finished_at' => now()]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'match' => [
+                'id' => $match->id,
+                'score1' => $match->score1,
+                'score2' => $match->score2,
+                'status' => $match->status,
+            ],
+            'tournament_status' => $tournament->fresh()->status,
+        ]);
+    }
+
+    /**
      * GET /api/agent/tournaments/{id}/standings
      * Tabla de posiciones completa del torneo.
      */

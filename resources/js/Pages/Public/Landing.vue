@@ -74,6 +74,10 @@ function goRegister() {
     router.visit(props.canRegister ? route('register') : route('login'));
 }
 
+function goLogin() {
+    router.visit(route('login'));
+}
+
 function animateValue(setter, to, duration = 700) {
     if (reduceMotion) { setter(to); return; }
     const start = performance.now();
@@ -182,14 +186,17 @@ onBeforeUnmount(() => {
 
         <!-- HEADER -->
         <header class="hdr" :class="{ scrolled }">
-            <a href="#top" class="logo" aria-label="FIFARDOS inicio">FIFAR<span>DOS</span></a>
+            <a href="#top" class="logo" aria-label="FIFARDOS inicio"><img src="/brand/logo-horizontal-dark.png" alt="FIFARDOS" /></a>
             <nav class="nav">
                 <a href="#como">Cómo va</a>
                 <a href="#modos">Modos</a>
                 <a href="#tabla">En vivo</a>
                 <a href="#faq">FAQ</a>
             </nav>
-            <button class="btn btn-solid btn-nav" @click="goRegister">Crear torneo</button>
+            <div class="nav-cta-group">
+                <button v-if="canLogin" class="btn btn-ghost-nav" @click="goLogin">Iniciar sesión</button>
+                <button class="btn btn-solid btn-nav" @click="goRegister">Crear torneo</button>
+            </div>
         </header>
 
         <span id="top"></span>
@@ -211,7 +218,7 @@ onBeforeUnmount(() => {
                     </p>
                     <div class="hero-btns anim" style="--d:210ms">
                         <button class="btn btn-solid btn-hero" @click="goRegister">Armar mi torneo <span aria-hidden="true">→</span></button>
-                        <a href="#tabla" class="btn btn-outline btn-hero">Ver una demo</a>
+                        <button class="btn btn-outline btn-hero" @click="goLogin">Iniciar sesión</button>
                     </div>
                     <div class="stats anim" style="--d:280ms">
                         <div class="stat"><span class="num">{{ heroSeconds }} s</span><span class="lbl">en armar el fixture</span></div>
@@ -360,7 +367,7 @@ onBeforeUnmount(() => {
 
         <!-- FOOTER -->
         <footer class="foot">
-            <a href="#top" class="logo foot-logo">FIFAR<span>DOS</span></a>
+            <a href="#top" class="logo foot-logo"><img src="/brand/logo-horizontal-dark.png" alt="FIFARDOS" /></a>
             <p class="foot-note">Hecho por fanáticos, no por EA. FIFA y EA Sports FC son marcas de sus dueños.</p>
             <div class="foot-links">
                 <button type="button" class="foot-mcp" @click="showMcp = true">
@@ -490,14 +497,17 @@ Authorization: Bearer 1|tu_token
 .btn-outline { background: transparent; color: var(--tp); border: 1px solid rgba(255, 255, 255, .18); }
 .btn-outline:hover { border-color: var(--accent); color: var(--accent-soft); }
 .btn-nav { font-size: 16px; letter-spacing: .1em; padding: 10px 20px 9px; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px); }
+.nav-cta-group { display: flex; align-items: center; gap: 10px; }
+.btn-ghost-nav { background: transparent; border: 1px solid rgba(255,255,255,.18); color: var(--tp); font-family: var(--f-barlow); font-weight: 700; text-transform: uppercase; letter-spacing: .1em; font-size: 15px; padding: 9px 16px; cursor: pointer; transition: border-color .2s ease, color .2s ease; }
+.btn-ghost-nav:hover { border-color: var(--accent); color: var(--accent-soft); }
 .btn-hero { font-size: 21px; padding: 15px 28px 13px; clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px); }
 .btn-cta { font-size: 24px; padding: 18px 44px 16px; clip-path: polygon(16px 0, 100% 0, 100% calc(100% - 16px), calc(100% - 16px) 100%, 0 100%, 0 16px); }
 
 /* Header */
 .hdr { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 32px; padding: 14px 24px; background: rgba(8, 8, 10, .82); backdrop-filter: blur(14px); border-bottom: 1px solid var(--hair); transition: background-color .2s ease, box-shadow .2s ease; }
 .hdr.scrolled { background: rgba(8, 8, 10, .94); box-shadow: 0 10px 30px -18px rgba(0, 0, 0, .9); }
-.logo { font-family: var(--f-anton); font-size: 24px; letter-spacing: -.5px; color: var(--tp); text-decoration: none; transform: skewX(-8deg); display: inline-block; }
-.logo span { color: var(--accent); }
+.logo { display: inline-flex; align-items: center; text-decoration: none; }
+.logo img { height: 30px; width: auto; display: block; }
 .nav { margin-left: auto; display: flex; gap: 26px; }
 .nav a { color: #9a9a96; text-decoration: none; font-family: var(--f-body); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; transition: color .15s ease; }
 .nav a:hover { color: var(--tp); }
@@ -615,7 +625,7 @@ Authorization: Bearer 1|tu_token
 
 /* Footer */
 .foot { background: var(--bg-alt); border-top: 1px solid var(--hair); padding: 30px 24px; display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
-.foot-logo { font-size: 18px; }
+.foot-logo img { height: 26px; }
 .foot-note { color: var(--tdd); font-size: 13px; margin: 0; }
 .foot-links { margin-left: auto; display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
 .foot-links a { color: var(--tm); text-decoration: none; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; transition: color .15s ease; }

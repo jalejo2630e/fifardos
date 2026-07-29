@@ -67,12 +67,6 @@ const submit = () => {
                 </PrimaryButton>
 
                 <p class="text-center text-sm text-white/30">
-                    <Link :href="route('security-questions.recover.form')" class="font-medium transition-colors" style="color: var(--accent-orange, #ff8a3d)">
-                        Recuperar con preguntas de seguridad
-                    </Link>
-                </p>
-
-                <p class="text-center text-sm text-white/30">
                     <Link :href="route('login')" class="font-medium transition-colors" style="color: var(--accent-orange, #ff8a3d)">
                         ← Volver al inicio de sesión
                     </Link>
