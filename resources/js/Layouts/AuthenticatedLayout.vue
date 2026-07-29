@@ -58,6 +58,12 @@ const showingNav = ref(false);
                                 CÓMO USAR
                             </Link>
                             <Link v-if="$page.props.auth.user?.is_admin"
+                                  :href="route('admin.reportes')"
+                                  class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+                                  :class="route().current('admin.reportes') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
+                                REPORTES
+                            </Link>
+                            <Link v-if="$page.props.auth.user?.is_admin"
                                   :href="route('admin.chat-config.edit')"
                                   class="px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200"
                                   :class="route().current('admin.chat-config.*') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/50 hover:text-white hover:bg-white/5'">
@@ -160,6 +166,16 @@ const showingNav = ref(false);
                             <path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
                         </svg>
                         Cómo Usar
+                    </Link>
+                    <Link v-if="$page.props.auth.user?.is_admin"
+                          :href="route('admin.reportes')"
+                          class="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all"
+                          :class="route().current('admin.reportes') ? 'text-elite-secondary bg-elite-secondary/10' : 'text-white/60 hover:text-white hover:bg-white/5'"
+                          @click="showingNav = false">
+                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 20V10M10 20V4M16 20v-7M22 20H2" />
+                        </svg>
+                        Reportes
                     </Link>
                     <Link v-if="$page.props.auth.user?.is_admin"
                           :href="route('admin.chat-config.edit')"

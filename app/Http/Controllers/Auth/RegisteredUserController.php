@@ -30,8 +30,8 @@ class RegisteredUserController extends Controller
         ];
 
         $rules['avatar'] = $request->hasFile('avatar')
-            ? 'nullable|image|max:2048'
-            : 'nullable|string|max:255';
+            ? 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:2048'
+            : ['nullable', 'string', 'max:16', 'not_regex:/[\/:<>]/'];
 
         $request->validate($rules);
 

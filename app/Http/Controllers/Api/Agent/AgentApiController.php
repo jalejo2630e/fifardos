@@ -19,9 +19,10 @@ class AgentApiController extends Controller
      * GET /api/agent/tournaments
      * Lista de torneos activos con estado, cantidad de jugadores, partidos jugados/totales.
      */
-    public function tournaments()
+    public function tournaments(Request $request)
     {
-        $tournaments = Tournament::withCount([
+        $tournaments = Tournament::where('user_id', $request->user()->id)
+            ->withCount([
             'players',
             'matches',
             'matches as matches_played' => fn($q) => $q->where('status', 'finished'),
@@ -107,9 +108,10 @@ class AgentApiController extends Controller
      * GET /api/agent/tournaments/{id}/standings
      * Tabla de posiciones completa del torneo.
      */
-    public function standings($id)
+    public function standings(Request $request, $id)
     {
-        $tournament = Tournament::with(['players', 'matches' => fn($q) => $q->with(['player1', 'player2'])])
+        $tournament = Tournament::where('user_id', $request->user()->id)
+            ->with(['players', 'matches' => fn($q) => $q->with(['player1', 'player2'])])
             ->findOrFail($id);
 
         $rows = app(StandingsService::class)->calculate($tournament);
@@ -146,9 +148,10 @@ class AgentApiController extends Controller
      * NOTA: Los goles se calculan sumando score1 (cuando el jugador es player1)
      *       y score2 (cuando es player2). No hay tabla individual de goleadores aún.
      */
-    public function topScorer($id)
+    public function topScorer(Request $request, $id)
     {
-        $tournament = Tournament::with(['players', 'matches' => fn($q) => $q->where('status', 'finished')])
+        $tournament = Tournament::where('user_id', $request->user()->id)
+            ->with(['players', 'matches' => fn($q) => $q->where('status', 'finished')])
             ->findOrFail($id);
 
         $goalCounts = [];
@@ -196,7 +199,7 @@ class AgentApiController extends Controller
      */
     public function matches(Request $request, $id)
     {
-        $tournament = Tournament::findOrFail($id);
+        $tournament = Tournament::where('user_id', $request->user()->id)->findOrFail($id);
 
         $query = GameMatch::with(['player1', 'player2'])
             ->where('tournament_id', $id)
@@ -248,9 +251,11 @@ class AgentApiController extends Controller
      * GET /api/agent/players/{id}
      * Datos y estadísticas de un jugador específico.
      */
-    public function player($id)
+    public function player(Request $request, $id)
     {
-        $player = Player::with('tournament')->findOrFail($id);
+        $player = Player::whereHas('tournament', fn($q) => $q->where('user_id', $request->user()->id))
+            ->with('tournament')
+            ->findOrFail($id);
 
         $matchesAsP1 = GameMatch::where('player1_id', $id)->where('status', 'finished')->get();
         $matchesAsP2 = GameMatch::where('player2_id', $id)->where('status', 'finished')->get();
@@ -551,10 +556,11 @@ class AgentApiController extends Controller
             ]);
 
         if ($response->failed()) {
+            \Illuminate\Support\Facades\Log::warning('Gemini embedding falló', ['status' => $response->status()]);
             return response()->json([
                 'success' => false,
-                'error' => 'Error al generar embedding: ' . $response->body(),
-            ], 500);
+                'error' => 'No se pudo generar el embedding en este momento.',
+            ], 502);
         }
 
         $queryEmbedding = $response->json('embedding.values');
@@ -567,6 +573,8 @@ class AgentApiController extends Controller
 
         $rows = DB::table('match_summaries')
             ->join('players', 'match_summaries.player_id', '=', 'players.id')
+            ->join('tournaments', 'players.tournament_id', '=', 'tournaments.id')
+            ->where('tournaments.user_id', $request->user()->id)
             ->whereNotNull('match_summaries.embedding')
             ->select(
                 'match_summaries.player_id',

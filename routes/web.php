@@ -157,18 +157,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/seguridad/configurar', [App\Http\Controllers\SecurityQuestionController::class, 'setupForm'])->name('security-questions.setup.form');
     Route::post('/seguridad/configurar', [App\Http\Controllers\SecurityQuestionController::class, 'setupStore'])->name('security-questions.setup.store');
 
-    Route::get('/admin/como-usar', function () {
-        if (!auth()->user()->is_admin) abort(403);
-        return \Inertia\Inertia::render('Admin/ComoUsar');
-    })->name('admin.como-usar');
+    // --- Administración (requiere is_admin, vía middleware 'admin') ---
+    Route::middleware('admin')->group(function () {
+        Route::get('/admin/como-usar', fn () => \Inertia\Inertia::render('Admin/ComoUsar'))->name('admin.como-usar');
 
-    Route::get('/admin/chat-config', [App\Http\Controllers\Admin\ChatConfigController::class, 'edit'])->name('admin.chat-config.edit');
-    Route::put('/admin/chat-config', [App\Http\Controllers\Admin\ChatConfigController::class, 'update'])->name('admin.chat-config.update');
+        Route::get('/admin/reportes', [App\Http\Controllers\Admin\ReportController::class, 'index'])->name('admin.reportes');
 
-    Route::get('/dashboard/api-docs', function () {
-        if (!auth()->user()->is_admin) abort(403);
-        return app(App\Http\Controllers\ApiDocsController::class)->index();
-    })->name('dashboard.api-docs');
+        Route::get('/admin/chat-config', [App\Http\Controllers\Admin\ChatConfigController::class, 'edit'])->name('admin.chat-config.edit');
+        Route::put('/admin/chat-config', [App\Http\Controllers\Admin\ChatConfigController::class, 'update'])->name('admin.chat-config.update');
+
+        Route::get('/dashboard/api-docs', fn () => app(App\Http\Controllers\ApiDocsController::class)->index())->name('dashboard.api-docs');
+    });
 
     Route::prefix('api-tokens')->group(function () {
         Route::get('/', [App\Http\Controllers\ApiTokenController::class, 'index'])->name('api-tokens.index');
@@ -177,6 +176,8 @@ Route::middleware('auth')->group(function () {
     });
 });
 
-Route::post('/chat', App\Http\Controllers\GeminiChatController::class)->name('chat');
+Route::post('/chat', App\Http\Controllers\GeminiChatController::class)
+    ->middleware('throttle:20,1')
+    ->name('chat');
 
 require __DIR__ . '/auth.php';

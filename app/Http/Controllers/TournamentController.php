@@ -28,6 +28,12 @@ class TournamentController extends Controller
         'third_place' => 'Tercer puesto',
     ];
 
+    /** Aborta con 403 si el torneo no pertenece al usuario autenticado. */
+    private function ensureOwner(Tournament $tournament): void
+    {
+        abort_unless((int) $tournament->user_id === (int) auth()->id(), 403);
+    }
+
     public function index()
     {
         $tournaments = Tournament::where('user_id', auth()->id())
@@ -104,6 +110,8 @@ class TournamentController extends Controller
 
     public function show(Tournament $tournament)
     {
+        $this->ensureOwner($tournament);
+
         $tournament->load(['players', 'matches' => function ($q) {
             $q->with(['player1', 'player2'])->orderBy('round')->orderBy('id');
         }]);
@@ -188,6 +196,8 @@ class TournamentController extends Controller
 
     public function generateKnockout(Request $request, Tournament $tournament)
     {
+        $this->ensureOwner($tournament);
+
         $top = (int) $request->input('top', 8);
         if (!in_array($top, [2, 4, 8, 16])) {
             return redirect()->back()->with('error', 'El número de jugadores debe ser 2, 4, 8 o 16.');
@@ -205,6 +215,9 @@ class TournamentController extends Controller
 
     public function updateScore(Request $request, Tournament $tournament, GameMatch $match)
     {
+        $this->ensureOwner($tournament);
+        abort_unless((int) $match->tournament_id === (int) $tournament->id, 404);
+
         $validated = $request->validate([
             'score1' => 'required|integer|min:0',
             'score2' => 'required|integer|min:0',
@@ -221,7 +234,10 @@ class TournamentController extends Controller
             'stats.cards_a' => 'nullable|integer|min:0',
             'stats.cards_b' => 'nullable|integer|min:0',
             'goal_scorers' => 'nullable|array',
-            'goal_scorers.*.player_id' => 'required|integer|exists:players,id',
+            'goal_scorers.*.player_id' => [
+                'required', 'integer',
+                \Illuminate\Validation\Rule::exists('players', 'id')->where('tournament_id', $tournament->id),
+            ],
             'goal_scorers.*.goals' => 'required|integer|min:1',
             'goal_scorers.*.minutes' => 'nullable|array',
             'goal_scorers.*.minutes.*' => 'integer|min:1|max:120',
@@ -273,6 +289,9 @@ class TournamentController extends Controller
 
     public function editScore(Request $request, Tournament $tournament, GameMatch $match)
     {
+        $this->ensureOwner($tournament);
+        abort_unless((int) $match->tournament_id === (int) $tournament->id, 404);
+
         $match->update([
             'score1' => null,
             'score2' => null,
@@ -293,6 +312,8 @@ class TournamentController extends Controller
 
     public function destroy(Tournament $tournament)
     {
+        $this->ensureOwner($tournament);
+
         $name = $tournament->name;
         $tournament->delete();
         return redirect()->route('dashboard')
@@ -301,6 +322,9 @@ class TournamentController extends Controller
 
     public function replacePlayer(Request $request, Tournament $tournament, Player $player)
     {
+        $this->ensureOwner($tournament);
+        abort_unless((int) $player->tournament_id === (int) $tournament->id, 404);
+
         $validated = $request->validate([
             'new_name' => 'required|string|max:255',
         ]);

@@ -83,10 +83,21 @@ class GeminiChatController extends Controller
 
     public function __invoke(Request $request)
     {
-        $request->validate(['message' => 'required|string|max:1000']);
+        $validated = $request->validate([
+            'message' => 'required|string|max:1000',
+            'history' => 'nullable|array|max:20',
+            'history.*.role' => 'required|in:user,model',
+            'history.*.parts' => 'required|array|max:4',
+            'history.*.parts.*.text' => 'required|string|max:2000',
+        ]);
 
-        $message = $request->input('message');
-        $history = $request->input('history', []);
+        $message = $validated['message'];
+        // Saneamos el historial: sólo role + parts[].text (descarta cualquier
+        // functionCall/functionResponse inyectado por el cliente → anti prompt-injection).
+        $history = array_map(fn($h) => [
+            'role' => $h['role'],
+            'parts' => array_map(fn($p) => ['text' => (string) $p['text']], $h['parts']),
+        ], $validated['history'] ?? []);
 
         // Try Gemini first (quick timeout)
         $result = $this->tryGemini($message, $history);
@@ -127,9 +138,10 @@ class GeminiChatController extends Controller
                 ],
             ];
 
-            $response = Http::timeout(3)->withHeaders(['Content-Type' => 'application/json'])
+            $response = Http::timeout(3)
+                ->withHeaders(['x-goog-api-key' => config('services.gemini.api_key')])
                 ->post(
-                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . config('services.gemini.api_key'),
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
                     $payload
                 );
 
@@ -158,9 +170,10 @@ class GeminiChatController extends Controller
                     'parts' => [['functionResponse' => ['name' => $fn['name'], 'response' => ['result' => $fnResult]]]],
                 ];
 
-                $response2 = Http::timeout(15)->withHeaders(['Content-Type' => 'application/json'])
+                $response2 = Http::timeout(15)
+                    ->withHeaders(['x-goog-api-key' => config('services.gemini.api_key')])
                     ->post(
-                        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . config('services.gemini.api_key'),
+                        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
                         $payload
                     );
 

@@ -13,16 +13,33 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // forceCreate (sin factory) para no depender de fakerphp/faker, que es
-        // dependencia de desarrollo y no está instalada en producción (--no-dev).
-        // El cast 'hashed' del modelo hashea el password automáticamente.
-        $user = User::forceCreate([
-            'name' => 'Alejandro',
-            'email' => 'jalejo.2630e@gmail.com',
-            'password' => 'password',
-            'is_admin' => true,
-            'email_verified_at' => now(),
-        ]);
+        // Admin: credenciales desde variables de entorno; si no hay password,
+        // se genera uno aleatorio fuerte y se imprime una vez (NUNCA un default débil).
+        // forceCreate (sin factory) para no depender de faker (require-dev, ausente con --no-dev).
+        // getenv() para leer aunque la config esté cacheada en producción.
+        $adminEmail = getenv('SEEDER_ADMIN_EMAIL') ?: 'admin@fifardos.com';
+        $adminName = getenv('SEEDER_ADMIN_NAME') ?: 'Admin';
+        $adminPassword = getenv('SEEDER_ADMIN_PASSWORD') ?: null;
+        $generated = false;
+        if (! $adminPassword) {
+            $adminPassword = \Illuminate\Support\Str::password(16);
+            $generated = true;
+        }
+
+        $user = User::where('email', $adminEmail)->first();
+        if (! $user) {
+            $user = User::forceCreate([
+                'name' => $adminName,
+                'email' => $adminEmail,
+                'password' => $adminPassword, // el cast 'hashed' lo hashea
+                'is_admin' => true,
+                'email_verified_at' => now(),
+            ]);
+            if ($generated && isset($this->command)) {
+                $this->command->warn("Admin creado: {$adminEmail} / {$adminPassword}");
+                $this->command->warn('⚠ Guardá esta contraseña: no se volverá a mostrar.');
+            }
+        }
 
         $this->createTorneoDiego($user);
         $this->createTorneoRelampago($user);

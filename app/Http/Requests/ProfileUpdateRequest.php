@@ -27,8 +27,9 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
             'avatar' => $this->hasFile('avatar')
-                ? ['nullable', 'image', 'max:2048']
-                : ['nullable', 'string', 'max:255'],
+                ? ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:2048']
+                // sin archivo: sólo texto corto (emoji/inicial); prohíbe URLs y rutas
+                : ['nullable', 'string', 'max:16', 'not_regex:/[\/:<>]/'],
         ];
     }
 }

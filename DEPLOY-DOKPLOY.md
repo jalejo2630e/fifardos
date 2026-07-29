@@ -61,9 +61,16 @@ FIFARDOS se empaqueta en **un solo contenedor** (nginx + php-fpm + supervisor) q
 Ejecuta comandos con la consola de Dokploy o `docker exec`:
 
 ```bash
-php artisan db:seed --force          # datos de ejemplo (opcional)
+# (Opcional) datos de ejemplo + usuario admin. NO es necesario en producción.
+# Define SEEDER_ADMIN_EMAIL y SEEDER_ADMIN_PASSWORD antes, o el seeder generará
+# una contraseña aleatoria fuerte y la imprimirá una sola vez.
+php artisan db:seed --force
+
 php artisan tournaments:send-reminders   # forzar envío de recordatorios
 ```
+
+> Seguridad: el seeder ya **no** trae credenciales por defecto. Si no defines
+> `SEEDER_ADMIN_PASSWORD`, se genera una aleatoria (mirá la salida del comando).
 
 ## Build local (opcional, para probar)
 

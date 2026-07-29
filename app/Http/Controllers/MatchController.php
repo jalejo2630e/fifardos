@@ -11,6 +11,9 @@ class MatchController extends Controller
 {
     public function show(Tournament $tournament, GameMatch $match)
     {
+        abort_unless((int) $tournament->user_id === (int) auth()->id(), 403);
+        abort_unless((int) $match->tournament_id === (int) $tournament->id, 404);
+
         $match->load(['player1', 'player2', 'tournament', 'goalScorers.player']);
 
         $goalScorers = $match->goalScorers->map(fn($gs) => [

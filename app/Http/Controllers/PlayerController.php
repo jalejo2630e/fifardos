@@ -13,6 +13,7 @@ class PlayerController extends Controller
     public function show(Player $player)
     {
         $player->load('tournament');
+        abort_unless($player->tournament && (int) $player->tournament->user_id === (int) auth()->id(), 403);
 
         // Goals across all finished matches
         $gsData = GoalScorer::where('player_id', $player->id)

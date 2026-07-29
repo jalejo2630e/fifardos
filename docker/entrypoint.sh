@@ -45,7 +45,9 @@ php artisan view:cache || true
 # Migraciones automáticas (desactivable con AUTO_MIGRATE=false)
 if [ "${AUTO_MIGRATE:-true}" = "true" ]; then
     echo "[entrypoint] Ejecutando migraciones…"
-    php artisan migrate --force || echo "[entrypoint] ⚠  Fallo en migraciones (continuando)."
+    # No enmascarar fallos: si migrate falla, abortar el arranque (el healthcheck
+    # marcará el contenedor como no-sano en vez de servir con un esquema roto).
+    php artisan migrate --force || { echo "[entrypoint] ✗ Migraciones fallaron — abortando arranque."; exit 1; }
 fi
 
 echo "[entrypoint] Listo. Iniciando servicios (nginx + php-fpm + scheduler + queue)…"
