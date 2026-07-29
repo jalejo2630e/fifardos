@@ -110,15 +110,14 @@ const mcpSnippets = computed(() => {
     return [
         {
             key: 'claude',
-            label: 'Claude / Cursor / Copilot',
+            label: 'Claude / Cursor / Copilot (remoto)',
             code: `{
   "mcpServers": {
     "fifardos": {
-      "command": "node",
-      "args": ["/ruta/al/proyecto/mcp/index.js"],
-      "env": {
-        "FIFARDOS_BASE_URL": "${base}",
-        "FIFARDOS_TOKEN": "${tok}"
+      "type": "http",
+      "url": "${base}/mcp",
+      "headers": {
+        "Authorization": "Bearer ${tok}"
       }
     }
   }
@@ -126,17 +125,29 @@ const mcpSnippets = computed(() => {
         },
         {
             key: 'gpt',
-            label: 'ChatGPT (puente HTTP)',
-            code: `FIFARDOS_BASE_URL=${base} FIFARDOS_TOKEN=${tok} \\
-npx -y supergateway --stdio "node /ruta/al/proyecto/mcp/index.js" --port 8787
-# Registrá http://localhost:8787/sse como conector MCP en ChatGPT`,
+            label: 'ChatGPT / conector remoto',
+            code: `# Servidor MCP remoto (Streamable HTTP) — no instalás nada
+URL:     ${base}/mcp
+Header:  Authorization: Bearer ${tok}
+# Agregalo como conector MCP remoto en tu asistente`,
         },
         {
-            key: 'gemini',
-            label: 'Gemini (API de agentes)',
-            code: `curl ${base}/api/agent/schema \\
-  -H "Authorization: Bearer ${tok}"
-# El schema describe todas las herramientas para el modelo`,
+            key: 'local',
+            label: 'Local (Node, avanzado)',
+            code: `# Requiere clonar el repo y "npm install" dentro de /mcp.
+# Reemplazá la ruta por la ubicación real de mcp/index.js en tu máquina.
+{
+  "mcpServers": {
+    "fifardos": {
+      "command": "node",
+      "args": ["/ruta/absoluta/al/repo/mcp/index.js"],
+      "env": {
+        "FIFARDOS_BASE_URL": "${base}",
+        "FIFARDOS_TOKEN": "${tok}"
+      }
+    }
+  }
+}`,
         },
     ];
 });
@@ -384,7 +395,7 @@ npx -y supergateway --stdio "node /ruta/al/proyecto/mcp/index.js" --port 8787
                         <span class="w-1.5 h-1.5 rounded-full bg-[#b6ff2e]"></span>
                         Cómo usarlo en tu IA (MCP)
                     </h4>
-                    <p class="text-xs text-white/40 mb-4">Copiá la configuración con tu token ya incluido y pegala en tu asistente.</p>
+                    <p class="text-xs text-white/40 mb-4">Copiá la configuración con tu token ya incluido y pegala en tu asistente. La opción <b class="text-white/60">remota</b> no requiere instalar nada: solo la URL y tu token.</p>
 
                     <div class="space-y-3">
                         <div v-for="s in mcpSnippets" :key="s.key"

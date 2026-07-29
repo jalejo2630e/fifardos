@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -10,6 +11,11 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function (): void {
+            // Endpoint MCP remoto en la raíz (/mcp), con middleware "api"
+            // (sin sesión ni CSRF) — no bajo el prefijo /api.
+            Route::middleware('api')->group(base_path('routes/mcp.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
@@ -25,5 +31,15 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // El endpoint MCP siempre responde JSON (nunca redirige a login),
+        // aunque el cliente no envíe el header Accept: application/json.
+        $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
+            if ($request->is('mcp')) {
+                return response()->json([
+                    'jsonrpc' => '2.0',
+                    'id' => null,
+                    'error' => ['code' => -32001, 'message' => 'Unauthorized: token Bearer inválido o ausente.'],
+                ], 401);
+            }
+        });
     })->create();

@@ -391,11 +391,10 @@ onBeforeUnmount(() => {
                             <pre class="mcp-code">{
   "mcpServers": {
     "fifardos": {
-      "command": "node",
-      "args": ["/ruta/al/proyecto/mcp/index.js"],
-      "env": {
-        "FIFARDOS_BASE_URL": "https://fifardos.com",
-        "FIFARDOS_TOKEN": "1|tu_token"
+      "type": "http",
+      "url": "https://fifardos.com/mcp",
+      "headers": {
+        "Authorization": "Bearer 1|tu_token"
       }
     }
   }
@@ -403,10 +402,10 @@ onBeforeUnmount(() => {
                         </div>
                         <div v-else-if="mcpTab === 'gpt'" class="mcp-pane">
                             <p class="mcp-note">{{ $t('mcp.noteGpt') }}</p>
-                            <pre class="mcp-code">npx -y supergateway \
-  --stdio "node /ruta/al/proyecto/mcp/index.js" \
-  --port 8787
-# Registrá http://localhost:8787/sse como conector MCP</pre>
+                            <pre class="mcp-code">URL:     https://fifardos.com/mcp
+Header:  Authorization: Bearer 1|tu_token
+
+# Agregalo como conector MCP remoto (Streamable HTTP)</pre>
                         </div>
                         <div v-else class="mcp-pane">
                             <p class="mcp-note">{{ $t('mcp.noteGemini') }}</p>
