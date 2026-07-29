@@ -275,16 +275,17 @@ const mvpScore = computed(() => {
 
 <style>
 :root {
-    --bg-main: #1b2130;
-    --card-bg: #242b3d;
-    --card-border: #343d54;
-    --accent-orange: #ff8a3d;
-    --accent-orange-dark: #33261a;
-    --accent-blue: #3d9bff;
-    --accent-blue-dark: #1e2a3d;
-    --text-primary: #f4f2ef;
-    --text-secondary: #9aa3bb;
-    --text-muted: #7a8299;
+    /* Paleta esports (landing.md) */
+    --bg-main: #08080a;
+    --card-bg: #0e0e11;
+    --card-border: rgba(255, 255, 255, 0.1);
+    --accent-orange: #ff5f00;
+    --accent-orange-dark: #2a1608;
+    --accent-blue: #b6ff2e;      /* acento secundario = lime */
+    --accent-blue-dark: #1c2410;
+    --text-primary: #f2f2f0;
+    --text-secondary: #a8a8a3;
+    --text-muted: #8f8f8b;
 }
 </style>
 

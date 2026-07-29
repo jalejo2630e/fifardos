@@ -9,7 +9,7 @@ const showingNav = ref(false);
 </script>
 
 <template>
-    <div class="min-h-screen bg-elite-bg relative overflow-hidden">
+    <div class="min-h-screen bg-[#08080a] relative overflow-hidden">
         <!-- Dynamic Background -->
         <div class="fixed inset-0 pointer-events-none z-0">
             <div class="absolute inset-0 bg-gradient-to-br from-elite-bg via-elite-bg to-purple-950/10 animate-gradient-shift" />
@@ -21,18 +21,12 @@ const showingNav = ref(false);
         <!-- Content -->
         <div class="relative z-10">
         <!-- Header -->
-        <header class="sticky top-0 z-40 border-b border-white/5 bg-elite-bg/80 backdrop-blur-xl">
+        <header class="sticky top-0 z-40 border-b border-white/5 bg-[#08080a]/85 backdrop-blur-xl">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="flex h-14 sm:h-16 items-center justify-between">
                     <!-- Logo + Desktop Nav -->
                     <div class="flex items-center gap-6 sm:gap-10">
-                        <Link :href="route('dashboard')" class="flex items-center gap-2.5 shrink-0">
-                            <img src="/brand/icon.png" alt="FIFARDOS"
-                                 class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl shadow-lg shadow-elite-secondary/20" />
-                            <span class="hidden sm:block font-condensed font-bold text-base tracking-wider text-white/90">
-                                FIFA<span class="text-elite-secondary">RDOS</span>
-                            </span>
-                        </Link>
+                        <Link :href="route('dashboard')" class="fd-logo shrink-0">FIFAR<span>DOS</span></Link>
 
                         <!-- Desktop Nav -->
                         <nav class="hidden md:flex items-center gap-1">
@@ -232,3 +226,23 @@ const showingNav = ref(false);
         </div>
     </div>
 </template>
+
+<style scoped>
+.fd-logo {
+    font-family: 'Anton', Impact, sans-serif;
+    font-size: 22px;
+    letter-spacing: -.5px;
+    color: #f2f2f0;
+    text-decoration: none;
+    transform: skewX(-8deg);
+    display: inline-block;
+}
+.fd-logo span { color: #ff5f00; }
+/* Nav con tipografía condensada del landing */
+:deep(header nav a) {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 600;
+    letter-spacing: .06em;
+    font-size: 15px;
+}
+</style>

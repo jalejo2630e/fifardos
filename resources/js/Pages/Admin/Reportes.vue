@@ -137,3 +137,20 @@ function fmtDay(d) {
         </div>
     </AuthenticatedLayout>
 </template>
+
+<style scoped>
+/* Retematiza a la estética esports (landing) sólo en esta página */
+:deep(.ucl-card) {
+    background: #0e0e11;
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: 0;
+    box-shadow: none;
+}
+:deep(.ucl-card)::before { display: none; }
+:deep(.ucl-title-lg) {
+    font-family: 'Anton', Impact, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: -.5px;
+}
+:deep(.font-condensed) { font-family: 'Anton', Impact, sans-serif; letter-spacing: 0; }
+</style>
