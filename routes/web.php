@@ -87,10 +87,26 @@ Route::get('/rules', function () {
     $tournament = App\Models\Tournament::with('prizes')->latest()->first();
     return Inertia::render('Public/Rules', [
         'prizes' => $tournament?->prizes->sortBy('position')->values() ?? [],
+        'seo' => [
+            'title' => 'Reglas y premios de los torneos | FIFARDOS',
+            'description' => 'Consulta el reglamento de los torneos de FIFARDOS: formato de grupos y eliminatorias, '
+                . 'sistema de puntos, desempates, premios y todo lo que necesitas saber para competir.',
+            'type' => 'article',
+        ],
     ]);
-});
+})->name('rules');
 
-Route::get('/torneos/{tournament}/bracket', [App\Http\Controllers\PublicBracketController::class, 'show'])->name('tournaments.public.bracket');
+// Redirige 301 las URLs antiguas por id (ya indexadas) a la URL canónica con slug.
+Route::get('/torneos/{tournamentId}/bracket', function (string $tournamentId) {
+    $tournament = Tournament::findOrFail((int) $tournamentId);
+    return redirect()->route('tournaments.public.bracket', $tournament, 301);
+})->whereNumber('tournamentId')->name('tournaments.public.bracket.legacy');
+
+Route::get('/torneos/{tournament:slug}/bracket', [App\Http\Controllers\PublicBracketController::class, 'show'])->name('tournaments.public.bracket');
+
+Route::get('/torneos/{tournament:slug}/jugador/{player:username}', [App\Http\Controllers\PublicPlayerProfileController::class, 'show'])
+    ->scopeBindings()
+    ->name('players.public.profile');
 
 Route::get('/sitemap.xml', function () {
     $urls = [
@@ -99,13 +115,25 @@ Route::get('/sitemap.xml', function () {
         ['loc' => url('/inscribirse'), 'priority' => '0.7', 'changefreq' => 'weekly'],
     ];
 
-    foreach (Tournament::orderBy('updated_at', 'desc')->get(['id', 'updated_at']) as $t) {
+    foreach (Tournament::with(['players:id,tournament_id,username'])->orderBy('updated_at', 'desc')->get() as $t) {
         $urls[] = [
-            'loc' => url("/torneos/{$t->id}/bracket"),
+            'loc' => route('tournaments.public.bracket', $t),
             'lastmod' => optional($t->updated_at)->toAtomString(),
             'priority' => '0.8',
             'changefreq' => 'daily',
         ];
+
+        foreach ($t->players as $player) {
+            if (blank($player->username)) {
+                continue;
+            }
+            $urls[] = [
+                'loc' => route('players.public.profile', [$t, $player]),
+                'lastmod' => optional($t->updated_at)->toAtomString(),
+                'priority' => '0.5',
+                'changefreq' => 'weekly',
+            ];
+        }
     }
 
     $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n";

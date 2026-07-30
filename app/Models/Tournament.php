@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 
 class Tournament extends Model
 {
@@ -13,6 +14,7 @@ class Tournament extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'slug',
         'consoles_count',
         'minutes_per_match',
         'status',
@@ -32,6 +34,41 @@ class Tournament extends Model
         'reminder_at' => 'datetime',
         'reminder_sent_at' => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // Genera un slug legible y único al crear el torneo (para URLs públicas
+        // tipo /torneos/apertura-2026/bracket). No se regenera al renombrar para
+        // no romper enlaces ya compartidos/indexados.
+        static::creating(function (Tournament $tournament) {
+            if (blank($tournament->slug)) {
+                $tournament->slug = static::generateUniqueSlug($tournament->name);
+            }
+        });
+    }
+
+    /**
+     * Devuelve un slug único a partir del nombre. Evita slugs vacíos o puramente
+     * numéricos (chocarían con las rutas por id) y resuelve colisiones con sufijo.
+     */
+    public static function generateUniqueSlug(?string $name, ?int $ignoreId = null): string
+    {
+        $base = Str::slug((string) $name);
+        if ($base === '' || ctype_digit($base)) {
+            $base = 'torneo';
+        }
+
+        $slug = $base;
+        $n = 2;
+        while (static::where('slug', $slug)
+            ->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))
+            ->exists()
+        ) {
+            $slug = $base . '-' . $n++;
+        }
+
+        return $slug;
+    }
 
     /**
      * Estima la duración total del torneo en minutos: partidos del round-robin

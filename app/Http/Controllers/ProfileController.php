@@ -73,13 +73,35 @@ class ProfileController extends Controller
     private function storeSanitizedAvatar(UploadedFile $file): string
     {
         try {
-            $src = @imagecreatefromstring(file_get_contents($file->getRealPath()));
+            $contents = file_get_contents($file->getRealPath());
+
+            // Lee las dimensiones SIN cargar el bitmap completo en memoria.
+            $info = @getimagesizefromstring($contents);
+            if ($info === false) {
+                throw new \RuntimeException('GD no pudo leer la imagen');
+            }
+            [$w, $h] = $info;
+
+            // Un bitmap truecolor ocupa ~4 bytes por píxel. Si reprocesar la imagen
+            // requiere más memoria de la disponible, GD provoca un fatal error de
+            // memoria (NO capturable por try/catch) que cuelga la petición. Para
+            // evitarlo: si cabe, subimos memory_limit lo justo (acotado); si es
+            // desproporcionada, guardamos el original ya validado sin tocar GD.
+            $needed = (int) ($w * $h * 4 * 2) + 48 * 1024 * 1024;
+            $ceiling = 512 * 1024 * 1024;
+
+            if ($needed > $ceiling) {
+                return $file->store('avatars', 'public');
+            }
+            if ($needed > $this->memoryLimitBytes()) {
+                @ini_set('memory_limit', (string) $needed);
+            }
+
+            $src = @imagecreatefromstring($contents);
             if ($src === false) {
                 throw new \RuntimeException('GD no pudo decodificar la imagen');
             }
 
-            $w = imagesx($src);
-            $h = imagesy($src);
             $max = 512;
             $ratio = min(1, $max / max($w, $h));
             $nw = max(1, (int) round($w * $ratio));
@@ -104,6 +126,27 @@ class ProfileController extends Controller
             \Illuminate\Support\Facades\Log::warning('No se pudo reprocesar el avatar, se guarda el original', ['error' => $e->getMessage()]);
             return $file->store('avatars', 'public');
         }
+    }
+
+    /**
+     * Devuelve el memory_limit actual en bytes (PHP_INT_MAX si es ilimitado, -1).
+     */
+    private function memoryLimitBytes(): int
+    {
+        $raw = trim((string) ini_get('memory_limit'));
+        if ($raw === '' || $raw === '-1') {
+            return PHP_INT_MAX;
+        }
+
+        $unit = strtolower($raw[strlen($raw) - 1]);
+        $value = (int) $raw;
+
+        return match ($unit) {
+            'g' => $value * 1024 * 1024 * 1024,
+            'm' => $value * 1024 * 1024,
+            'k' => $value * 1024,
+            default => (int) $raw,
+        };
     }
 
     /**

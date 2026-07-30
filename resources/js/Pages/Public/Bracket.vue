@@ -184,10 +184,12 @@ onUnmounted(() => {
                                       :class="idx === 0 ? 'text-elite-secondary' : 'text-elite-primary/30'">
                                     {{ idx + 1 }}
                                 </span>
-                                <span class="flex-1 truncate font-medium"
-                                      :class="idx === 0 ? 'text-white' : 'text-elite-primary/60'">
+                                <component :is="s.username ? Link : 'span'"
+                                      :href="s.username ? route('players.public.profile', [tournament.slug, s.username]) : undefined"
+                                      class="flex-1 truncate font-medium"
+                                      :class="[idx === 0 ? 'text-white' : 'text-elite-primary/60', s.username ? 'hover:text-elite-secondary transition-colors' : '']">
                                     {{ s.player_name }}
-                                </span>
+                                </component>
                                 <span class="font-elite-condensed font-bold"
                                       :class="idx === 0 ? 'text-elite-secondary' : 'text-elite-primary/40'">
                                     {{ s.pts }}

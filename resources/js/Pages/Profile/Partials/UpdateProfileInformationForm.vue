@@ -184,9 +184,40 @@ async function handleFile(file) {
     reader.readAsDataURL(file);
 }
 
-function uploadAvatar() {
+// Reduce la imagen en el navegador antes de subirla: así el archivo pesa poco
+// (no choca con upload_max_filesize del servidor ni con la subida lenta) y el
+// backend no tiene que procesar un bitmap enorme. Si algo falla, sube el original.
+function downscaleImage(file, maxDim = 1024) {
+    return new Promise((resolve) => {
+        try {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                URL.revokeObjectURL(url);
+                const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+                if (scale === 1) { resolve(file); return; } // ya es pequeña
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(img.width * scale));
+                canvas.height = Math.max(1, Math.round(img.height * scale));
+                canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                const keepAlpha = file.type !== 'image/jpeg';
+                const outType = keepAlpha ? 'image/png' : 'image/jpeg';
+                canvas.toBlob((blob) => {
+                    if (!blob) { resolve(file); return; }
+                    resolve(new File([blob], `avatar.${keepAlpha ? 'png' : 'jpg'}`, { type: outType }));
+                }, outType, 0.9);
+            };
+            img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+            img.src = url;
+        } catch (e) {
+            resolve(file);
+        }
+    });
+}
+
+async function uploadAvatar() {
     if (!selectedFile.value) return;
-    form.avatar = selectedFile.value; // el File va dentro del form
+    form.avatar = await downscaleImage(selectedFile.value); // el File va dentro del form
     uploadProgress.value = 0;
     form.post(route('profile.update'), {
         forceFormData: true,

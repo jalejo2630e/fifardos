@@ -13,6 +13,7 @@ class StandingsService
             $standings[$player->id] = [
                 'player_id' => $player->id,
                 'player_name' => $player->name,
+                'username' => $player->username,
                 'pts' => 0, 'pj' => 0, 'pg' => 0, 'pe' => 0, 'pp' => 0,
                 'gf' => 0, 'gc' => 0, 'dg' => 0,
             ];

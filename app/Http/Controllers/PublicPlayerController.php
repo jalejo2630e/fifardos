@@ -24,6 +24,12 @@ class PublicPlayerController extends Controller
 
         return Inertia::render('Public/Register', [
             'tournaments' => $tournaments,
+            'seo' => [
+                'title' => 'Inscríbete a un torneo de fútbol | FIFARDOS',
+                'description' => 'Regístrate gratis y súmate a un torneo abierto en FIFARDOS. Elige el torneo, '
+                    . 'crea tu jugador y compite por la tabla, las eliminatorias y el título.',
+                'type' => 'website',
+            ],
         ]);
     }
 

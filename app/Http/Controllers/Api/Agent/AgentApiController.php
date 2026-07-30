@@ -99,7 +99,7 @@ class AgentApiController extends Controller
                 'players_count' => $tournament->players_count,
                 'total_matches' => $tournament->matches_count,
                 'url' => url("/tournaments/{$tournament->id}"),
-                'public_bracket_url' => url("/torneos/{$tournament->id}/bracket"),
+                'public_bracket_url' => route('tournaments.public.bracket', $tournament),
             ],
         ], 201);
     }
