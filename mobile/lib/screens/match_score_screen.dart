@@ -157,7 +157,7 @@ class _MatchScoreScreenState extends State<MatchScoreScreen> {
             ),
             const Spacer(),
             SizedBox(
-              width: 60,
+              width: 68,
               child: TextField(
                 controller: s['a']!,
                 keyboardType: TextInputType.number,
@@ -178,7 +178,7 @@ class _MatchScoreScreenState extends State<MatchScoreScreen> {
               child: Text(':', style: TextStyle(color: kTextDim, fontSize: 18, fontWeight: FontWeight.w800)),
             ),
             SizedBox(
-              width: 60,
+              width: 68,
               child: TextField(
                 controller: s['b']!,
                 keyboardType: TextInputType.number,

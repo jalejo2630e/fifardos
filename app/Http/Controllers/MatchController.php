@@ -14,7 +14,10 @@ class MatchController extends Controller
         abort_unless((int) $tournament->user_id === (int) auth()->id(), 403);
         abort_unless((int) $match->tournament_id === (int) $tournament->id, 404);
 
-        $match->load(['player1', 'player2', 'tournament', 'goalScorers.player']);
+        $match->load(['player1', 'player2', 'team1', 'team2', 'tournament', 'goalScorers.player']);
+
+        $sportKey = $match->tournament?->sport ?? 'fifa';
+        $sport = \App\Services\SportsCatalog::get($sportKey);
 
         $goalScorers = $match->goalScorers->map(fn($gs) => [
             'player_name' => $gs->player?->name ?? '—',
@@ -25,6 +28,12 @@ class MatchController extends Controller
         return Inertia::render('Matches/Show', [
             'match' => $match,
             'goalScorers' => $goalScorers,
+            'sport' => [
+                'key' => $sportKey,
+                'name' => $sport['name'] ?? $sportKey,
+                'scoring' => \App\Services\SportsCatalog::scoring($sportKey),
+                'uses_penalties' => \App\Services\SportsCatalog::usesPenalties($sportKey),
+            ],
         ]);
     }
 }

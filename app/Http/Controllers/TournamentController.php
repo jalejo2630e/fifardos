@@ -59,6 +59,12 @@ class TournamentController extends Controller
                     $tournament->format ?? 'groups_knockout',
                     (bool) $tournament->home_and_away,
                 );
+                $sportKey = $tournament->sport ?? 'fifa';
+                $arr['sport_name'] = SportsCatalog::name($sportKey);
+                $arr['sport_icon'] = SportsCatalog::icon($sportKey);
+                $arr['is_team'] = SportsCatalog::isTeam($sportKey);
+                $arr['mode'] = $tournament->mode ?? 'virtual';
+                $arr['competitor_label'] = $arr['is_team'] ? 'equipos' : 'jugadores';
                 $arr['leader'] = null;
                 if ($tournament->matches_played > 0) {
                     $standings = app(StandingsService::class)->calculate($tournament);

@@ -36,6 +36,8 @@ const features = computed(() => [0, 1, 2, 3, 4, 5].map((i) => ({
     d: t(`landing.features.${i}.d`),
 })));
 
+const sports = computed(() => t('landing.sports'));
+
 const quotes = computed(() => [0, 1, 2].map((i) => ({
     q: t(`landing.quotes.${i}.q`),
     a: t(`landing.quotes.${i}.a`),
@@ -246,6 +248,22 @@ onBeforeUnmount(() => {
                     <div class="boot">
                         <span class="boot-lbl">{{ $t('landing.boot') }}</span>
                         <span class="boot-val">{{ $t('landing.bootVal') }}</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DEPORTES -->
+        <section class="sec sec-alt sec-sports">
+            <div class="wrap">
+                <div class="sec-head" data-reveal>
+                    <h2>{{ $t('landing.sportsH1') }}<br /><span class="accent">{{ $t('landing.sportsH2') }}</span></h2>
+                    <p class="sec-note">{{ $t('landing.sportsNote') }}</p>
+                </div>
+                <div class="sports-strip" data-reveal>
+                    <div v-for="s in sports" :key="s.name" class="sport-chip">
+                        <span class="sport-icon">{{ s.icon }}</span>
+                        <span class="sport-name">{{ s.name }}</span>
                     </div>
                 </div>
             </div>
@@ -548,6 +566,15 @@ Authorization: Bearer 1|tu_token
 .feat-tag { display: block; font-family: var(--f-anton); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
 .feat h3 { font-family: var(--f-barlow); font-weight: 700; font-size: 27px; line-height: 1.05; letter-spacing: .02em; text-transform: uppercase; margin: 0 0 8px; }
 .feat p { color: var(--tm); font-size: 16px; line-height: 1.5; margin: 0; }
+
+/* Sports strip */
+.sec-sports .sec-head { margin-bottom: 32px; }
+.sports-strip { display: flex; flex-wrap: wrap; gap: 10px; }
+.sport-chip { display: inline-flex; align-items: center; gap: 10px; padding: 10px 16px 10px 12px;
+    background: var(--bg-card); border: 1px solid var(--bcard); border-radius: 999px; transition: border-color .2s ease, transform .2s ease; }
+.sport-chip:hover { border-color: rgba(255, 95, 0, .55); transform: translateY(-2px); }
+.sport-icon { font-size: 20px; line-height: 1; }
+.sport-name { font-family: var(--f-barlow); font-weight: 700; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; color: var(--tp); white-space: nowrap; }
 
 /* Bracket */
 .br-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 48px; align-items: center; }

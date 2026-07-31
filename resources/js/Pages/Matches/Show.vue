@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 const { t } = useI18n({
@@ -44,15 +45,24 @@ const { t } = useI18n({
 const props = defineProps({
     match: Object,
     goalScorers: Array,
+    sport: Object,
 });
 
-const isDraw = props.match.score1 === props.match.score2;
-const hasPenalties = props.match.penalties1 !== null && props.match.penalties2 !== null;
-const winner1 = !isDraw ? props.match.score1 > props.match.score2 : (hasPenalties ? props.match.penalties1 > props.match.penalties2 : false);
-</script>
+const isSets = computed(() => props.sport?.scoring === 'sets');
+const isGoals = computed(() => props.sport?.scoring === 'goals');
+const competitor1 = computed(() => props.match?.team1?.name || props.match?.player1?.name || '—');
+const competitor2 = computed(() => props.match?.team2?.name || props.match?.player2?.name || '—');
+const hasPenalties = computed(() => props.match.penalties1 !== null && props.match.penalties2 !== null);
+const isDraw = computed(() => props.match.score1 === props.match.score2);
+const winner1 = computed(() => !isDraw.value ? props.match.score1 > props.match.score2 : (hasPenalties.value ? props.match.penalties1 > props.match.penalties2 : false));
+const setsSummary = computed(() => (props.match?.sets || []).map(s => `${s.a}-${s.b}`).join(' · '));
+const scoreText = computed(() => {
+    if (isSets.value && setsSummary.value) return setsSummary.value;
+    return `${props.match.score1} : ${props.match.score2}`;
+});</script>
 
 <template>
-    <Head :title="`${match.player1?.name || '?'} vs ${match.player2?.name || '?'}`" />
+    <Head :title="`${competitor1} vs ${competitor2}`" />
     <AuthenticatedLayout>
         <div class="max-w-3xl mx-auto py-8 px-4 space-y-6">
             <!-- Back -->
@@ -68,25 +78,32 @@ const winner1 = !isDraw ? props.match.score1 > props.match.score2 : (hasPenaltie
                     <span class="text-[10px] text-[#7a8299] font-condensed tracking-wider uppercase">{{ match.phase === 'group' ? t('groupPhase') : match.phase?.replace('_', ' ') }}</span>
                 </div>
 
-                <!-- Scoreboard -->
-                <div class="flex items-center justify-center gap-6 py-4">
-                    <div class="text-right flex-1">
-                        <div class="text-lg font-bold text-[#f4f2ef]" :class="!isDraw && winner1 ? 'text-emerald-400' : ''">{{ match.player1?.name || '—' }}</div>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-5xl font-bold font-condensed" :class="!isDraw ? (winner1 ? 'text-emerald-400' : 'text-white/30') : 'text-white/60'">{{ match.score1 }}</span>
-                        <span class="text-2xl text-white/10 font-condensed">:</span>
-                        <span class="text-5xl font-bold font-condensed" :class="!isDraw ? (!winner1 ? 'text-emerald-400' : 'text-white/30') : 'text-white/60'">{{ match.score2 }}</span>
-                    </div>
-                    <div class="text-left flex-1">
-                        <div class="text-lg font-bold text-[#f4f2ef]" :class="!isDraw && !winner1 ? 'text-emerald-400' : ''">{{ match.player2?.name || '—' }}</div>
-                    </div>
+            <!-- Scoreboard -->
+            <div class="flex items-center justify-center gap-4 sm:gap-6 py-4">
+                <div class="text-right flex-1 min-w-0">
+                    <div class="text-lg font-bold text-[#f4f2ef]" :class="!isDraw && winner1 ? 'text-emerald-400' : ''">{{ competitor1 }}</div>
                 </div>
+                <div class="flex items-center gap-3 shrink-0">
+                    <template v-if="match.status === 'finished'">
+                        <template v-if="!isSets">
+                            <span class="text-5xl font-bold font-condensed" :class="!isDraw ? (winner1 ? 'text-emerald-400' : 'text-white/30') : 'text-white/60'">{{ match.score1 }}</span>
+                            <span class="text-2xl text-white/10 font-condensed">:</span>
+                            <span class="text-5xl font-bold font-condensed" :class="!isDraw ? (!winner1 ? 'text-emerald-400' : 'text-white/30') : 'text-white/60'">{{ match.score2 }}</span>
+                        </template>
+                        <span v-else class="text-2xl sm:text-3xl font-bold font-condensed whitespace-nowrap"
+                              :class="!isDraw ? (winner1 ? 'text-emerald-400' : 'text-white/30') : 'text-white/60'">{{ scoreText }}</span>
+                    </template>
+                    <span v-else class="text-2xl font-bold font-condensed text-white/40">VS</span>
+                </div>
+                <div class="text-left flex-1 min-w-0">
+                    <div class="text-lg font-bold text-[#f4f2ef]" :class="!isDraw && !winner1 ? 'text-emerald-400' : ''">{{ competitor2 }}</div>
+                </div>
+            </div>
 
-                <!-- Penalties if draw -->
-                <div v-if="isDraw && hasPenalties" class="text-center mt-2">
-                    <span class="text-xs text-[#7a8299] font-condensed tracking-wider">{{ t('penalties', { a: match.penalties1, b: match.penalties2 }) }}</span>
-                </div>
+            <!-- Penalties if draw (solo deportes con penales) -->
+            <div v-if="isGoals && isDraw && hasPenalties" class="text-center mt-2">
+                <span class="text-xs text-[#7a8299] font-condensed tracking-wider">{{ t('penalties', { a: match.penalties1, b: match.penalties2 }) }}</span>
+            </div>
 
                 <div class="text-center mt-4">
                     <span v-if="match.status === 'finished'" class="text-[10px] text-emerald-400/60 font-condensed tracking-widest uppercase">{{ t('finished') }}</span>
@@ -95,8 +112,8 @@ const winner1 = !isDraw ? props.match.score1 > props.match.score2 : (hasPenaltie
                 </div>
             </div>
 
-            <!-- Stats -->
-            <div v-if="match.stats" class="bg-[#242b3d] border border-[#343d54] rounded-2xl overflow-hidden">
+            <!-- Stats (solo deportes con estadísticas, ej. fútbol) -->
+            <div v-if="isGoals && match.stats" class="bg-[#242b3d] border border-[#343d54] rounded-2xl overflow-hidden">
                 <div class="px-5 py-3 border-b border-[#343d54]">
                     <h2 class="text-sm font-bold text-[#f4f2ef] font-condensed tracking-wider uppercase">{{ t('stats') }}</h2>
                 </div>
@@ -130,8 +147,8 @@ const winner1 = !isDraw ? props.match.score1 > props.match.score2 : (hasPenaltie
                 </div>
             </div>
 
-            <!-- Goal scorers -->
-            <div v-if="goalScorers && goalScorers.length" class="bg-[#242b3d] border border-[#343d54] rounded-2xl overflow-hidden">
+            <!-- Goal scorers (solo deportes de goles) -->
+            <div v-if="isGoals && goalScorers && goalScorers.length" class="bg-[#242b3d] border border-[#343d54] rounded-2xl overflow-hidden">
                 <div class="px-5 py-3 border-b border-[#343d54]">
                     <h2 class="text-sm font-bold text-[#f4f2ef] font-condensed tracking-wider uppercase">{{ t('scorers') }}</h2>
                 </div>

@@ -266,12 +266,19 @@ class _MatchCard extends StatelessWidget {
                       color: isFinished ? kAccent : kSurfaceLow,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Text(
-                      isFinished ? '${match.score1} - ${match.score2}' : 'VS',
-                      style: TextStyle(
-                        color: isFinished ? const Color(0xFF08080A) : kTextDim,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        isFinished && match.isSets && match.sets.isNotEmpty
+                            ? match.sets.map((s) => '${s.a}-${s.b}').join(' ')
+                            : isFinished
+                                ? '${match.score1} - ${match.score2}'
+                                : 'VS',
+                        style: TextStyle(
+                          color: isFinished ? const Color(0xFF08080A) : kTextDim,
+                          fontWeight: FontWeight.w800,
+                          fontSize: isFinished && match.isSets ? 15 : 16,
+                        ),
                       ),
                     ),
                   ),
