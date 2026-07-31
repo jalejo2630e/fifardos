@@ -4,9 +4,14 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
     tournament: Object,
+    sport: Object,
     standings: Array,
     rounds: Array,
 });
+
+const scoring = computed(() => (props.sport?.scoring || 'goals'));
+const scoreUnit = computed(() => (scoring.value === 'points' ? 'PUNTOS' : scoring.value === 'sets' ? 'SETS' : 'GOLES'));
+const topLabel = computed(() => (scoring.value === 'points' ? 'Líder de puntos' : scoring.value === 'sets' ? 'Líder en sets' : 'Golden Boot'));
 
 const goldenBoot = computed(() => {
     const sorted = [...props.standings].sort((a, b) => b.gf - a.gf);
@@ -14,6 +19,10 @@ const goldenBoot = computed(() => {
 });
 
 const roundLabels = ['Jornada'];
+
+const isPhysical = computed(() => (props.tournament?.mode ?? 'virtual') === 'physical');
+const venueLabel = computed(() => (isPhysical.value ? 'canchas' : 'consolas'));
+const venueSingular = computed(() => (isPhysical.value ? 'Cancha' : 'Consola'));
 
 let intervalId = null;
 
@@ -65,7 +74,7 @@ onUnmounted(() => {
                 {{ tournament.name }}
             </h1>
             <p class="text-sm text-elite-primary/60 max-w-lg mx-auto">
-                {{ tournament.players?.length || 0 }} jugadores &middot; {{ tournament.consoles_count }} consolas &middot; {{ rounds.reduce((a, r) => a + r.length, 0) }} partidos
+                {{ tournament.players?.length || 0 }} jugadores &middot; {{ tournament.consoles_count }} {{ venueLabel }} &middot; {{ rounds.reduce((a, r) => a + r.length, 0) }} partidos
             </p>
         </section>
 
@@ -102,7 +111,7 @@ onUnmounted(() => {
                                         <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
-                                        TV {{ match.tv_number }}
+                                        {{ venueSingular }} {{ match.tv_number }}
                                     </span>
                                     <span v-if="match.status === 'live'"
                                           class="flex items-center gap-1.5 text-[10px] font-elite-condensed font-bold uppercase tracking-wider text-red-400">
@@ -124,7 +133,7 @@ onUnmounted(() => {
                                     <div class="flex-1 text-right">
                                         <div class="font-elite-condensed font-bold text-sm truncate"
                                              :class="match.status === 'finished' ? (match.score1 > match.score2 ? 'text-white' : 'text-elite-primary/40') : 'text-white/80'">
-                                            {{ match.player1?.name || '—' }}
+                                            {{ match.team1?.name || match.player1?.name || '—' }}
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-2">
@@ -146,7 +155,7 @@ onUnmounted(() => {
                                     <div class="flex-1 text-left">
                                         <div class="font-elite-condensed font-bold text-sm truncate"
                                              :class="match.status === 'finished' ? (match.score2 > match.score1 ? 'text-white' : 'text-elite-primary/40') : 'text-white/80'">
-                                            {{ match.player2?.name || '—' }}
+                                            {{ match.team2?.name || match.player2?.name || '—' }}
                                         </div>
                                     </div>
                                 </div>
@@ -157,18 +166,18 @@ onUnmounted(() => {
 
                 <!-- SIDEBAR -->
                 <div class="lg:w-80 shrink-0 space-y-6">
-                    <!-- Golden Boot -->
+                    <!-- Top performer -->
                     <div v-if="goldenBoot" class="glass-panel p-5 text-center">
                         <div class="text-3xl mb-2">👑</div>
                         <div class="text-[10px] font-elite-condensed uppercase tracking-[0.15em] text-elite-secondary mb-1">
-                            Golden Boot
+                            {{ topLabel }}
                         </div>
                         <div class="font-elite-condensed font-black text-xl text-white mb-1">
-                            {{ goldenBoot.player_name }}
+                            {{ goldenBoot.competitor_name || goldenBoot.player_name || goldenBoot.team_name }}
                         </div>
                         <div class="flex items-center justify-center gap-2">
                             <span class="text-2xl font-elite-condensed font-bold text-elite-secondary">{{ goldenBoot.gf }}</span>
-                            <span class="text-xs text-elite-primary/40 font-elite-condensed">GOLES</span>
+                            <span class="text-xs text-elite-primary/40 font-elite-condensed">{{ scoreUnit }}</span>
                         </div>
                     </div>
 
@@ -178,7 +187,7 @@ onUnmounted(() => {
                             CLASIFICACIÓN
                         </h3>
                         <div class="space-y-2">
-                            <div v-for="(s, idx) in standings.slice(0, 8)" :key="s.player_id"
+                            <div v-for="(s, idx) in standings.slice(0, 8)" :key="s.competitor_id ?? s.player_id ?? s.team_id"
                                  class="flex items-center gap-3 text-xs">
                                 <span class="w-5 text-center font-elite-condensed font-bold"
                                       :class="idx === 0 ? 'text-elite-secondary' : 'text-elite-primary/30'">
@@ -188,7 +197,7 @@ onUnmounted(() => {
                                       :href="s.username ? route('players.public.profile', [tournament.slug, s.username]) : undefined"
                                       class="flex-1 truncate font-medium"
                                       :class="[idx === 0 ? 'text-white' : 'text-elite-primary/60', s.username ? 'hover:text-elite-secondary transition-colors' : '']">
-                                    {{ s.player_name }}
+                                    {{ s.competitor_name || s.player_name || s.team_name }}
                                 </component>
                                 <span class="font-elite-condensed font-bold"
                                       :class="idx === 0 ? 'text-elite-secondary' : 'text-elite-primary/40'">

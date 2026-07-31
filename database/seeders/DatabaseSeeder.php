@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        $this->call(SportRulesSeeder::class);
         // Admin: credenciales desde variables de entorno; si no hay password,
         // se genera uno aleatorio fuerte y se imprime una vez (NUNCA un default débil).
         // forceCreate (sin factory) para no depender de faker (require-dev, ausente con --no-dev).

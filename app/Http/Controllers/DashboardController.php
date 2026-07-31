@@ -76,7 +76,7 @@ class DashboardController extends Controller
 
         // Current/last match for live simulation
         $currentMatch = null;
-        $lastMatch = GameMatch::with(['player1', 'player2', 'tournament'])
+        $lastMatch = GameMatch::with(['player1', 'player2', 'team1', 'team2', 'tournament'])
             ->where('status', 'finished')
             ->whereHas('tournament', fn($q) => $q->where('user_id', $user->id))
             ->latest('played_at')
@@ -86,8 +86,8 @@ class DashboardController extends Controller
             $currentMatch = [
                 'id' => $lastMatch->id,
                 'tournament_id' => $lastMatch->tournament_id,
-                'home' => $lastMatch->player1?->name ?? '—',
-                'away' => $lastMatch->player2?->name ?? '—',
+                'home' => $lastMatch->competitor1Name() ?? '—',
+                'away' => $lastMatch->competitor2Name() ?? '—',
                 'home_score' => $lastMatch->score1 ?? 0,
                 'away_score' => $lastMatch->score2 ?? 0,
                 'minute' => rand(70, 90),

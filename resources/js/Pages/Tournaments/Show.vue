@@ -13,11 +13,31 @@ const { t } = useI18n({
         es: {
             // header
             headerPlayers: 'JUGADORES',
-            headerTv: 'TV',
+            headerTeams: 'EQUIPOS',
             headerMatches: 'PARTIDOS',
             headerBack: 'Volver',
             headerReplacePlayer: 'Reemplazar jugador',
             headerDeleteConfirm: '¿Eliminar torneo? Se borrarán todos los datos.',
+            headerModeVirtual: 'VIRTUAL',
+            headerModePhysical: 'CAMPO',
+            venueConsoles: 'consolas',
+            venueCourts: 'canchas',
+            venueConsoleSingular: 'Consola',
+            venueCourtSingular: 'Cancha',
+            rulesTitle: 'Reglas del torneo',
+            ruleYes: 'Sí',
+            ruleNo: 'No',
+            ruleOpt: {
+                ilimitado: 'Ilimitado',
+                sin_reloj: 'Sin reloj',
+                solo_saque_anota: 'Solo el saque anota',
+                rally_point: 'Rally point',
+                amateur: 'Amateur',
+                semi_pro: 'Semiprofesional',
+                pro: 'Profesional',
+                world_class: 'Clase mundial',
+                legendary: 'Leyenda',
+            },
             // status bar
             statusFinished: 'FINALIZADO',
             statusInProgress: 'EN CURSO',
@@ -26,7 +46,6 @@ const { t } = useI18n({
             champion: 'Champion',
             championPts: '{pts} PTS',
             championRecord: '{pg}G {pe}E {pp}P',
-            championDg: 'DG {dg}',
             // tabs
             tabMatches: 'Partidos',
             tabStandings: 'Clasificación',
@@ -41,6 +60,10 @@ const { t } = useI18n({
             matchLoadResult: 'CARGAR RESULTADO',
             matchDatetimeLabel: 'Fecha y hora del partido',
             matchPenaltiesToggle: '+ Penales (desempate)',
+            matchSetsLabel: 'Sets del partido',
+            matchSetShort: 'S {n}',
+            addSet: '+ Añadir set',
+            setsSummary: '{sets} sets',
             matchAddStats: '+ Agregar estadísticas',
             matchPossession: 'Posesión',
             matchShots: 'Tiros',
@@ -64,6 +87,7 @@ const { t } = useI18n({
             standingsCopied: 'Copiado!',
             standingsCopy: 'Copiar tabla',
             standingsColPlayer: 'Jugador',
+            standingsColTeam: 'Equipo',
             standingsPts: 'PTS',
             standingsPj: 'PJ',
             standingsPg: 'PG',
@@ -99,7 +123,14 @@ const { t } = useI18n({
             // stats
             statsPoints: 'Puntos',
             statsGoalsFor: 'Goles a favor',
+            statsGoalsAgainst: 'Goles en contra',
             statsGoalDiff: 'Diferencia de gol',
+            statsPointsFor: 'Puntos a favor',
+            statsPointsAgainst: 'Puntos en contra',
+            statsPointsDiff: 'Diferencia de puntos',
+            statsSetsWon: 'Sets ganados',
+            statsSetsLost: 'Sets perdidos',
+            statsSetsDiff: 'Diferencia de sets',
             statsNoData: 'Sin datos todavía',
             statsNoDataText: 'Las gráficas aparecerán cuando cargues resultados de los partidos.',
             // modal
@@ -115,11 +146,31 @@ const { t } = useI18n({
         en: {
             // header
             headerPlayers: 'PLAYERS',
-            headerTv: 'TV',
+            headerTeams: 'TEAMS',
             headerMatches: 'MATCHES',
             headerBack: 'Back',
             headerReplacePlayer: 'Replace player',
             headerDeleteConfirm: 'Delete tournament? All data will be erased.',
+            headerModeVirtual: 'VIRTUAL',
+            headerModePhysical: 'ON-SITE',
+            venueConsoles: 'consoles',
+            venueCourts: 'courts',
+            venueConsoleSingular: 'Console',
+            venueCourtSingular: 'Court',
+            rulesTitle: 'Tournament rules',
+            ruleYes: 'Yes',
+            ruleNo: 'No',
+            ruleOpt: {
+                ilimitado: 'Unlimited',
+                sin_reloj: 'No shot clock',
+                solo_saque_anota: 'Side-out scoring',
+                rally_point: 'Rally point',
+                amateur: 'Amateur',
+                semi_pro: 'Semi-pro',
+                pro: 'Pro',
+                world_class: 'World class',
+                legendary: 'Legendary',
+            },
             // status bar
             statusFinished: 'FINISHED',
             statusInProgress: 'IN PROGRESS',
@@ -128,7 +179,6 @@ const { t } = useI18n({
             champion: 'Champion',
             championPts: '{pts} PTS',
             championRecord: '{pg}W {pe}D {pp}L',
-            championDg: 'GD {dg}',
             // tabs
             tabMatches: 'Matches',
             tabStandings: 'Standings',
@@ -143,6 +193,10 @@ const { t } = useI18n({
             matchLoadResult: 'ENTER RESULT',
             matchDatetimeLabel: 'Match date and time',
             matchPenaltiesToggle: '+ Penalties (tiebreaker)',
+            matchSetsLabel: 'Match sets',
+            matchSetShort: 'S {n}',
+            addSet: '+ Add set',
+            setsSummary: '{sets} sets',
             matchAddStats: '+ Add statistics',
             matchPossession: 'Possession',
             matchShots: 'Shots',
@@ -166,6 +220,7 @@ const { t } = useI18n({
             standingsCopied: 'Copied!',
             standingsCopy: 'Copy table',
             standingsColPlayer: 'Player',
+            standingsColTeam: 'Team',
             standingsPts: 'PTS',
             standingsPj: 'MP',
             standingsPg: 'W',
@@ -201,7 +256,14 @@ const { t } = useI18n({
             // stats
             statsPoints: 'Points',
             statsGoalsFor: 'Goals for',
+            statsGoalsAgainst: 'Goals against',
             statsGoalDiff: 'Goal difference',
+            statsPointsFor: 'Points for',
+            statsPointsAgainst: 'Points against',
+            statsPointsDiff: 'Points difference',
+            statsSetsWon: 'Sets won',
+            statsSetsLost: 'Sets lost',
+            statsSetsDiff: 'Sets difference',
             statsNoData: 'No data yet',
             statsNoDataText: 'Charts will appear once you enter match results.',
             // modal
@@ -219,6 +281,7 @@ const { t } = useI18n({
 
 const props = defineProps({
     tournament: Object,
+    sport: Object,
     standings: Array,
     allPlayed: Boolean,
     rounds: Array,
@@ -226,7 +289,23 @@ const props = defineProps({
     phases: Array,
     goalScorers: Array,
     estimatedMinutes: { type: Number, default: 0 },
+    tournamentRules: { type: Object, default: () => ({}) },
+    rulesList: { type: Array, default: () => [] },
 });
+
+const { locale: globalLocale } = useI18n();
+const isEn = computed(() => globalLocale.value === 'en');
+
+const venueLabel = computed(() => (props.tournament?.mode === 'physical' ? t('venueCourts') : t('venueConsoles')));
+const venueSingular = computed(() => (props.tournament?.mode === 'physical' ? t('venueCourtSingular') : t('venueConsoleSingular')));
+const modeChip = computed(() => (props.tournament?.mode === 'physical' ? t('headerModePhysical') : t('headerModeVirtual')));
+
+const ruleTitle = (r) => (isEn.value && r.label_en ? r.label_en : r.label);
+const ruleValue = (r) => {
+    if (r.type === 'boolean') return r.value === '1' ? t('ruleYes') : t('ruleNo');
+    if (r.type === 'select') return t('ruleOpt')?.[r.value] ?? r.value;
+    return r.value;
+};
 
 function fmtDuration(min) {
     if (!min || min <= 0) return '—';
@@ -254,6 +333,7 @@ const formData = reactive({
     cards_b: null,
     penalties1: null,
     penalties2: null,
+    sets: [],
     goalScorers: [],
 });
 
@@ -289,6 +369,9 @@ function openResultForm(match) {
     formData.cards_b = null;
     formData.penalties1 = null;
     formData.penalties2 = null;
+    formData.sets = (match.sets && match.sets.length)
+        ? JSON.parse(JSON.stringify(match.sets))
+        : [{ a: 0, b: 0 }];
     formData.goalScorers = [];
 }
 
@@ -297,6 +380,14 @@ function cancelResultForm() {
 }
 
 function saveScore(match) {
+    if (isSets.value) {
+        const sets = (match.sets && match.sets.length)
+            ? match.sets.map(s => ({ a: Math.max(0, parseInt(s.a, 10) || 0), b: Math.max(0, parseInt(s.b, 10) || 0) }))
+            : [{ a: 0, b: 0 }];
+        if (sets.some(s => s.a === s.b)) return;
+        router.post(route('matches.score.update', [props.tournament.id, match.id]), { sets });
+        return;
+    }
     const s1 = parseInt(match.score1, 10);
     const s2 = parseInt(match.score2, 10);
     if (isNaN(s1) || isNaN(s2) || s1 < 0 || s2 < 0) return;
@@ -304,20 +395,31 @@ function saveScore(match) {
 }
 
 function submitScore(match) {
-    const s1 = parseInt(formData.score1, 10);
-    const s2 = parseInt(formData.score2, 10);
-    if (isNaN(s1) || isNaN(s2) || s1 < 0 || s2 < 0) return;
-
-    const payload = { score1: s1, score2: s2 };
+    const payload = {};
 
     if (formData.played_at) {
         payload.played_at = formData.played_at;
     }
 
-    // Penalties (only if tied in knockout)
-    if (formData.penalties1 !== null && formData.penalties2 !== null) {
-        payload.penalties1 = formData.penalties1;
-        payload.penalties2 = formData.penalties2;
+    if (isSets.value) {
+        const sets = formData.sets.map(s => ({
+            a: Math.max(0, parseInt(s.a, 10) || 0),
+            b: Math.max(0, parseInt(s.b, 10) || 0),
+        }));
+        if (sets.length === 0 || sets.some(s => s.a === s.b)) return;
+        payload.sets = sets;
+    } else {
+        const s1 = parseInt(formData.score1, 10);
+        const s2 = parseInt(formData.score2, 10);
+        if (isNaN(s1) || isNaN(s2) || s1 < 0 || s2 < 0) return;
+        payload.score1 = s1;
+        payload.score2 = s2;
+
+        // Penalties (only if tied in knockout)
+        if (formData.penalties1 !== null && formData.penalties2 !== null) {
+            payload.penalties1 = formData.penalties1;
+            payload.penalties2 = formData.penalties2;
+        }
     }
 
     if (formData.showStats) {
@@ -338,7 +440,7 @@ function submitScore(match) {
     }
 
     // Goal scorers
-    const validScorers = formData.goalScorers.filter(gs => gs.player_id && gs.goals > 0);
+    const validScorers = isGoals.value ? formData.goalScorers.filter(gs => gs.player_id && gs.goals > 0) : [];
     if (validScorers.length > 0) {
         payload.goal_scorers = validScorers.map(gs => ({
             player_id: gs.player_id,
@@ -357,9 +459,66 @@ function editMatch(match) {
 const color = computed(() => props.tournament.color || '#F97316');
 const isLeague = computed(() => props.tournament?.format === 'league');
 
+const sport = computed(() => props.sport || {});
+const isTeam = computed(() => sport.value.type === 'team');
+const isSets = computed(() => sport.value.scoring === 'sets');
+const maxSets = computed(() => sport.value.max_sets || 3);
+const scoring = computed(() => sport.value.scoring || 'goals');
+const isGoals = computed(() => scoring.value === 'goals');
+const statLabels = computed(() => {
+    if (scoring.value === 'points') {
+        return {
+            forShort: 'PF', againstShort: 'PC', diffShort: 'DP',
+            forLabel: t('statsPointsFor'), againstLabel: t('statsPointsAgainst'), diffLabel: t('statsPointsDiff'),
+        };
+    }
+    if (scoring.value === 'sets') {
+        return {
+            forShort: 'SG', againstShort: 'SP', diffShort: 'DS',
+            forLabel: t('statsSetsWon'), againstLabel: t('statsSetsLost'), diffLabel: t('statsSetsDiff'),
+        };
+    }
+    return {
+        forShort: 'GF', againstShort: 'GC', diffShort: 'DG',
+        forLabel: t('statsGoalsFor'), againstLabel: t('statsGoalsAgainst'), diffLabel: t('statsGoalDiff'),
+    };
+});
+const competitorsCount = computed(() => isTeam.value
+    ? (props.tournament?.teams?.length ?? 0)
+    : (props.tournament?.players?.length ?? 0));
+
+function competitorName(match, num) {
+    if (num === 1) return match?.team1?.name || match?.player1?.name || '—';
+    return match?.team2?.name || match?.player2?.name || '—';
+}
+
+function competitorShort(match, num) {
+    const full = competitorName(match, num);
+    if (full === '—') return full;
+    return full.split(' ')[0];
+}
+
+function compId(match, num) {
+    if (num === 1) return match?.team1_id ?? match?.player1_id ?? null;
+    return match?.team2_id ?? match?.player2_id ?? null;
+}
+
+function standingName(s) {
+    return s?.competitor_name || s?.player_name || s?.team_name || '—';
+}
+
+function setsSummary(match) {
+    if (!match?.sets || !match.sets.length) return '';
+    return match.sets.map(s => `${s.a}-${s.b}`).join(' · ');
+}
+
+function removeSet(idx) {
+    if (formData.sets.length > 1) formData.sets.splice(idx, 1);
+}
+
 // Gráficas de barras de la clasificación (pestaña Estadísticas)
 function buildBars(field) {
-    const rows = (props.standings || []).map((r) => ({ name: r.player_name, value: Number(r[field]) || 0 }));
+    const rows = (props.standings || []).map((r) => ({ name: standingName(r), value: Number(r[field]) || 0 }));
     rows.sort((a, b) => b.value - a.value);
     const max = Math.max(1, ...rows.map((r) => Math.abs(r.value)));
     return rows.map((r) => ({ ...r, pct: Math.round((Math.abs(r.value) / max) * 100) }));
@@ -421,10 +580,10 @@ function copyStandings() {
     const header = [
         t('standingsCopyHeaderPos'), t('standingsColPlayer'),
         t('standingsPts'), t('standingsPj'), t('standingsPg'), t('standingsPe'),
-        t('standingsPp'), t('standingsGf'), t('standingsGc'), t('standingsDg'),
+        t('standingsPp'), statLabels.value.forShort, statLabels.value.againstShort, statLabels.value.diffShort,
     ].join('\t');
     const rows = props.standings.map((s, i) =>
-        `${i + 1}\t${s.player_name}\t${s.pts}\t${s.pj}\t${s.pg}\t${s.pe}\t${s.pp}\t${s.gf}\t${s.gc}\t${s.dg > 0 ? '+' : ''}${s.dg}`
+        `${i + 1}\t${standingName(s)}\t${s.pts}\t${s.pj}\t${s.pg}\t${s.pe}\t${s.pp}\t${s.gf}\t${s.gc}\t${s.dg > 0 ? '+' : ''}${s.dg}`
     );
     navigator.clipboard.writeText([header, ...rows].join('\n')).then(() => {
         copiedStandings.value = true;
@@ -464,11 +623,9 @@ function isWinner(match, playerNum) {
 }
 
 function getPlayerName(match, playerNum) {
-    const key = playerNum === 1 ? 'player1' : 'player2';
-    if (!match[key]) return '—';
-    if (!match[key].name) return '—';
-    if (match.status === 'pending' && !match.player1_id) return '—';
-    return match[key].name;
+    const name = competitorName(match, playerNum);
+    if (match.status === 'pending' && !compId(match, playerNum)) return '—';
+    return name;
 }
 
 function getMatchGap(phaseIndex, totalPhases) {
@@ -490,9 +647,16 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <StatusBadge :status="tournament.status" />
                     </div>
                     <div class="flex items-center gap-3 mt-1.5 text-xs sm:text-sm text-white/30 flex-wrap">
-                        <span>{{ tournament.players.length }} {{ t('headerPlayers') }}</span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium"
+                              :style="{ background: `${color}18`, border: `1px solid ${color}33`, color }">
+                            {{ sport.icon }} {{ sport.name }}
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-medium text-white/60 border border-white/10 bg-white/5">
+                            {{ modeChip }}
+                        </span>
+                        <span>{{ competitorsCount }} {{ isTeam ? t('headerTeams') : t('headerPlayers') }}</span>
                         <span class="w-1 h-1 rounded-full bg-white/10" />
-                        <span>{{ tournament.consoles_count }} {{ t('headerTv') }}</span>
+                        <span>{{ tournament.consoles_count }} {{ venueLabel }}</span>
                         <span class="w-1 h-1 rounded-full bg-white/10" />
                         <span>{{ totalMatches }} {{ t('headerMatches') }}</span>
                         <span class="w-1 h-1 rounded-full bg-white/10" />
@@ -564,14 +728,33 @@ function getMatchGap(phaseIndex, totalPhases) {
                         </h2>
                         <div class="ucl-title-lg text-3xl sm:text-5xl lg:text-6xl text-white animate-gold-pulse"
                              :style="{ textShadow: `0 0 20px ${color}44, 0 0 40px ${color}22` }">
-                            {{ champion.player_name }}
+                            {{ standingName(champion) }}
                         </div>
                         <div class="flex items-center justify-center gap-4 sm:gap-6 mt-4 text-xs sm:text-sm text-white/40 font-medium">
                             <span class="font-bold" :style="{ color: color }">{{ t('championPts', { pts: champion.pts }) }}</span>
                             <span class="w-1 h-1 rounded-full bg-white/10" />
                             <span>{{ t('championRecord', { pg: champion.pg, pe: champion.pe, pp: champion.pp }) }}</span>
                             <span class="w-1 h-1 rounded-full bg-white/10" />
-                            <span>{{ t('championDg', { dg: (champion.dg > 0 ? '+' : '') + champion.dg }) }}</span>
+                            <span>{{ statLabels.diffShort }} {{ (champion.dg > 0 ? '+' : '') + champion.dg }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reglas del torneo -->
+                <div v-if="rulesList.length" class="ucl-card animate-fade-up">
+                    <div class="p-4 sm:p-5">
+                        <div class="flex items-center gap-2 mb-3">
+                            <svg class="w-4 h-4 text-elite-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6M9 8h6M5 20V4a1 1 0 011-1h12a1 1 0 011 1v16l-3-2-3 2-3-2-3 2z" />
+                            </svg>
+                            <span class="font-condensed text-xs tracking-[0.1em] uppercase text-white/50">{{ t('rulesTitle') }}</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1.5">
+                            <span v-for="r in rulesList" :key="r.key"
+                                  class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/5 text-xs">
+                                <span class="text-white/50">{{ ruleTitle(r) }}</span>
+                                <span class="font-semibold text-white/90">{{ ruleValue(r) }}</span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -652,7 +835,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                             <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                             </svg>
-                                            {{ t('headerTv') }} {{ match.tv_number }}
+                                            {{ venueSingular }} {{ match.tv_number }}
                                         </span>
                                         <span v-if="match.status === 'finished'" class="text-[10px] font-condensed text-ucl-gold uppercase tracking-wider">{{ t('matchFinal') }}</span>
                                         <span v-else class="text-[10px] font-condensed text-white/15 uppercase tracking-wider">{{ t('matchPending') }}</span>
@@ -663,7 +846,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                         <div class="flex-1 text-right">
                                              <div class="ucl-player"
                                                   :class="match.status === 'finished' ? (match.score1 > match.score2 ? 'winner' : 'loser') : ''">
-                                                  {{ match.player1?.name || '—' }}
+                                                  {{ competitorName(match, 1) }}
                                              </div>
                                         </div>
 
@@ -687,9 +870,22 @@ function getMatchGap(phaseIndex, totalPhases) {
                                         <div class="flex-1 text-left">
                                             <div class="ucl-player"
                                                  :class="match.status === 'finished' ? (match.score2 > match.score1 ? 'winner' : 'loser') : ''">
-                                                {{ match.player2?.name || '—' }}
+                                                {{ competitorName(match, 2) }}
                                             </div>
                                         </div>
+                                    </div>
+
+                                    <!-- Sets summary -->
+                                    <div v-if="match.status === 'finished' && isSets && match.sets && match.sets.length"
+                                         class="flex items-center justify-center gap-1.5 flex-wrap">
+                                        <span v-for="(set, si) in match.sets" :key="si"
+                                              class="px-1.5 py-0.5 rounded text-[9px] font-condensed font-bold"
+                                              :class="set.a > set.b ? 'text-ucl-gold bg-ucl-gold/10' : set.b > set.a ? 'text-white/30 bg-white/5' : 'text-white/20 bg-white/5'">
+                                            {{ set.a }}-{{ set.b }}
+                                        </span>
+                                        <span class="text-[9px] text-white/20 font-condensed tracking-wider ml-1">
+                                            {{ t('setsSummary', { sets: match.sets.length }) }}
+                                        </span>
                                     </div>
 
                                     <!-- Finished: edit button -->
@@ -719,15 +915,38 @@ function getMatchGap(phaseIndex, totalPhases) {
 
                                         <!-- Expanded: form -->
                                         <div v-else class="pt-3 border-t border-white/5 space-y-3">
+                                            <!-- Sets editor -->
+                                            <div v-if="isSets" class="space-y-2">
+                                                <label class="text-[9px] text-white/30 font-condensed tracking-wider block">{{ t('matchSetsLabel') }}</label>
+                                                <div v-for="(set, si) in formData.sets" :key="si"
+                                                     class="flex items-center justify-center gap-3">
+                                                    <div class="flex flex-col items-center">
+                                                        <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ competitorShort(match, 1) }}</label>
+                                                        <input type="number" min="0" class="score-input text-lg w-16 text-center" v-model.number="set.a" />
+                                                    </div>
+                                                    <span class="text-white/20 font-condensed font-bold text-sm">—</span>
+                                                    <div class="flex flex-col items-center">
+                                                        <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ competitorShort(match, 2) }}</label>
+                                                        <input type="number" min="0" class="score-input text-lg w-16 text-center" v-model.number="set.b" />
+                                                    </div>
+                                                    <button @click="removeSet(si)"
+                                                            class="text-white/20 hover:text-red-400 text-sm px-1 pb-1">✕</button>
+                                                </div>
+                                                <button v-if="formData.sets.length < maxSets" @click="formData.sets.push({ a: 0, b: 0 })"
+                                                        class="text-[10px] text-white/30 hover:text-white/60 font-condensed tracking-wider">
+                                                    {{ t('addSet') }}
+                                                </button>
+                                            </div>
+
                                             <!-- Score inputs -->
-                                            <div class="flex items-center justify-center gap-3">
+                                            <div v-else class="flex items-center justify-center gap-3">
                                                 <div class="flex flex-col items-center">
-                                                    <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ match.player1?.name?.split(' ')[0] || 'A' }}</label>
+                                                    <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ competitorShort(match, 1) }}</label>
                                                     <input type="number" min="0" class="score-input text-lg w-16 text-center" v-model.number="formData.score1" />
                                                 </div>
                                                 <span class="text-white/20 font-condensed font-bold text-sm">—</span>
                                                 <div class="flex flex-col items-center">
-                                                    <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ match.player2?.name?.split(' ')[0] || 'B' }}</label>
+                                                    <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ competitorShort(match, 2) }}</label>
                                                     <input type="number" min="0" class="score-input text-lg w-16 text-center" v-model.number="formData.score2" />
                                                 </div>
                                             </div>
@@ -740,7 +959,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                             </div>
 
                                             <!-- Penalties (knockout only, shown when tied) -->
-                                            <div v-if="match.phase !== 'group' && match.phase !== 'third_place'"
+                                            <div v-if="!isSets && match.phase !== 'group' && match.phase !== 'third_place'"
                                                  class="pt-1">
                                                 <details class="group">
                                                     <summary class="text-[10px] text-white/30 hover:text-white/50 font-condensed tracking-wider cursor-pointer select-none">
@@ -748,13 +967,13 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                     </summary>
                                                     <div class="mt-2 flex items-center justify-center gap-3">
                                                         <div class="flex flex-col items-center">
-                                                            <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ match.player1?.name?.split(' ')[0] || 'A' }}</label>
+                                                            <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ competitorShort(match, 1) }}</label>
                                                             <input type="number" min="0" v-model.number="formData.penalties1"
                                                                    class="w-14 text-center bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-white text-sm" />
                                                         </div>
                                                         <span class="text-white/20 font-condensed font-bold text-xs">—</span>
                                                         <div class="flex flex-col items-center">
-                                                            <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ match.player2?.name?.split(' ')[0] || 'B' }}</label>
+                                                            <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ competitorShort(match, 2) }}</label>
                                                             <input type="number" min="0" v-model.number="formData.penalties2"
                                                                    class="w-14 text-center bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-white text-sm" />
                                                         </div>
@@ -762,8 +981,8 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                 </details>
                                             </div>
 
-                                            <!-- Optional stats (collapsible) -->
-                                            <details class="group" @toggle="formData.showStats = $event.target.open">
+                                            <!-- Optional stats (collapsible, solo deportes de goles) -->
+                                            <details v-if="isGoals" class="group" @toggle="formData.showStats = $event.target.open">
                                                 <summary class="text-[10px] text-white/30 hover:text-white/50 font-condensed tracking-wider cursor-pointer select-none">
                                                     {{ t('matchAddStats') }}
                                                 </summary>
@@ -772,12 +991,12 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                         <span class="text-[9px] text-white/20 font-condensed tracking-wider">{{ t('matchPossession') }}</span>
                                                     </div>
                                                     <div>
-                                                        <label class="text-[9px] text-white/30 block">{{ match.player1?.name?.split(' ')[0] || 'A' }} %</label>
+                                                        <label class="text-[9px] text-white/30 block">{{ competitorShort(match, 1) }} %</label>
                                                         <input type="number" min="0" max="100" v-model.number="formData.possession_a"
                                                                class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs" />
                                                     </div>
                                                     <div>
-                                                        <label class="text-[9px] text-white/30 block">{{ match.player2?.name?.split(' ')[0] || 'B' }} %</label>
+                                                        <label class="text-[9px] text-white/30 block">{{ competitorShort(match, 2) }} %</label>
                                                         <input type="number" min="0" max="100" v-model.number="formData.possession_b"
                                                                class="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-white text-xs" />
                                                     </div>
@@ -902,19 +1121,19 @@ function getMatchGap(phaseIndex, totalPhases) {
                             <thead>
                                 <tr class="bg-white/[0.02]">
                                     <th class="w-10 sm:w-12 text-center">#</th>
-                                    <th>{{ t('standingsColPlayer') }}</th>
+                                    <th>{{ t(isTeam ? 'standingsColTeam' : 'standingsColPlayer') }}</th>
                                     <th class="text-center">{{ t('standingsPts') }}</th>
                                     <th class="text-center hidden sm:table-cell">{{ t('standingsPj') }}</th>
                                     <th class="text-center hidden sm:table-cell">{{ t('standingsPg') }}</th>
                                     <th class="text-center hidden sm:table-cell">{{ t('standingsPe') }}</th>
                                     <th class="text-center hidden sm:table-cell">{{ t('standingsPp') }}</th>
-                                    <th class="text-center">{{ t('standingsGf') }}</th>
-                                    <th class="text-center">{{ t('standingsGc') }}</th>
-                                    <th class="text-center">{{ t('standingsDg') }}</th>
+                                    <th class="text-center">{{ statLabels.forShort }}</th>
+                                    <th class="text-center">{{ statLabels.againstShort }}</th>
+                                    <th class="text-center">{{ statLabels.diffShort }}</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr v-for="(s, idx) in standings" :key="s.player_id"
+                                <tr v-for="(s, idx) in standings" :key="s.competitor_id ?? s.player_id ?? s.team_id"
                                      :style="idx === 0 && allPlayed ? { background: `linear-gradient(90deg, ${color}12, transparent)` } : idx === 0 ? { background: `${color}08` } : {}">
                                     <td class="text-center font-condensed font-bold text-lg"
                                         :style="idx === 0 ? { color: allPlayed ? '#FFD700' : color } : {}">
@@ -923,7 +1142,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                     </td>
                                     <td class="font-semibold"
                                         :style="idx === 0 && allPlayed ? { color: '#FFD700' } : idx === 0 ? { color: color } : {}">
-                                        {{ s.player_name }}
+                                        {{ standingName(s) }}
                                     </td>
                                     <td class="text-center font-condensed font-bold text-lg sm:text-xl"
                                         :style="idx === 0 && allPlayed ? { color: '#FFD700' } : idx === 0 ? { color: color } : {}">
@@ -949,9 +1168,9 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <span>{{ t('legendPg') }}</span>
                         <span>{{ t('legendPe') }}</span>
                         <span>{{ t('legendPp') }}</span>
-                        <span>{{ t('legendGf') }}</span>
-                        <span>{{ t('legendGc') }}</span>
-                        <span>{{ t('legendDg') }}</span>
+                        <span>{{ statLabels.forLabel }}</span>
+                        <span>{{ statLabels.againstLabel }}</span>
+                        <span>{{ statLabels.diffLabel }}</span>
                     </div>
                 </div>
 
@@ -1022,8 +1241,8 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                      class="bracket-match"
                                                      :class="{
                                                          'finished': match.status === 'finished',
-                                                         'pending': match.status === 'pending' && match.player1_id && match.player2_id,
-                                                         'empty': match.status === 'pending' && (!match.player1_id || !match.player2_id)
+                                                         'pending': match.status === 'pending' && compId(match, 1) && compId(match, 2),
+                                                         'empty': match.status === 'pending' && (!compId(match, 1) || !compId(match, 2))
                                                      }"
                                                      :style="match.status === 'finished' ? {
                                                          '--match-accent': color,
@@ -1043,7 +1262,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                                      {{ match.score1 }}
                                                                  </span>
                                                              </template>
-                                                             <template v-else-if="match.player1_id">
+                                                             <template v-else-if="!isSets && compId(match, 1)">
                                                                  <input type="number" min="0" placeholder="-"
                                                                         class="score-input"
                                                                         v-model.number="match.score1" />
@@ -1058,7 +1277,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                          <span class="text-[10px] font-condensed text-white/[0.07] font-bold tracking-[0.15em]">VS</span>
                                                          <span v-if="match.status === 'finished' && match.score1 === match.score2"
                                                                class="text-[9px] text-amber-400/50 font-condensed">{{ t('bracketTie') }}</span>
-                                                         <span v-if="match.status === 'pending' && match.player1_id && match.player2_id"
+                                                         <span v-if="match.status === 'pending' && compId(match, 1) && compId(match, 2)"
                                                                class="text-[9px] text-white/15 font-condensed">{{ t('bracketPending') }}</span>
                                                      </div>
 
@@ -1075,7 +1294,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                                      {{ match.score2 }}
                                                                  </span>
                                                              </template>
-                                                             <template v-else-if="match.player2_id">
+                                                             <template v-else-if="!isSets && compId(match, 2)">
                                                                  <input type="number" min="0" placeholder="-"
                                                                         class="score-input"
                                                                         v-model.number="match.score2" />
@@ -1093,14 +1312,14 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                             {{ t('bracketEdit') }}
                                                         </button>
                                                     </div>
-                                                    <div v-else-if="match.player1_id && match.player2_id && match.score1 >= 0 && match.score2 >= 0"
+                                                    <div v-else-if="compId(match, 1) && compId(match, 2) && !isSets && match.score1 >= 0 && match.score2 >= 0"
                                                          class="bracket-action">
                                                         <button @click="saveScore(match)"
                                                                 class="bracket-btn-save">
                                                             {{ t('bracketSave') }}
                                                         </button>
                                                     </div>
-                                                    <div v-else-if="!match.player1_id || !match.player2_id"
+                                                    <div v-else-if="!compId(match, 1) || !compId(match, 2)"
                                                          class="bracket-action">
                                                         <span class="text-[9px] text-white/10 font-condensed italic tracking-wider">{{ t('bracketWaitingRival') }}</span>
                                                     </div>
@@ -1134,8 +1353,8 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                  class="bracket-match"
                                                  :class="{
                                                      'finished': match.status === 'finished',
-                                                     'pending': match.status === 'pending' && match.player1_id && match.player2_id,
-                                                     'empty': match.status === 'pending' && (!match.player1_id || !match.player2_id)
+                                                     'pending': match.status === 'pending' && compId(match, 1) && compId(match, 2),
+                                                     'empty': match.status === 'pending' && (!compId(match, 1) || !compId(match, 2))
                                                  }"
                                                  :style="match.status === 'finished' ? { borderColor: `${color}55` } : {}">
                                                 <div class="bracket-player">
@@ -1147,7 +1366,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                         <template v-if="match.status === 'finished'">
                                                             <span class="text-sm font-bold" :class="isWinner(match, 1) ? 'text-ucl-gold text-base' : 'text-white/30'">{{ match.score1 }}</span>
                                                         </template>
-                                                        <template v-else-if="match.player1_id">
+                                                        <template v-else-if="!isSets && compId(match, 1)">
                                                             <input type="number" min="0" placeholder="-"
                                                                    class="score-input"
                                                                    v-model.number="match.score1" />
@@ -1159,7 +1378,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                 <div class="bracket-vs">
                                                     <span class="text-[10px] font-condensed text-white/[0.07] font-bold tracking-[0.15em]">VS</span>
                                                     <span v-if="match.status === 'finished' && match.score1 === match.score2" class="text-[9px] text-amber-400/50 font-condensed">{{ t('bracketTie') }}</span>
-                                                    <span v-if="match.status === 'pending' && match.player1_id && match.player2_id" class="text-[9px] text-white/15 font-condensed">{{ t('bracketPending') }}</span>
+                                                    <span v-if="match.status === 'pending' && compId(match, 1) && compId(match, 2)" class="text-[9px] text-white/15 font-condensed">{{ t('bracketPending') }}</span>
                                                 </div>
                                                 <div class="bracket-player">
                                                     <div class="flex-1 truncate text-xs font-medium"
@@ -1170,7 +1389,7 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                         <template v-if="match.status === 'finished'">
                                                             <span class="text-sm font-bold" :class="isWinner(match, 2) ? 'text-ucl-gold text-base' : 'text-white/30'">{{ match.score2 }}</span>
                                                         </template>
-                                                        <template v-else-if="match.player2_id">
+                                                        <template v-else-if="!isSets && compId(match, 2)">
                                                             <input type="number" min="0" placeholder="-"
                                                                    class="score-input"
                                                                    v-model.number="match.score2" />
@@ -1182,10 +1401,10 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                 <div v-if="match.status === 'finished'" class="bracket-action">
                                                     <button @click="editMatch(match)" class="bracket-btn-edit">{{ t('bracketEdit') }}</button>
                                                 </div>
-                                                <div v-else-if="match.player1_id && match.player2_id && match.score1 >= 0 && match.score2 >= 0" class="bracket-action">
+                                                <div v-else-if="compId(match, 1) && compId(match, 2) && !isSets && match.score1 >= 0 && match.score2 >= 0" class="bracket-action">
                                                     <button @click="saveScore(match)" class="bracket-btn-save">{{ t('bracketSave') }}</button>
                                                 </div>
-                                                <div v-else-if="!match.player1_id || !match.player2_id" class="bracket-action">
+                                                <div v-else-if="!compId(match, 1) || !compId(match, 2)" class="bracket-action">
                                                     <span class="text-[9px] text-white/10 font-condensed italic tracking-wider">{{ t('bracketWaitingRival') }}</span>
                                                 </div>
                                             </div>
@@ -1240,9 +1459,9 @@ function getMatchGap(phaseIndex, totalPhases) {
                                 </div>
                             </div>
                         </div>
-                        <!-- Goles a favor -->
+                        <!-- Goles/Puntos/Sets a favor -->
                         <div class="ucl-card p-5 sm:p-6">
-                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">{{ t('statsGoalsFor') }}</h3>
+                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">{{ statLabels.forLabel }}</h3>
                             <div class="space-y-3">
                                 <div v-for="(r, i) in chartGf" :key="'gf' + i">
                                     <div class="flex items-center justify-between mb-1">
@@ -1255,9 +1474,9 @@ function getMatchGap(phaseIndex, totalPhases) {
                                 </div>
                             </div>
                         </div>
-                        <!-- Diferencia de gol -->
+                        <!-- Diferencia -->
                         <div class="ucl-card p-5 sm:p-6">
-                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">{{ t('statsGoalDiff') }}</h3>
+                            <h3 class="font-condensed font-bold text-lg tracking-wider text-white mb-4">{{ statLabels.diffLabel }}</h3>
                             <div class="space-y-3">
                                 <div v-for="(r, i) in chartDg" :key="'dg' + i">
                                     <div class="flex items-center justify-between mb-1">

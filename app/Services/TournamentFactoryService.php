@@ -4,37 +4,38 @@ namespace App\Services;
 
 use App\Models\GameMatch;
 use App\Models\Player;
+use App\Models\Team;
 use App\Models\Tournament;
 
 /**
- * Crea torneos (torneo + jugadores + fixture de fase de grupos).
+ * Crea torneos (torneo + competidores + fixture de fase de grupos).
  * Fuente única de verdad usada tanto por el flujo web (TournamentController)
  * como por la API de agentes / MCP (AgentApiController).
+ *
+ * Soporta deportes individuales (jugadores como competidores) y deportes de
+ * equipo (equipos con jugadores como competidores).
  */
 class TournamentFactoryService
 {
     const COLORS = ['#F97316', '#FFD700', '#FF6B9D', '#10B981', '#8B5CF6', '#00D4FF', '#EF4444', '#84CC16'];
 
     /**
+     * Crea un torneo de deporte individual.
+     *
      * @param  string[]  $playerNames
      */
     public function make(
         int $userId,
         string $name,
-        int $consolesCount,
+        int $venuesCount,
         array $playerNames,
         string $format = 'groups_knockout',
         bool $homeAndAway = false,
+        string $sport = 'fifa',
     ): Tournament {
-        $tournament = Tournament::create([
-            'user_id' => $userId,
-            'name' => $name,
-            'consoles_count' => $consolesCount,
-            'status' => 'in_progress',
-            'format' => in_array($format, ['groups_knockout', 'league'], true) ? $format : 'groups_knockout',
-            'home_and_away' => $homeAndAway,
-            'color' => $this->pickColor($userId),
-        ]);
+        $tournament = $this->createTournament(
+            $userId, $name, $venuesCount, $sport, $format, $homeAndAway,
+        );
 
         foreach ($playerNames as $playerName) {
             Player::create([
@@ -46,6 +47,68 @@ class TournamentFactoryService
         $this->generateMatches($tournament);
 
         return $tournament;
+    }
+
+    /**
+     * Crea un torneo de deporte de equipo.
+     *
+     * @param  array<int, array{name: string, players?: string[]}>  $teams  nombre + integrantes opcionales
+     */
+    public function makeTeamTournament(
+        int $userId,
+        string $name,
+        int $venuesCount,
+        string $sport,
+        array $teams,
+        string $format = 'groups_knockout',
+        bool $homeAndAway = false,
+    ): Tournament {
+        $tournament = $this->createTournament(
+            $userId, $name, $venuesCount, $sport, $format, $homeAndAway,
+        );
+
+        foreach ($teams as $teamData) {
+            $team = Team::create([
+                'tournament_id' => $tournament->id,
+                'name' => $teamData['name'],
+                'color' => $this->pickColor($userId),
+            ]);
+            foreach ($teamData['players'] ?? [] as $memberName) {
+                Player::create([
+                    'tournament_id' => $tournament->id,
+                    'team_id' => $team->id,
+                    'name' => $memberName,
+                ]);
+            }
+        }
+
+        $this->generateMatches($tournament);
+
+        return $tournament;
+    }
+
+    private function createTournament(
+        int $userId,
+        string $name,
+        int $venuesCount,
+        string $sport,
+        string $format,
+        bool $homeAndAway,
+    ): Tournament {
+        if (!in_array($sport, SportsCatalog::keys(), true)) {
+            $sport = 'fifa';
+        }
+
+        return Tournament::create([
+            'user_id' => $userId,
+            'name' => $name,
+            'sport' => $sport,
+            'consoles_count' => max(1, $venuesCount),
+            'status' => 'in_progress',
+            'format' => in_array($format, ['groups_knockout', 'league'], true) ? $format : 'groups_knockout',
+            'home_and_away' => $homeAndAway,
+            'color' => $this->pickColor($userId),
+        ]);
     }
 
     public function pickColor(int $userId): string
@@ -60,34 +123,43 @@ class TournamentFactoryService
 
     /**
      * Genera el fixture de todos contra todos (round-robin) de la fase de grupos / liga,
-     * repartiendo los partidos entre las consolas disponibles. Si el torneo es de ida y
-     * vuelta (home_and_away), agrega una segunda rueda con los cruces invertidos.
+     * repartiendo los partidos entre los espacios disponibles (canchas/consolas). Si el
+     * torneo es de ida y vuelta (home_and_away), agrega una segunda rueda con los cruces
+     * invertidos. Funciona sobre competidores (equipos o jugadores según el deporte).
      */
     public function generateMatches(Tournament $tournament): void
     {
-        $players = $tournament->players()->pluck('id', 'name')->toArray();
-        $playerNames = array_keys($players);
-        $playerIds = array_values($players);
+        $isTeam = $tournament->isTeamSport();
+        $competitors = $isTeam
+            ? $tournament->teams()->orderBy('id')->get()
+            : $tournament->players()->orderBy('id')->get();
 
-        if (count($playerNames) % 2 !== 0) {
-            $playerNames[] = 'BYE';
-            $playerIds[] = null;
+        $names = $competitors->pluck('name')->map(fn ($n) => (string) $n)->values()->toArray();
+        $ids = $competitors->pluck('id')->map(fn ($i) => (int) $i)->values()->toArray();
+
+        if (count($names) < 2) {
+            return;
         }
 
-        $numPlayers = count($playerNames);
+        if (count($names) % 2 !== 0) {
+            $names[] = 'BYE';
+            $ids[] = null;
+        }
+
+        $numPlayers = count($names);
         $rounds = $numPlayers - 1;
         $half = $numPlayers / 2;
         $tvCount = max(1, $tournament->consoles_count);
 
         // 1) Construye el calendario de la primera rueda (método del círculo).
-        $schedule = []; // [ [ ['p1'=>id,'p2'=>id], ... ], ... ]
+        $schedule = [];
         for ($round = 0; $round < $rounds; $round++) {
             $roundMatches = [];
             for ($i = 0; $i < $half; $i++) {
-                $p1Name = $playerNames[$i];
-                $p2Name = $playerNames[$numPlayers - 1 - $i];
-                $p1Id = $playerIds[$i];
-                $p2Id = $playerIds[$numPlayers - 1 - $i];
+                $p1Name = $names[$i];
+                $p2Name = $names[$numPlayers - 1 - $i];
+                $p1Id = $ids[$i];
+                $p2Id = $ids[$numPlayers - 1 - $i];
 
                 if ($p1Name !== 'BYE' && $p2Name !== 'BYE') {
                     $roundMatches[] = ['p1' => $p1Id, 'p2' => $p2Id];
@@ -95,10 +167,10 @@ class TournamentFactoryService
             }
             $schedule[] = $roundMatches;
 
-            $lastName = array_pop($playerNames);
-            $lastId = array_pop($playerIds);
-            array_splice($playerNames, 1, 0, [$lastName]);
-            array_splice($playerIds, 1, 0, [$lastId]);
+            $lastName = array_pop($names);
+            $lastId = array_pop($ids);
+            array_splice($names, 1, 0, [$lastName]);
+            array_splice($ids, 1, 0, [$lastId]);
         }
 
         // 2) Persiste la(s) rueda(s). En ida y vuelta se duplica invirtiendo local/visitante.
@@ -113,15 +185,23 @@ class TournamentFactoryService
                         ? [$matchData['p1'], $matchData['p2']]
                         : [$matchData['p2'], $matchData['p1']];
 
-                    GameMatch::create([
+                    $match = [
                         'tournament_id' => $tournament->id,
                         'round' => $roundNumber,
-                        'player1_id' => $p1,
-                        'player2_id' => $p2,
                         'phase' => 'group',
                         'status' => 'pending',
                         'tv_number' => ($tvIndex % $tvCount) + 1,
-                    ]);
+                    ];
+
+                    if ($isTeam) {
+                        $match['team1_id'] = $p1;
+                        $match['team2_id'] = $p2;
+                    } else {
+                        $match['player1_id'] = $p1;
+                        $match['player2_id'] = $p2;
+                    }
+
+                    GameMatch::create($match);
                     $tvIndex++;
                 }
             }

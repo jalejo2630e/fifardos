@@ -117,12 +117,17 @@ class AgentApiControllerTest extends TestCase
         $tournament = Tournament::factory()->for($this->user)->create();
         $p1 = Player::factory()->for($tournament)->create(['name' => 'Alice']);
         $p2 = Player::factory()->for($tournament)->create(['name' => 'Bob']);
-        GameMatch::factory()->for($tournament)->create([
+        $match = GameMatch::factory()->for($tournament)->create([
             'player1_id' => $p1->id,
             'player2_id' => $p2->id,
             'score1' => 5,
             'score2' => 2,
             'status' => 'finished',
+        ]);
+        \App\Models\GoalScorer::create([
+            'match_id' => $match->id,
+            'player_id' => $p1->id,
+            'goals' => 5,
         ]);
 
         $this->authenticate();

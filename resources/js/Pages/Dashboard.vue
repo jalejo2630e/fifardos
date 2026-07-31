@@ -239,13 +239,13 @@ const mvpScore = computed(() => {
                         <span class="right-card-title">Tabla del grupo</span>
                     </div>
                     <div class="right-card-body standings-body">
-                        <Link v-for="(s, i) in standings.slice(0, 6)" :key="s.player_id"
-                              :href="route('players.show', s.player_id)"
+                        <component :is="s.player_id ? Link : 'div'" v-for="(s, i) in standings.slice(0, 6)" :key="s.competitor_id ?? s.player_id ?? s.team_id"
+                              :href="s.player_id ? route('players.show', s.player_id) : undefined"
                               class="standing-row dash-clickable">
                             <span class="standing-pos" :class="{ 'pos-first': i === 0 }">{{ i + 1 }}</span>
-                            <span class="standing-name">{{ s.player_name }}</span>
+                            <span class="standing-name">{{ s.competitor_name || s.player_name || s.team_name }}</span>
                             <span class="standing-pts">{{ s.pts }}</span>
-                        </Link>
+                        </component>
                         <div v-if="!standings.length" class="empty-list">
                             <span class="empty-list-text">Sin datos de tabla.</span>
                         </div>

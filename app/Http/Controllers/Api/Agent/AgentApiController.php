@@ -8,6 +8,7 @@ use App\Models\Player;
 use App\Models\GameMatch;
 use App\Services\StandingsService;
 use App\Services\TournamentFactoryService;
+use App\Services\TournamentRulesService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -24,6 +25,7 @@ class AgentApiController extends Controller
         $tournaments = Tournament::where('user_id', $request->user()->id)
             ->withCount([
             'players',
+            'teams',
             'matches',
             'matches as matches_played' => fn($q) => $q->where('status', 'finished'),
         ])->orderBy('created_at', 'desc')->get()->map(function ($t) {
@@ -31,20 +33,32 @@ class AgentApiController extends Controller
             if ($t->matches_played > 0) {
                 $standings = app(StandingsService::class)->calculate($t);
                 $leader = [
-                    'player_id' => $standings[0]['player_id'],
-                    'player_name' => $standings[0]['player_name'],
+                    'competitor_id' => $standings[0]['competitor_id'],
+                    'competitor_name' => $standings[0]['competitor_name'],
+                    'type' => $standings[0]['type'],
                     'pts' => $standings[0]['pts'],
                 ];
+                if ($leader['type'] === 'team') {
+                    $leader['team_id'] = $leader['competitor_id'];
+                    $leader['team_name'] = $leader['competitor_name'];
+                } else {
+                    $leader['player_id'] = $leader['competitor_id'];
+                    $leader['player_name'] = $leader['competitor_name'];
+                }
             }
 
             return [
                 'id' => $t->id,
                 'name' => $t->name,
+                'sport' => $t->sport ?? 'fifa',
+                'sport_name' => \App\Services\SportsCatalog::name($t->sport ?? 'fifa'),
+                'is_team' => $t->isTeamSport(),
                 'status' => $t->status,
                 'color' => $t->color,
                 'consoles_count' => $t->consoles_count,
                 'max_players' => $t->max_players,
                 'players_count' => $t->players_count,
+                'teams_count' => $t->teams_count,
                 'total_matches' => $t->matches_count,
                 'played_matches' => $t->matches_played,
                 'progress_percent' => $t->matches_count > 0
@@ -69,30 +83,81 @@ class AgentApiController extends Controller
      */
     public function createTournament(Request $request)
     {
+        $sport = $request->input('sport', 'fifa');
+        if (!in_array($sport, \App\Services\SportsCatalog::keys(), true)) {
+            $sport = 'fifa';
+        }
+        $isTeam = \App\Services\SportsCatalog::isTeam($sport);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'sport' => 'nullable|string',
+            'mode' => 'nullable|in:virtual,physical',
             'consoles_count' => 'nullable|integer|min:1|max:20',
-            'players' => 'required|array|min:2|max:32',
+            'players' => $isTeam ? 'nullable|array' : 'required|array|min:2|max:32',
             'players.*' => 'required|string|max:255|distinct',
+            'teams' => $isTeam ? 'required|array|min:2|max:32' : 'nullable|array',
+            'teams.*' => 'required|string|max:255|distinct',
+            'rules' => 'nullable|array',
         ]);
+
+        // Reglas parametrizables: validar contra las definiciones del deporte
+        $rulesErrors = app(TournamentRulesService::class)->validate(
+            $validated['rules'] ?? [],
+            $sport,
+        );
+        if (!empty($rulesErrors)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Reglas inválidas para el deporte seleccionado.',
+                'errors' => $rulesErrors,
+            ], 422);
+        }
 
         $user = $request->user();
 
-        $tournament = app(TournamentFactoryService::class)->make(
-            $user->id,
-            $validated['name'],
-            $validated['consoles_count'] ?? 1,
-            $validated['players'],
-        );
+        if ($isTeam) {
+            $tournament = app(TournamentFactoryService::class)->makeTeamTournament(
+                $user->id,
+                $validated['name'],
+                $validated['consoles_count'] ?? 1,
+                $sport,
+                array_map(fn ($name) => ['name' => $name, 'players' => []], $validated['teams']),
+            );
+            $competitorCount = count($validated['teams']);
+        } else {
+            $tournament = app(TournamentFactoryService::class)->make(
+                $user->id,
+                $validated['name'],
+                $validated['consoles_count'] ?? 1,
+                $validated['players'],
+                'groups_knockout',
+                false,
+                $sport,
+            );
+            $competitorCount = count($validated['players']);
+        }
+
+        $tournament->update([
+            'mode' => $validated['mode'] ?? 'virtual',
+        ]);
+
+        // Reglas del torneo según el deporte
+        if (!empty($validated['rules'])) {
+            app(TournamentRulesService::class)->saveForTournament($tournament, $validated['rules']);
+        }
 
         $tournament->loadCount(['players', 'matches']);
 
         return response()->json([
             'success' => true,
-            'message' => "Torneo «{$tournament->name}» creado con {$tournament->players_count} jugadores y {$tournament->matches_count} partidos de fase de grupos.",
+            'message' => "Torneo «{$tournament->name}» creado con {$competitorCount} competidores y {$tournament->matches_count} partidos de fase de grupos.",
             'data' => [
                 'id' => $tournament->id,
                 'name' => $tournament->name,
+                'sport' => $tournament->sport,
+                'mode' => $tournament->mode,
+                'is_team' => $isTeam,
                 'status' => $tournament->status,
                 'color' => $tournament->color,
                 'consoles_count' => $tournament->consoles_count,
@@ -114,11 +179,13 @@ class AgentApiController extends Controller
         $tournament = Tournament::where('user_id', $request->user()->id)->findOrFail($id);
         $match = GameMatch::where('tournament_id', $tournament->id)->findOrFail($matchId);
 
-        $validated = $request->validate([
-            'score1' => 'required|integer|min:0',
-            'score2' => 'required|integer|min:0',
-            'penalties1' => 'nullable|integer|min:0',
-            'penalties2' => 'nullable|integer|min:0',
+        $sport = $tournament->sport ?? 'fifa';
+        $isSets = \App\Services\SportsCatalog::isSets($sport);
+        $usesPenalties = \App\Services\SportsCatalog::usesPenalties($sport);
+
+        $rules = [
+            'score1' => $isSets ? 'nullable|integer|min:0' : 'required|integer|min:0',
+            'score2' => $isSets ? 'nullable|integer|min:0' : 'required|integer|min:0',
             'played_at' => 'nullable|date',
             'goal_scorers' => 'nullable|array',
             'goal_scorers.*.player_id' => [
@@ -126,18 +193,49 @@ class AgentApiController extends Controller
                 \Illuminate\Validation\Rule::exists('players', 'id')->where('tournament_id', $tournament->id),
             ],
             'goal_scorers.*.goals' => 'required|integer|min:1',
-        ]);
+        ];
+        if ($isSets) {
+            $rules['sets'] = 'required|array|min:1';
+            $rules['sets.*.a'] = 'required|integer|min:0';
+            $rules['sets.*.b'] = 'required|integer|min:0';
+        } elseif ($usesPenalties) {
+            $rules['penalties1'] = 'nullable|integer|min:0';
+            $rules['penalties2'] = 'nullable|integer|min:0';
+        }
+        $validated = $request->validate($rules);
 
         $data = [
-            'score1' => $validated['score1'],
-            'score2' => $validated['score2'],
             'status' => 'finished',
             'played_at' => $validated['played_at'] ?? now(),
         ];
-        if (isset($validated['penalties1'], $validated['penalties2'])) {
-            $data['penalties1'] = $validated['penalties1'];
-            $data['penalties2'] = $validated['penalties2'];
+
+        if ($isSets) {
+            $sets = array_values($validated['sets']);
+            foreach ($sets as $set) {
+                if ((int) $set['a'] === (int) $set['b']) {
+                    return response()->json(['success' => false, 'error' => 'Un set no puede terminar empatado.'], 422);
+                }
+            }
+            if (count($sets) > \App\Services\SportsCatalog::maxSets($sport)) {
+                return response()->json(['success' => false, 'error' => 'Demasiados sets.'], 422);
+            }
+            $s1 = count(array_filter($sets, fn ($s) => (int) $s['a'] > (int) $s['b']));
+            $s2 = count($sets) - $s1;
+            if ($s1 === $s2) {
+                return response()->json(['success' => false, 'error' => 'Debe haber un ganador en sets.'], 422);
+            }
+            $data['sets'] = $sets;
+            $data['score1'] = $s1;
+            $data['score2'] = $s2;
+        } else {
+            $data['score1'] = $validated['score1'];
+            $data['score2'] = $validated['score2'];
+            if ($usesPenalties && isset($validated['penalties1'], $validated['penalties2'])) {
+                $data['penalties1'] = $validated['penalties1'];
+                $data['penalties2'] = $validated['penalties2'];
+            }
         }
+
         $match->update($data);
 
         if (!empty($validated['goal_scorers'])) {
@@ -173,7 +271,7 @@ class AgentApiController extends Controller
     public function standings(Request $request, $id)
     {
         $tournament = Tournament::where('user_id', $request->user()->id)
-            ->with(['players', 'matches' => fn($q) => $q->with(['player1', 'player2'])])
+            ->with(['players', 'teams', 'matches' => fn($q) => $q->with(['player1', 'player2', 'team1', 'team2'])])
             ->findOrFail($id);
 
         $rows = app(StandingsService::class)->calculate($tournament);
@@ -182,7 +280,9 @@ class AgentApiController extends Controller
         $standings = array_map(function ($row, $index) use ($allPlayed) {
             return [
                 'position' => $index + 1,
-                'player_name' => $row['player_name'],
+                'competitor_id' => $row['competitor_id'],
+                'competitor_name' => $row['competitor_name'],
+                'type' => $row['type'],
                 'points' => $row['pts'],
                 'played' => $row['pj'],
                 'won' => $row['pg'],
@@ -197,6 +297,7 @@ class AgentApiController extends Controller
 
         return response()->json([
             'tournament' => $tournament->name,
+            'sport' => $tournament->sport ?? 'fifa',
             'status' => $tournament->status,
             'all_matches_played' => $allPlayed,
             'standings' => $standings,
@@ -205,53 +306,38 @@ class AgentApiController extends Controller
 
     /**
      * GET /api/agent/tournaments/{id}/top-scorer
-     * Goleador actual del torneo (jugador con más goles acumulados).
-     *
-     * NOTA: Los goles se calculan sumando score1 (cuando el jugador es player1)
-     *       y score2 (cuando es player2). No hay tabla individual de goleadores aún.
+     * Goleador actual del torneo (jugador con más goles registrados en goal_scorers).
      */
     public function topScorer(Request $request, $id)
     {
-        $tournament = Tournament::where('user_id', $request->user()->id)
-            ->with(['players', 'matches' => fn($q) => $q->where('status', 'finished')])
-            ->findOrFail($id);
+        $tournament = Tournament::where('user_id', $request->user()->id)->findOrFail($id);
 
-        $goalCounts = [];
-        foreach ($tournament->players as $player) {
-            $goalCounts[$player->id] = [
-                'player_id' => $player->id,
-                'player_name' => $player->name,
-                'total_goals' => 0,
-                'matches_played' => 0,
-            ];
-        }
+        $rows = \DB::table('goal_scorers')
+            ->join('matches', 'goal_scorers.match_id', '=', 'matches.id')
+            ->join('players', 'goal_scorers.player_id', '=', 'players.id')
+            ->where('matches.tournament_id', $tournament->id)
+            ->where('matches.status', 'finished')
+            ->select('players.id as player_id', 'players.name as player_name')
+            ->selectRaw('SUM(goal_scorers.goals) as total_goals')
+            ->selectRaw('COUNT(DISTINCT goal_scorers.match_id) as matches_played')
+            ->groupBy('players.id', 'players.name')
+            ->orderByDesc('total_goals')
+            ->limit(1)
+            ->first();
 
-        foreach ($tournament->matches as $match) {
-            if (isset($goalCounts[$match->player1_id])) {
-                $goalCounts[$match->player1_id]['total_goals'] += $match->score1 ?? 0;
-                $goalCounts[$match->player1_id]['matches_played']++;
-            }
-            if (isset($goalCounts[$match->player2_id])) {
-                $goalCounts[$match->player2_id]['total_goals'] += $match->score2 ?? 0;
-                $goalCounts[$match->player2_id]['matches_played']++;
-            }
-        }
-
-        usort($goalCounts, fn($a, $b) => $b['total_goals'] - $a['total_goals']);
-
-        $top = $goalCounts[0] ?? null;
-
-        if ($top && $top['matches_played'] > 0) {
-            $top['goals_per_match'] = round($top['total_goals'] / $top['matches_played'], 2);
-        } else {
-            $top['goals_per_match'] = 0;
+        if ($rows) {
+            $rows->total_goals = (int) $rows->total_goals;
+            $rows->matches_played = (int) $rows->matches_played;
+            $rows->goals_per_match = $rows->matches_played > 0
+                ? round($rows->total_goals / $rows->matches_played, 2)
+                : 0;
         }
 
         return response()->json([
             'success' => true,
             'tournament_id' => (int) $id,
             'tournament_name' => $tournament->name,
-            'data' => $top,
+            'data' => $rows ? (array) $rows : null,
         ]);
     }
 
@@ -263,7 +349,7 @@ class AgentApiController extends Controller
     {
         $tournament = Tournament::where('user_id', $request->user()->id)->findOrFail($id);
 
-        $query = GameMatch::with(['player1', 'player2'])
+        $query = GameMatch::with(['player1', 'player2', 'team1', 'team2'])
             ->where('tournament_id', $id)
             ->orderBy('round')
             ->orderBy('id');
@@ -276,26 +362,34 @@ class AgentApiController extends Controller
         }
 
         $matches = $query->get()->map(function ($m) {
+            $sportKey = $m->tournament?->sport ?? 'fifa';
             return [
                 'id' => $m->id,
                 'round' => $m->round,
                 'tv_number' => $m->tv_number,
+                'phase' => $m->phase,
                 'status' => $m->status,
-                'player1' => $m->player1 ? [
-                    'id' => $m->player1->id,
-                    'name' => $m->player1->name,
-                ] : null,
-                'player2' => $m->player2 ? [
-                    'id' => $m->player2->id,
-                    'name' => $m->player2->name,
-                ] : null,
+                'sport' => $sportKey,
+                'is_sets' => \App\Services\SportsCatalog::isSets($sportKey),
+                'max_sets' => \App\Services\SportsCatalog::maxSets($sportKey),
+                'competitor1' => [
+                    'id' => $m->competitor1Id(),
+                    'name' => $m->competitor1Name() ?? '—',
+                ],
+                'competitor2' => [
+                    'id' => $m->competitor2Id(),
+                    'name' => $m->competitor2Name() ?? '—',
+                ],
                 'score1' => $m->score1,
                 'score2' => $m->score2,
+                'sets' => $m->sets,
+                'penalties1' => $m->penalties1,
+                'penalties2' => $m->penalties2,
                 'played_at' => $m->played_at,
                 'winner_id' => $m->status === 'finished'
-                    ? ($m->score1 > $m->score2 ? $m->player1_id : ($m->score2 > $m->score1 ? $m->player2_id : null))
+                    ? ($m->outcome() === 1 ? $m->competitor1Id() : ($m->outcome() === 2 ? $m->competitor2Id() : null))
                     : null,
-                'is_draw' => $m->status === 'finished' && $m->score1 === $m->score2,
+                'is_draw' => $m->status === 'finished' && $m->outcome() === 0,
             ];
         });
 

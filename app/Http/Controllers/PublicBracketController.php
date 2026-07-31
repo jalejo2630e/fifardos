@@ -10,14 +10,15 @@ class PublicBracketController extends Controller
 {
     public function show(Tournament $tournament)
     {
-        $tournament->load(['players', 'matches' => function ($q) {
-            $q->with(['player1', 'player2'])->orderBy('round')->orderBy('id');
+        $tournament->load(['players', 'teams.players', 'matches' => function ($q) {
+            $q->with(['player1', 'player2', 'team1', 'team2'])->orderBy('round')->orderBy('id');
         }]);
 
         // Página pública: nunca exponer datos personales de los jugadores en los
         // props JSON (email, apellido, psn_id). Sólo nombre de pila, username y equipo.
         $safe = ['email', 'apellido', 'psn_id', 'password'];
         $tournament->players->each->makeHidden($safe);
+        $tournament->teams->each->players->each->makeHidden($safe);
         $tournament->matches->each(function ($m) use ($safe) {
             $m->player1?->makeHidden($safe);
             $m->player2?->makeHidden($safe);
@@ -28,6 +29,7 @@ class PublicBracketController extends Controller
 
         return Inertia::render('Public/Bracket', [
             'tournament' => $tournament,
+            'sport' => \App\Services\SportsCatalog::get($tournament->sport ?? 'fifa'),
             'standings' => $standings,
             'rounds' => $rounds,
             'seo' => $this->seoFor($tournament),
@@ -48,11 +50,20 @@ class PublicBracketController extends Controller
             'finished', 'completed' => 'resultados y campeón',
             default => 'próximamente',
         };
+        $sportKey = $tournament->sport ?? 'fifa';
+        $sportName = \App\Services\SportsCatalog::name($sportKey);
+        $isPhysical = $tournament->isPhysical();
+        $attendanceMode = $isPhysical
+            ? 'https://schema.org/OfflineEventAttendanceMode'
+            : 'https://schema.org/OnlineEventAttendanceMode';
+        $location = $isPhysical
+            ? ['@type' => 'Place', 'name' => ucfirst($tournament->venueLabel())]
+            : ['@type' => 'VirtualLocation', 'url' => $url];
 
         return [
             'title' => "{$tournament->name} — Bracket, tabla y {$statusLabel} | FIFARDOS",
-            'description' => "Torneo {$tournament->name} en FIFARDOS: {$players} jugadores, tabla de posiciones "
-                . 'en vivo, resultados de cada partido, eliminatorias y goleador del torneo.',
+            'description' => "Torneo de {$sportName} «{$tournament->name}» en FIFARDOS: tabla de posiciones "
+                . 'en vivo, resultados de cada partido, eliminatorias y líder del torneo.',
             'type' => 'article',
             'canonical' => $url,
             'jsonld' => [
@@ -60,16 +71,13 @@ class PublicBracketController extends Controller
                     '@type' => 'SportsEvent',
                     'name' => $tournament->name,
                     'url' => $url,
-                    'sport' => 'Football',
-                    'eventAttendanceMode' => 'https://schema.org/OnlineEventAttendanceMode',
+                    'sport' => $sportName,
+                    'eventAttendanceMode' => $attendanceMode,
                     'eventStatus' => 'https://schema.org/EventScheduled',
                     'startDate' => optional($tournament->created_at)->toIso8601String(),
                     'endDate' => optional($tournament->finished_at)->toIso8601String(),
                     'organizer' => ['@id' => url('/#organization')],
-                    'location' => [
-                        '@type' => 'VirtualLocation',
-                        'url' => $url,
-                    ],
+                    'location' => $location,
                 ]),
                 [
                     '@type' => 'BreadcrumbList',

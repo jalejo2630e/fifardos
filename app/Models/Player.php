@@ -12,6 +12,7 @@ class Player extends Model
     use HasFactory;
     protected $fillable = [
         'tournament_id',
+        'team_id',
         'name',
         'apellido',
         'psn_id',
@@ -28,6 +29,11 @@ class Player extends Model
     public function tournament(): BelongsTo
     {
         return $this->belongsTo(Tournament::class);
+    }
+
+    public function team(): BelongsTo
+    {
+        return $this->belongsTo(Team::class);
     }
 
     public function matchesAsPlayer1(): HasMany

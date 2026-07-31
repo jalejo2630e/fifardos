@@ -3,6 +3,7 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
+use App\Support\HumanChallenge;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -21,22 +22,34 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
+        $this->withSession([
+            HumanChallenge::ANSWER_KEY => 7,
+            HumanChallenge::TIME_KEY => now()->timestamp - 10,
+        ]);
+
         $response = $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
+            'captcha' => 7,
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+        $response->assertRedirect(route('tournaments.index', absolute: false));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();
 
+        $this->withSession([
+            HumanChallenge::ANSWER_KEY => 7,
+            HumanChallenge::TIME_KEY => now()->timestamp - 10,
+        ]);
+
         $this->post('/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
+            'captcha' => 7,
         ]);
 
         $this->assertGuest();

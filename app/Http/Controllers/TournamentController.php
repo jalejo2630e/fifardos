@@ -7,11 +7,14 @@ use App\Models\Player;
 use App\Models\GameMatch;
 use App\Models\GoalScorer;
 use App\Mail\TournamentCreatedMail;
+use App\Services\SportsCatalog;
 use App\Services\StandingsService;
 use App\Services\TournamentFactoryService;
+use App\Services\TournamentRulesService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 
 class TournamentController extends Controller
@@ -37,17 +40,22 @@ class TournamentController extends Controller
     public function index()
     {
         $tournaments = Tournament::where('user_id', auth()->id())
-            ->withCount(['players', 'matches', 'matches as matches_played' => fn($q) => $q->where('status', 'finished')])
-            ->with(['players', 'matches' => fn($q) => $q->where('status', 'finished')])
+            ->withCount(['players', 'teams', 'matches', 'matches as matches_played' => fn($q) => $q->where('status', 'finished')])
+            ->with(['players', 'teams', 'matches' => fn($q) => $q->where('status', 'finished')])
             ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($tournament) {
                 $arr = $tournament->toArray();
-                unset($arr['players'], $arr['matches']);
+                unset($arr['players'], $arr['matches'], $arr['teams']);
+
+                $competitorCount = $tournament->isTeamSport()
+                    ? $tournament->teams_count
+                    : $tournament->players_count;
+
                 $arr['estimated_minutes'] = Tournament::estimateMinutes(
-                    $tournament->players_count,
+                    $competitorCount,
                     $tournament->consoles_count,
-                    $tournament->minutes_per_match ?? 6,
+                    $tournament->minutes_per_match ?? SportsCatalog::minutes($tournament->sport),
                     $tournament->format ?? 'groups_knockout',
                     (bool) $tournament->home_and_away,
                 );
@@ -55,7 +63,7 @@ class TournamentController extends Controller
                 if ($tournament->matches_played > 0) {
                     $standings = app(StandingsService::class)->calculate($tournament);
                     $arr['leader'] = [
-                        'name' => $standings[0]['player_name'],
+                        'name' => $standings[0]['competitor_name'],
                         'pts' => $standings[0]['pts'],
                     ];
                 }
@@ -69,36 +77,93 @@ class TournamentController extends Controller
 
     public function create()
     {
-        return Inertia::render('Tournaments/Create');
+        return Inertia::render('Tournaments/Create', [
+            'sports' => SportsCatalog::all(),
+            'rules' => app(TournamentRulesService::class)->definitionsBySport(),
+        ]);
     }
 
     public function store(Request $request)
     {
+        $sport = $request->input('sport', 'fifa');
+        if (!in_array($sport, SportsCatalog::keys(), true)) {
+            $sport = 'fifa';
+        }
+        $isTeam = SportsCatalog::isTeam($sport);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'sport' => 'nullable|string',
+            'mode' => 'nullable|in:virtual,physical',
             'consoles_count' => 'required|integer|min:1|max:20',
-            'minutes_per_match' => 'nullable|integer|min:1|max:60',
+            'minutes_per_match' => 'nullable|integer|min:1|max:180',
             'format' => 'nullable|in:groups_knockout,league',
             'home_and_away' => 'boolean',
-            'players' => 'required|array|min:2',
+            'rules' => 'nullable|array',
+            'players' => $isTeam ? 'nullable|array' : 'required|array|min:2',
             'players.*' => 'required|string|max:255|distinct',
+            'teams' => $isTeam ? 'required|array|min:2' : 'nullable|array',
+            'teams.*.name' => 'required|string|max:255',
+            'teams.*.players' => 'nullable|array',
+            'teams.*.players.*' => 'required|string|max:255|distinct',
             'reminder_at' => 'nullable|date|after:now',
             'reminder_email' => 'nullable|email',
             'notify_email' => 'boolean',
         ]);
 
+        // Reglas parametrizables: validar contra las definiciones del deporte
+        $rulesErrors = app(TournamentRulesService::class)->validate(
+            $validated['rules'] ?? [],
+            $sport,
+        );
+        if (!empty($rulesErrors)) {
+            return redirect()->back()
+                ->withErrors(['rules' => $rulesErrors])
+                ->withInput();
+        }
+
+        if ($isTeam) {
+            $names = array_map(fn ($t) => $t['name'], $validated['teams']);
+            if (count($names) !== count(array_unique($names))) {
+                return redirect()->back()->withErrors(['teams' => 'Los nombres de equipos no pueden repetirse.'])->withInput();
+            }
+        }
+
         $reminderEmail = $validated['reminder_email'] ?? auth()->user()->email;
 
-        $tournament = app(TournamentFactoryService::class)->make(
-            auth()->id(),
-            $validated['name'],
-            $validated['consoles_count'],
-            $validated['players'],
-            $validated['format'] ?? 'groups_knockout',
-            (bool) ($validated['home_and_away'] ?? false),
-        );
+        if ($isTeam) {
+            $tournament = app(TournamentFactoryService::class)->makeTeamTournament(
+                auth()->id(),
+                $validated['name'],
+                $validated['consoles_count'],
+                $sport,
+                $validated['teams'],
+                $validated['format'] ?? 'groups_knockout',
+                (bool) ($validated['home_and_away'] ?? false),
+            );
+            $competitorLabel = count($validated['teams']) . ' equipos';
+        } else {
+            $tournament = app(TournamentFactoryService::class)->make(
+                auth()->id(),
+                $validated['name'],
+                $validated['consoles_count'],
+                $validated['players'],
+                $validated['format'] ?? 'groups_knockout',
+                (bool) ($validated['home_and_away'] ?? false),
+                $sport,
+            );
+            $competitorLabel = count($validated['players']) . ' jugadores';
+        }
 
-        $tournament->update(['minutes_per_match' => $validated['minutes_per_match'] ?? 6]);
+        $tournament->update([
+            'minutes_per_match' => $validated['minutes_per_match'] ?? SportsCatalog::minutes($sport),
+            'mode' => $validated['mode'] ?? 'virtual',
+        ]);
+
+        // Reglas del torneo según el deporte
+        if (!empty($validated['rules'])) {
+            app(TournamentRulesService::class)->saveForTournament($tournament, $validated['rules']);
+        }
 
         if (!empty($validated['reminder_at'])) {
             $tournament->update([
@@ -119,16 +184,21 @@ class TournamentController extends Controller
         $extra = !empty($validated['reminder_at']) ? ' Te recordaremos por email.' : '';
 
         return redirect()->route('tournaments.show', $tournament)
-            ->with('success', "Torneo «{$tournament->name}» creado con " . count($validated['players']) . " jugadores.{$extra}");
+            ->with('success', "Torneo «{$tournament->name}» creado con {$competitorLabel}.{$extra}");
     }
 
     public function show(Tournament $tournament)
     {
         $this->ensureOwner($tournament);
 
-        $tournament->load(['players', 'matches' => function ($q) {
-            $q->with(['player1', 'player2'])->orderBy('round')->orderBy('id');
-        }]);
+        $tournament->load([
+            'players',
+            'teams.players',
+            'rules',
+            'matches' => function ($q) {
+                $q->with(['player1', 'player2', 'team1', 'team2'])->orderBy('round')->orderBy('id');
+            },
+        ]);
 
         $standings = app(StandingsService::class)->calculate($tournament);
         $allPlayed = $tournament->matches->every(fn($m) => $m->status === 'finished');
@@ -139,9 +209,13 @@ class TournamentController extends Controller
                 'finished_at' => now(),
             ]);
             $tournament = $tournament->fresh();
-            $tournament->load(['players', 'matches' => function ($q) {
-                $q->with(['player1', 'player2'])->orderBy('round')->orderBy('id');
-            }]);
+            $tournament->load([
+                'players',
+                'teams.players',
+                'matches' => function ($q) {
+                    $q->with(['player1', 'player2', 'team1', 'team2'])->orderBy('round')->orderBy('id');
+                },
+            ]);
             $standings = app(StandingsService::class)->calculate($tournament);
         }
 
@@ -154,9 +228,13 @@ class TournamentController extends Controller
             && !$tournament->matches->whereIn('phase', self::PHASE_ORDER)->count()) {
             $this->autoGenerateKnockout($tournament);
             $tournament->refresh();
-            $tournament->load(['players', 'matches' => function ($q) {
-                $q->with(['player1', 'player2'])->orderBy('round')->orderBy('id');
-            }]);
+            $tournament->load([
+                'players',
+                'teams.players',
+                'matches' => function ($q) {
+                    $q->with(['player1', 'player2', 'team1', 'team2'])->orderBy('round')->orderBy('id');
+                },
+            ]);
             $standings = app(StandingsService::class)->calculate($tournament);
         }
 
@@ -199,18 +277,41 @@ class TournamentController extends Controller
             }
         }
 
+        $sportKey = $tournament->sport ?? 'fifa';
+
+        // Reglas del torneo ya elegidas, combinadas con sus definiciones para mostrar
+        $tournamentRules = $tournament->rulesMap();
+        $rulesList = [];
+        foreach (app(TournamentRulesService::class)->definitionsFor($sportKey) as $def) {
+            if (!array_key_exists($def->key, $tournamentRules)) {
+                continue;
+            }
+            $rulesList[] = [
+                'key' => $def->key,
+                'label' => $def->label,
+                'label_en' => $def->label_en,
+                'type' => $def->type,
+                'value' => $tournamentRules[$def->key],
+                'options' => $def->options,
+                'group' => $def->group,
+            ];
+        }
+
         return Inertia::render('Tournaments/Show', [
             'tournament' => $tournament,
+            'sport' => SportsCatalog::get($sportKey),
             'standings' => $standings,
             'allPlayed' => $allPlayed,
             'rounds' => $groupRounds,
             'groupAllPlayed' => $groupAllPlayed,
             'phases' => $phases,
             'goalScorers' => $goalScorersData,
+            'tournamentRules' => $tournamentRules,
+            'rulesList' => $rulesList,
             'estimatedMinutes' => Tournament::estimateMinutes(
-                $tournament->players->count(),
+                $tournament->isTeamSport() ? $tournament->teams->count() : $tournament->players->count(),
                 $tournament->consoles_count,
-                $tournament->minutes_per_match ?? 6,
+                $tournament->minutes_per_match ?? SportsCatalog::minutes($sportKey),
                 $tournament->format ?? 'groups_knockout',
                 (bool) $tournament->home_and_away,
             ),
@@ -223,7 +324,7 @@ class TournamentController extends Controller
 
         $top = (int) $request->input('top', 8);
         if (!in_array($top, [2, 4, 8, 16])) {
-            return redirect()->back()->with('error', 'El número de jugadores debe ser 2, 4, 8 o 16.');
+            return redirect()->back()->with('error', 'El número de competidores debe ser 2, 4, 8 o 16.');
         }
 
         $hasExisting = $tournament->matches()->whereIn('phase', self::PHASE_ORDER)->exists();
@@ -241,12 +342,12 @@ class TournamentController extends Controller
         $this->ensureOwner($tournament);
         abort_unless((int) $match->tournament_id === (int) $tournament->id, 404);
 
-        $validated = $request->validate([
-            'score1' => 'required|integer|min:0',
-            'score2' => 'required|integer|min:0',
+        $sport = $tournament->sport ?? 'fifa';
+        $isSets = SportsCatalog::isSets($sport);
+        $usesPenalties = SportsCatalog::usesPenalties($sport);
+
+        $rules = [
             'played_at' => 'nullable|date',
-            'penalties1' => 'nullable|integer|min:0',
-            'penalties2' => 'nullable|integer|min:0',
             'stats' => 'nullable|array',
             'stats.possession_a' => 'nullable|integer|min:0|max:100',
             'stats.possession_b' => 'nullable|integer|min:0|max:100',
@@ -259,23 +360,58 @@ class TournamentController extends Controller
             'goal_scorers' => 'nullable|array',
             'goal_scorers.*.player_id' => [
                 'required', 'integer',
-                \Illuminate\Validation\Rule::exists('players', 'id')->where('tournament_id', $tournament->id),
+                Rule::exists('players', 'id')->where('tournament_id', $tournament->id),
             ],
             'goal_scorers.*.goals' => 'required|integer|min:1',
             'goal_scorers.*.minutes' => 'nullable|array',
-            'goal_scorers.*.minutes.*' => 'integer|min:1|max:120',
-        ]);
+            'goal_scorers.*.minutes.*' => 'integer|min:1|max:180',
+        ];
+
+        if ($isSets) {
+            $rules['sets'] = 'required|array|min:1';
+            $rules['sets.*.a'] = 'required|integer|min:0';
+            $rules['sets.*.b'] = 'required|integer|min:0';
+        } else {
+            $rules['score1'] = 'required|integer|min:0';
+            $rules['score2'] = 'required|integer|min:0';
+            if ($usesPenalties) {
+                $rules['penalties1'] = 'nullable|integer|min:0';
+                $rules['penalties2'] = 'nullable|integer|min:0';
+            }
+        }
+
+        $validated = $request->validate($rules);
 
         $data = [
-            'score1' => $validated['score1'],
-            'score2' => $validated['score2'],
             'status' => 'finished',
             'played_at' => $validated['played_at'] ?? now(),
         ];
 
-        if (isset($validated['penalties1']) && isset($validated['penalties2'])) {
-            $data['penalties1'] = $validated['penalties1'];
-            $data['penalties2'] = $validated['penalties2'];
+        if ($isSets) {
+            $sets = array_values($validated['sets']);
+            foreach ($sets as $set) {
+                if ((int) $set['a'] === (int) $set['b']) {
+                    return redirect()->back()->with('error', 'Un set no puede terminar empatado.');
+                }
+            }
+            if (count($sets) > SportsCatalog::maxSets($sport)) {
+                return redirect()->back()->with('error', 'Demasiados sets. Máximo ' . SportsCatalog::maxSets($sport) . '.');
+            }
+            $s1 = count(array_filter($sets, fn ($s) => (int) $s['a'] > (int) $s['b']));
+            $s2 = count($sets) - $s1;
+            if ($s1 === $s2) {
+                return redirect()->back()->with('error', 'Debe haber un ganador en sets.');
+            }
+            $data['sets'] = $sets;
+            $data['score1'] = $s1;
+            $data['score2'] = $s2;
+        } else {
+            $data['score1'] = $validated['score1'];
+            $data['score2'] = $validated['score2'];
+            if ($usesPenalties && isset($validated['penalties1'], $validated['penalties2'])) {
+                $data['penalties1'] = $validated['penalties1'];
+                $data['penalties2'] = $validated['penalties2'];
+            }
         }
 
         if (isset($validated['stats'])) {
@@ -321,6 +457,7 @@ class TournamentController extends Controller
             'status' => 'pending',
             'penalties1' => null,
             'penalties2' => null,
+            'sets' => null,
         ]);
 
         $match->goalScorers()->delete();
@@ -354,6 +491,7 @@ class TournamentController extends Controller
 
         $newPlayer = Player::create([
             'tournament_id' => $tournament->id,
+            'team_id' => $player->team_id,
             'name' => $validated['new_name'],
         ]);
 
@@ -378,9 +516,18 @@ class TournamentController extends Controller
             ->with('success', "Jugador reemplazado por {$newPlayer->name}.");
     }
 
+    /** Columnas de competidor (equipo o jugador) según el deporte del torneo. */
+    private function competitorColumns(Tournament $tournament, ?int $c1, ?int $c2): array
+    {
+        if ($tournament->isTeamSport()) {
+            return ['team1_id' => $c1, 'team2_id' => $c2];
+        }
+        return ['player1_id' => $c1, 'player2_id' => $c2];
+    }
+
     private function autoGenerateKnockout(Tournament $tournament)
     {
-        $total = $tournament->players->count();
+        $total = $tournament->isTeamSport() ? $tournament->teams->count() : $tournament->players->count();
         $top = match (true) {
             $total <= 4 => 4,
             $total <= 8 => 8,
@@ -404,7 +551,7 @@ class TournamentController extends Controller
         $positions = $this->seedBracket($qualified);
         $maxRound = $tournament->matches()->where('phase', 'group')->max('round') ?? 0;
 
-        foreach ($positions as $pos => $players) {
+        foreach ($positions as $pos => $competitors) {
             $phase = $this->bracketPosToPhase($pos);
             $roundOffset = match ($phase) {
                 'round_of_16' => 1,
@@ -415,16 +562,14 @@ class TournamentController extends Controller
                 default => 1,
             };
 
-            GameMatch::create([
+            GameMatch::create(array_merge([
                 'tournament_id' => $tournament->id,
                 'round' => $maxRound + $roundOffset,
-                'player1_id' => $players[0],
-                'player2_id' => $players[1],
                 'phase' => $phase,
                 'bracket_position' => $pos,
                 'status' => 'pending',
                 'tv_number' => 1,
-            ]);
+            ], $this->competitorColumns($tournament, $competitors[0], $competitors[1])));
         }
 
         Log::info('Eliminatorias generadas', [
@@ -482,17 +627,15 @@ class TournamentController extends Controller
 
         // Create next phase matches
         $nextPositions = $this->getNextPositions($completedPhase, $winners);
-        foreach ($nextPositions as $pos => $playerIds) {
-            GameMatch::create([
+        foreach ($nextPositions as $pos => $competitorIds) {
+            GameMatch::create(array_merge([
                 'tournament_id' => $tournament->id,
                 'round' => $maxRound + $roundOffset,
-                'player1_id' => $playerIds[0],
-                'player2_id' => $playerIds[1],
                 'phase' => $nextPhase,
                 'bracket_position' => $pos,
                 'status' => 'pending',
                 'tv_number' => 1,
-            ]);
+            ], $this->competitorColumns($tournament, $competitorIds[0], $competitorIds[1])));
         }
 
         // If completing semifinals, also generate third place match
@@ -519,10 +662,10 @@ class TournamentController extends Controller
         foreach ($nextMatches as $nm) {
             $parent1 = $this->getParentPosition($nm->bracket_position, 1);
             $parent2 = $this->getParentPosition($nm->bracket_position, 2);
-            $p1 = isset($winners[$parent1]) ? $winners[$parent1] : $nm->player1_id;
-            $p2 = isset($winners[$parent2]) ? $winners[$parent2] : $nm->player2_id;
+            $p1 = isset($winners[$parent1]) ? $winners[$parent1] : ($nm->team1_id ?? $nm->player1_id);
+            $p2 = isset($winners[$parent2]) ? $winners[$parent2] : ($nm->team2_id ?? $nm->player2_id);
             if ($nm->status === 'pending') {
-                $nm->update(['player1_id' => $p1, 'player2_id' => $p2]);
+                $nm->update($this->competitorColumns($tournament, $p1, $p2));
             }
         }
     }
@@ -570,16 +713,14 @@ class TournamentController extends Controller
             $losers[] = $this->getLoser($m);
         }
 
-        GameMatch::create([
+        GameMatch::create(array_merge([
             'tournament_id' => $tournament->id,
             'round' => $round,
-            'player1_id' => $losers[0] ?? null,
-            'player2_id' => $losers[1] ?? null,
             'phase' => 'third_place',
             'bracket_position' => 'third_place',
             'status' => 'pending',
             'tv_number' => 1,
-        ]);
+        ], $this->competitorColumns($tournament, $losers[0] ?? null, $losers[1] ?? null)));
     }
 
     private function clearSubsequentPhases(Tournament $tournament, string $phase)
@@ -598,7 +739,7 @@ class TournamentController extends Controller
     {
         $total = count($qualified);
         $positions = [];
-        $ids = array_map(fn($p) => $p['player_id'], $qualified);
+        $ids = array_map(fn($p) => $p['competitor_id'], $qualified);
 
         if ($total === 2) {
             $positions['final'] = [$ids[0], $ids[1]];
@@ -653,18 +794,12 @@ class TournamentController extends Controller
     private function getWinner(GameMatch $match): ?int
     {
         if ($match->status !== 'finished') return null;
-        if ($match->score1 === null || $match->score2 === null) return null;
+        $outcome = $match->outcome();
+        if ($outcome === 1) return $match->competitor1Id();
+        if ($outcome === 2) return $match->competitor2Id();
 
-        if ($match->score1 > $match->score2) return $match->player1_id;
-        if ($match->score2 > $match->score1) return $match->player2_id;
-
-        // Scores tied — check penalties
-        if ($match->penalties1 !== null && $match->penalties2 !== null) {
-            if ($match->penalties1 > $match->penalties2) return $match->player1_id;
-            if ($match->penalties2 > $match->penalties1) return $match->player2_id;
-        }
-
-        return $match->player1_id;
+        // Empate sin desempate definido: gana el local (compat con comportamiento previo)
+        return $match->competitor1Id();
     }
 
     private function getLoser(GameMatch $match): ?int
@@ -672,7 +807,6 @@ class TournamentController extends Controller
         if ($match->status !== 'finished') return null;
         $winner = $this->getWinner($match);
         if ($winner === null) return null;
-        return $winner === $match->player1_id ? $match->player2_id : $match->player1_id;
+        return $winner === $match->competitor1Id() ? $match->competitor2Id() : $match->competitor1Id();
     }
-
 }

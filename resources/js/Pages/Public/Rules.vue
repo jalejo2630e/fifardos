@@ -49,8 +49,8 @@ const { x: sx, y: sy, onMove, onEnter, onLeave } = useMouseSpotlight();
                 <span class="text-elite-secondary"> PREMIOS</span>
             </h1>
             <p class="text-sm sm:text-base text-elite-primary/60 max-w-lg mx-auto">
-                FIFARDOS organiza torneos de <strong class="text-elite-primary/80">cualquier tipo de fútbol</strong>:
-                videojuego (EA Sports FC / FIFA, eFootball) o fútbol real (fulbito, F5, F7, F11).
+                FIFARDOS organiza torneos de <strong class="text-elite-primary/80">cualquier deporte</strong>:
+                videojuego (EA Sports FC / FIFA, eFootball) o deporte real (fútbol, básquet, vóley, tenis y más).
                 Tú defines las reglas; nosotros armamos el fixture, la tabla y las eliminatorias.
             </p>
         </section>
@@ -60,12 +60,12 @@ const { x: sx, y: sy, onMove, onEnter, onLeave } = useMouseSpotlight();
             <div class="glass-panel p-6 sm:p-8 md:p-10 space-y-8">
                 <div v-for="(rule, i) in [
                     {
-                        title: 'PARA CUALQUIER TORNEO DE FÚTBOL',
+                        title: 'PARA CUALQUIER DEPORTE',
                         items: [
-                            'FIFARDOS sirve para todo tipo de fútbol: videojuego (EA Sports FC / FIFA, eFootball) o fútbol real (fulbito, F5, F7, F11).',
+                            'FIFARDOS sirve para deportes individuales (tenis, padel, ping pong) y de equipo (fútbol, básquet, vóley, handball, rugby y más), en cancha física o modo virtual.',
                             'Funciona para ligas entre amigos, torneos de oficina, del barrio, de la escuela o eventos.',
                             'El organizador define el formato, la duración y las reglas de cada partido.',
-                            'FIFARDOS se encarga del fixture, la tabla de posiciones, los goleadores y las eliminatorias.',
+                            'FIFARDOS se encarga del fixture, la tabla de posiciones, los líderes de cada deporte y las eliminatorias.',
                         ],
                     },
                     {
@@ -80,9 +80,9 @@ const { x: sx, y: sy, onMove, onEnter, onLeave } = useMouseSpotlight();
                     {
                         title: 'REGLAS DE PARTIDO (EJEMPLO)',
                         items: [
-                            'Estas son reglas de ejemplo; el organizador las adapta a su torneo.',
-                            'Duración: en videojuego suele ser 6 min por tiempo; en fútbol real, define los tiempos (ej. 2×25 min).',
-                            'Empate en eliminatorias: tiempo extra y, si sigue igualado, penales.',
+                            'Estas son reglas de ejemplo; el organizador las adapta a su torneo y deporte.',
+                            'Duración: depende del deporte y del modo (virtual o campo físico).',
+                            'Empate en eliminatorias: se resuelve según las reglas configuradas del torneo (desempate, extra time, etc.).',
                             'Amonestaciones (opcional): dos amarillas = suspensión de 1 partido.',
                         ],
                     },

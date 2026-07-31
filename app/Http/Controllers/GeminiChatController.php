@@ -46,7 +46,7 @@ class GeminiChatController extends Controller
             ],
             [
                 'name' => 'getTopScorers',
-                'description' => 'Obtiene los goleadores (máximos anotadores) de un torneo.',
+                'description' => 'Obtiene los máximos anotadores (goles, puntos o sets según el deporte) de un torneo.',
                 'parameters' => [
                     'type' => 'object',
                     'properties' => [
@@ -190,6 +190,28 @@ class GeminiChatController extends Controller
         }
     }
 
+    /** Términos de anotación según el tipo de marcador del deporte. */
+    private function scoreTerms(string $sport): array
+    {
+        return match (\App\Services\SportsCatalog::scoring($sport)) {
+            'points' => [
+                'leader' => 'máximo anotador', 'leaders' => 'máximos anotadores',
+                'unit' => 'puntos', 'recorded' => 'puntos registrados',
+                'for' => 'PF', 'against' => 'PC', 'diff' => 'DP',
+            ],
+            'sets' => [
+                'leader' => 'líder en sets', 'leaders' => 'líderes en sets',
+                'unit' => 'sets ganados', 'recorded' => 'sets registrados',
+                'for' => 'SG', 'against' => 'SP', 'diff' => 'DS',
+            ],
+            default => [
+                'leader' => 'máximo goleador', 'leaders' => 'máximos goleadores',
+                'unit' => 'goles', 'recorded' => 'goles registrados',
+                'for' => 'GF', 'against' => 'GC', 'diff' => 'DG',
+            ],
+        };
+    }
+
     private function localAnswer(string $message, array $history = []): string
     {
         $msg = mb_strtolower(trim($message));
@@ -199,7 +221,7 @@ class GeminiChatController extends Controller
             return $this->replyTournaments();
         }
 
-        if (str_contains($msg, 'goleador') || str_contains($msg, 'gol') || str_contains($msg, 'maximo') || str_contains($msg, 'anotador')) {
+        if (str_contains($msg, 'goleador') || str_contains($msg, 'gol') || str_contains($msg, 'maximo') || str_contains($msg, 'anotador') || str_contains($msg, 'lider') || str_contains($msg, 'puntaje')) {
             return $this->replyTopScorers();
         }
 
@@ -220,7 +242,7 @@ class GeminiChatController extends Controller
         }
 
         if (str_contains($msg, 'regla') || str_contains($msg, 'formato') || str_contains($msg, 'como funciona')) {
-            return "El torneo funciona en dos fases:\n1. Fase de grupos (round-robin): todos contra todos\n2. Eliminatorias directas (knockout): los mejores avanzan\n\nLos partidos tienen resultado numérico (goles) y se registran en el sistema por el administrador.";
+            return "El torneo funciona en dos fases:\n1. Fase de grupos (round-robin): todos contra todos\n2. Eliminatorias directas (knockout): los mejores avanzan\n\nEl marcador de cada partido se registra según el deporte (goles, puntos o sets) por el administrador, y las reglas de cada torneo se configuran al crearlo.";
         }
 
         if (str_contains($msg, 'partido') || str_contains($msg, 'resultado') || str_contains($msg, 'match')) {
@@ -240,13 +262,15 @@ class GeminiChatController extends Controller
 
     private function replyTournaments(): string
     {
-        $tournaments = Tournament::withCount('players')->latest()->get();
+        $tournaments = Tournament::withCount(['players', 'teams'])->latest()->get();
         if ($tournaments->isEmpty()) return "No hay torneos registrados aún.";
 
         $lines = ["Hay {$tournaments->count()} torneo(s):"];
         foreach ($tournaments as $t) {
             $status = match ($t->status) { 'setup' => 'En configuración', 'in_progress' => 'En curso', 'completed' => 'Finalizado', default => $t->status };
-            $lines[] = "• {$t->name} — {$status} — {$t->players_count} jugadores";
+            $count = $t->isTeamSport() ? $t->teams_count : $t->players_count;
+            $unit = $t->isTeamSport() ? 'equipos' : 'jugadores';
+            $lines[] = "• {$t->name} — {$status} — {$count} {$unit}";
         }
         return implode("\n", $lines);
     }
@@ -256,19 +280,20 @@ class GeminiChatController extends Controller
         $tournament = Tournament::with('matches')->latest()->first();
         if (!$tournament) return "No hay torneos registrados.";
 
+        $terms = $this->scoreTerms($tournament->sport ?? 'fifa');
         $standings = app(StandingsService::class)->calculate($tournament);
         $maxGf = max(array_column($standings, 'gf'));
 
-        if ($maxGf <= 0) return "Todavía no hay goles registrados en {$tournament->name}.";
+        if ($maxGf <= 0) return "Todavía no hay {$terms['recorded']} en {$tournament->name}.";
 
         $top = array_values(array_filter($standings, fn($s) => $s['gf'] === $maxGf));
 
         if (count($top) === 1) {
-            return "El máximo goleador de {$tournament->name} es {$top[0]['player_name']} con {$top[0]['gf']} goles.";
+            return "El {$terms['leader']} de {$tournament->name} es {$top[0]['competitor_name']} con {$top[0]['gf']} {$terms['unit']}.";
         }
 
-        $names = array_map(fn($s) => "{$s['player_name']} ({$s['gf']} goles)", $top);
-        return "Los máximos goleadores de {$tournament->name} son: " . implode(', ', $names) . ".";
+        $names = array_map(fn($s) => "{$s['competitor_name']} ({$s['gf']} {$terms['unit']})", $top);
+        return "Los {$terms['leaders']} de {$tournament->name} son: " . implode(', ', $names) . ".";
     }
 
     private function replyStandings(): string
@@ -276,12 +301,13 @@ class GeminiChatController extends Controller
         $tournament = Tournament::with('matches')->latest()->first();
         if (!$tournament) return "No hay torneos registrados.";
 
+        $terms = $this->scoreTerms($tournament->sport ?? 'fifa');
         $standings = app(StandingsService::class)->calculate($tournament);
         if (empty($standings)) return "{$tournament->name} no tiene partidos jugados todavía.";
 
         $lines = ["Tabla de posiciones de {$tournament->name}:"];
         foreach ($standings as $i => $s) {
-            $lines[] = ($i + 1) . ". {$s['player_name']} — {$s['pts']} pts (G:{$s['pg']} E:{$s['pe']} P:{$s['pp']} | GF:{$s['gf']} GC:{$s['gc']} DG:{$s['dg']})";
+            $lines[] = ($i + 1) . ". {$s['competitor_name']} — {$s['pts']} pts (G:{$s['pg']} E:{$s['pe']} P:{$s['pp']} | {$terms['for']}:{$s['gf']} {$terms['against']}:{$s['gc']} {$terms['diff']}:{$s['dg']})";
         }
         return implode("\n", $lines);
     }
@@ -302,8 +328,14 @@ class GeminiChatController extends Controller
 
     private function replyPlayers(): string
     {
-        $tournament = Tournament::withCount('players')->latest()->first();
+        $tournament = Tournament::withCount(['players', 'teams'])->latest()->first();
         if (!$tournament) return "No hay torneos registrados.";
+
+        if ($tournament->isTeamSport()) {
+            $teams = $tournament->teams()->pluck('name');
+            if ($teams->isEmpty()) return "{$tournament->name} no tiene equipos registrados.";
+            return "{$tournament->name} tiene {$tournament->teams_count} equipos:\n" . $teams->map(fn($n, $i) => ($i + 1) . ". {$n}")->join("\n");
+        }
 
         $players = $tournament->players()->pluck('name');
         if ($players->isEmpty()) return "{$tournament->name} no tiene jugadores registrados.";
@@ -313,7 +345,7 @@ class GeminiChatController extends Controller
 
     private function replyRecentMatches(): string
     {
-        $tournament = Tournament::with('matches.player1', 'matches.player2')->latest()->first();
+        $tournament = Tournament::with('matches.player1', 'matches.player2', 'matches.team1', 'matches.team2')->latest()->first();
         if (!$tournament) return "No hay torneos registrados.";
 
         $matches = $tournament->matches()->where('status', 'finished')->latest('played_at')->limit(5)->get();
@@ -321,7 +353,10 @@ class GeminiChatController extends Controller
 
         $lines = ["Últimos partidos de {$tournament->name}:"];
         foreach ($matches as $m) {
-            $lines[] = "• {$m->player1?->name} {$m->score1} - {$m->score2} {$m->player2?->name}" . ($m->phase === 'knockout' ? ' (eliminatoria)' : '');
+            $score = $m->isSetsSport()
+                ? collect($m->sets ?? [])->map(fn($s) => "{$s['a']}-{$s['b']}")->join(' / ')
+                : "{$m->score1} - {$m->score2}";
+            $lines[] = "• {$m->competitor1Name()} {$score} {$m->competitor2Name()}" . (in_array($m->phase, ['final', 'semifinals', 'quarterfinals', 'round_of_16', 'third_place']) ? ' (eliminatoria)' : '');
         }
         return implode("\n", $lines);
     }
@@ -329,11 +364,12 @@ class GeminiChatController extends Controller
     private function replyTournamentDetail(Tournament $tournament): string
     {
         $status = match ($tournament->status) { 'setup' => 'en configuración', 'in_progress' => 'en curso', 'completed' => 'finalizado', default => $tournament->status };
-        $players = $tournament->players()->count();
+        $competitors = $tournament->isTeamSport() ? $tournament->teams()->count() : $tournament->players()->count();
+        $unit = $tournament->isTeamSport() ? 'equipos' : 'jugadores';
         $matches = $tournament->matches()->count();
         $finished = $tournament->matches()->where('status', 'finished')->count();
 
-        return "{$tournament->name} — {$status}\nJugadores: {$players}\nPartidos: {$finished} jugados de {$matches} totales" . ($tournament->finished_at ? "\nFinalizó el {$tournament->finished_at->format('d/m/Y')}" : '');
+        return "{$tournament->name} — {$status}\n{$unit}: {$competitors}\nPartidos: {$finished} jugados de {$matches} totales" . ($tournament->finished_at ? "\nFinalizó el {$tournament->finished_at->format('d/m/Y')}" : '');
     }
 
     private function executeFunction(string $name, array $args): array
@@ -351,14 +387,15 @@ class GeminiChatController extends Controller
 
     private function fnGetTournaments(): array
     {
-        return Tournament::withCount('players')
+        return Tournament::withCount(['players', 'teams'])
             ->latest()
             ->get()
             ->map(fn($t) => [
                 'id' => $t->id,
                 'name' => $t->name,
+                'sport' => $t->sport,
                 'status' => $t->status,
-                'players_count' => $t->players_count,
+                'competitors_count' => $t->isTeamSport() ? $t->teams_count : $t->players_count,
                 'created_at' => $t->created_at->format('d/m/Y'),
                 'finished_at' => $t->finished_at?->format('d/m/Y H:i'),
             ])
@@ -373,8 +410,8 @@ class GeminiChatController extends Controller
 
         $standings = app(StandingsService::class)->calculate($tournament);
         return array_map(fn($s) => [
-            'position' => $s['player_id'],
-            'player' => $s['player_name'],
+            'position' => $s['competitor_id'],
+            'player' => $s['competitor_name'],
             'pts' => $s['pts'],
             'pj' => $s['pj'],
             'pg' => $s['pg'],
@@ -407,13 +444,14 @@ class GeminiChatController extends Controller
         $tournament = Tournament::with('matches')->find($id);
         if (!$tournament) return ['error' => 'Torneo no encontrado'];
 
+        $terms = $this->scoreTerms($tournament->sport ?? 'fifa');
         $standings = app(StandingsService::class)->calculate($tournament);
         $maxGf = max(array_column($standings, 'gf'));
 
-        if ($maxGf <= 0) return ['message' => 'No hay goles registrados'];
+        if ($maxGf <= 0) return ['message' => "No hay {$terms['recorded']}"];
 
         return array_values(array_map(
-            fn($s) => ['player' => $s['player_name'], 'goals' => $s['gf']],
+            fn($s) => ['player' => $s['competitor_name'], 'score' => $s['gf'], 'unit' => $terms['unit']],
             array_filter($standings, fn($s) => $s['gf'] === $maxGf)
         ));
     }
@@ -440,15 +478,15 @@ class GeminiChatController extends Controller
         if (!$tournament) return ['error' => 'Torneo no encontrado'];
 
         return $tournament->matches()
-            ->with(['player1', 'player2'])
+            ->with(['player1', 'player2', 'team1', 'team2'])
             ->where('status', 'finished')
             ->latest('played_at')
             ->limit($limit)
             ->get()
             ->map(fn($m) => [
                 'round' => $m->round,
-                'player1' => $m->player1?->name,
-                'player2' => $m->player2?->name,
+                'player1' => $m->competitor1Name(),
+                'player2' => $m->competitor2Name(),
                 'score' => "{$m->score1} - {$m->score2}",
                 'phase' => $m->phase ?? 'group',
                 'played_at' => $m->played_at?->format('d/m/Y H:i'),

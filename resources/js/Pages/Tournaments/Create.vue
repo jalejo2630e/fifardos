@@ -11,12 +11,17 @@ const { t } = useI18n({
             headTitle: 'Nuevo Torneo',
             headerNew: 'Nuevo',
             headerTournament: 'Torneo',
-            headerSubtitle: 'Configura tu torneo FIFA Champions',
+            headerSubtitle: 'Elegí el deporte y armá el torneo que quieras',
+            stepSport: 'Deporte',
             stepName: 'Nombre',
-            stepTvs: 'TVs',
-            stepPlayers: 'Jugadores',
+            stepSetup: 'Formato',
+            stepCompetitors: 'Competidores',
+            sportLabel: '¿Qué deporte?',
+            sportHint: 'Torneos individuales o por equipos',
+            individualTag: 'Individual',
+            teamTag: 'Equipos',
             tournamentNameLabel: 'Nombre del Torneo',
-            tournamentNamePlaceholder: 'Ej: FIFA WORLD CUP 2026',
+            tournamentNamePlaceholder: 'Ej: Copa del Barrio 2026',
             tournamentNameHint: 'Elige un nombre épico para tu torneo',
             formatLabel: 'Formato del torneo',
             formatHint: '¿Cómo se define el campeón?',
@@ -26,8 +31,8 @@ const { t } = useI18n({
             formatLeagueDesc: 'Una sola tabla; campeón = primero al final.',
             homeAndAway: 'Ida y vuelta',
             homeAndAwayDesc: 'Cada cruce se juega dos veces (local y visitante).',
-            consolesLabel: 'Televisores / Consolas',
-            consolesHint: '¿Cuántas pantallas disponibles?',
+            venuesLabel: 'Espacios disponibles',
+            venuesHint: 'Canchas, consolas o mesas disponibles en paralelo',
             minutesLabel: 'Minutos por partido',
             minutesHint: 'Duración de cada partido',
             minuteUnit: '{m} min',
@@ -38,14 +43,22 @@ const { t } = useI18n({
             noPlayers: 'Sin jugadores',
             playersCount: '{n} jugador | {n} jugadores',
             emptyPlayers: 'No hay jugadores aún. ¡Añade al menos 2!',
+            teamsLabel: 'Equipos',
+            teamsHint: 'Añade los equipos y sus integrantes (opcional)',
+            teamNamePlaceholder: 'Nombre del equipo',
+            addTeam: '+ Añadir equipo',
+            memberPlaceholder: 'Jugador del equipo',
+            noTeams: 'Sin equipos',
+            emptyTeams: 'No hay equipos aún. ¡Añade al menos 2!',
+            membersCount: '{n} integrantes',
             estimatedDuration: 'Duración estimada',
             estimateLeague: '{total} partidos de liga{extra}',
             estimateLeagueHomeAway: ' (ida y vuelta)',
             estimateKnockout: '{total} partidos ({group} de grupos{extra} + {knockout} de eliminatorias)',
             estimateKnockoutHomeAway: ' ida y vuelta',
             estimateParallel: ' · {tv} {tvLabel} en paralelo · {m} min por partido.',
-            estimateTvSingular: 'TV/cancha',
-            estimateTvPlural: 'TVs/canchas',
+            estimateTvSingular: 'espacio',
+            estimateTvPlural: 'espacios',
             estimateDisclaimer: 'Estimado aproximado, sin contar descansos entre partidos.',
             emailReminder: 'Recordatorio por email',
             optional: '· opcional',
@@ -59,17 +72,56 @@ const { t } = useI18n({
             durationMin: '{mm} min',
             durationHour: '{h} h',
             durationHourMin: '{h} h {mm} min',
+            pickSportFirst: 'Elegí un deporte para continuar',
+            teamPlayersHint: 'Los integrantes se registran pero la tabla y los partidos son por equipo.',
+            modeLabel: '¿Cómo se juega?',
+            modeHint: 'Elegí dónde se desarrolla el torneo',
+            modeVirtual: 'Virtual',
+            modeVirtualDesc: 'Consolas y videojuegos',
+            modePhysical: 'Campo físico',
+            modePhysicalDesc: 'Canchas y espacios reales',
+            rulesLabel: 'Reglas del torneo',
+            rulesHint: 'Cada deporte tiene sus propias reglas. Ajustalas a tu torneo.',
+            rulesGroupGeneral: 'Reglas generales',
+            rulesGroupTiempo: 'Tiempo',
+            rulesGroupSets: 'Sets',
+            rulesGroupMarcador: 'Marcador',
+            rulesGroupDesempate: 'Desempate',
+            venuesLabelVirtual: 'Consolas disponibles',
+            venuesLabelPhysical: 'Canchas disponibles',
+            venuesHintVirtual: 'Consolas disponibles en paralelo',
+            venuesHintPhysical: 'Canchas disponibles en paralelo',
+            estimateTvSingularVirtual: 'consola',
+            estimateTvPluralVirtual: 'consolas',
+            estimateTvSingularPhysical: 'cancha',
+            estimateTvPluralPhysical: 'canchas',
+            ruleOpt: {
+                ilimitado: 'Ilimitado',
+                sin_reloj: 'Sin reloj',
+                solo_saque_anota: 'Solo el saque anota',
+                rally_point: 'Rally point',
+                amateur: 'Amateur',
+                semi_pro: 'Semiprofesional',
+                pro: 'Profesional',
+                world_class: 'Clase mundial',
+                legendary: 'Leyenda',
+            },
         },
         en: {
             headTitle: 'New Tournament',
             headerNew: 'New',
             headerTournament: 'Tournament',
-            headerSubtitle: 'Set up your FIFA Champions tournament',
+            headerSubtitle: 'Pick a sport and build any tournament you want',
+            stepSport: 'Sport',
             stepName: 'Name',
-            stepTvs: 'TVs',
-            stepPlayers: 'Players',
+            stepSetup: 'Format',
+            stepCompetitors: 'Competitors',
+            sportLabel: 'Which sport?',
+            sportHint: 'Individual or team tournaments',
+            individualTag: 'Individual',
+            teamTag: 'Teams',
             tournamentNameLabel: 'Tournament Name',
-            tournamentNamePlaceholder: 'e.g. FIFA WORLD CUP 2026',
+            tournamentNamePlaceholder: 'e.g. Neighborhood Cup 2026',
             tournamentNameHint: 'Pick an epic name for your tournament',
             formatLabel: 'Tournament format',
             formatHint: 'How is the champion decided?',
@@ -79,8 +131,8 @@ const { t } = useI18n({
             formatLeagueDesc: 'A single table; champion = first at the end.',
             homeAndAway: 'Home and away',
             homeAndAwayDesc: 'Each matchup is played twice (home and away).',
-            consolesLabel: 'TVs / Consoles',
-            consolesHint: 'How many screens are available?',
+            venuesLabel: 'Available spaces',
+            venuesHint: 'Courts, consoles or tables available in parallel',
             minutesLabel: 'Minutes per match',
             minutesHint: 'Duration of each match',
             minuteUnit: '{m} min',
@@ -91,14 +143,22 @@ const { t } = useI18n({
             noPlayers: 'No players',
             playersCount: '{n} player | {n} players',
             emptyPlayers: 'No players yet. Add at least 2!',
+            teamsLabel: 'Teams',
+            teamsHint: 'Add teams and their members (optional)',
+            teamNamePlaceholder: 'Team name',
+            addTeam: '+ Add team',
+            memberPlaceholder: 'Team player',
+            noTeams: 'No teams',
+            emptyTeams: 'No teams yet. Add at least 2!',
+            membersCount: '{n} members',
             estimatedDuration: 'Estimated duration',
             estimateLeague: '{total} league matches{extra}',
             estimateLeagueHomeAway: ' (home and away)',
             estimateKnockout: '{total} matches ({group} group{extra} + {knockout} knockout)',
             estimateKnockoutHomeAway: ' home and away',
             estimateParallel: ' · {tv} {tvLabel} in parallel · {m} min per match.',
-            estimateTvSingular: 'TV/pitch',
-            estimateTvPlural: 'TVs/pitches',
+            estimateTvSingular: 'space',
+            estimateTvPlural: 'spaces',
             estimateDisclaimer: 'Rough estimate, not counting breaks between matches.',
             emailReminder: 'Email reminder',
             optional: '· optional',
@@ -112,37 +172,147 @@ const { t } = useI18n({
             durationMin: '{mm} min',
             durationHour: '{h} h',
             durationHourMin: '{h} h {mm} min',
+            pickSportFirst: 'Pick a sport to continue',
+            teamPlayersHint: 'Players are registered but the table and matches are per team.',
+            modeLabel: 'How will it be played?',
+            modeHint: 'Choose where the tournament takes place',
+            modeVirtual: 'Virtual',
+            modeVirtualDesc: 'Consoles and video games',
+            modePhysical: 'On-site field',
+            modePhysicalDesc: 'Real courts and venues',
+            rulesLabel: 'Tournament rules',
+            rulesHint: 'Each sport has its own rules. Adjust them for your tournament.',
+            rulesGroupGeneral: 'General rules',
+            rulesGroupTiempo: 'Time',
+            rulesGroupSets: 'Sets',
+            rulesGroupMarcador: 'Scoring',
+            rulesGroupDesempate: 'Tiebreaker',
+            venuesLabelVirtual: 'Available consoles',
+            venuesLabelPhysical: 'Available courts',
+            venuesHintVirtual: 'Consoles available in parallel',
+            venuesHintPhysical: 'Courts available in parallel',
+            estimateTvSingularVirtual: 'console',
+            estimateTvPluralVirtual: 'consoles',
+            estimateTvSingularPhysical: 'court',
+            estimateTvPluralPhysical: 'courts',
+            ruleOpt: {
+                ilimitado: 'Unlimited',
+                sin_reloj: 'No shot clock',
+                solo_saque_anota: 'Side-out scoring',
+                rally_point: 'Rally point',
+                amateur: 'Amateur',
+                semi_pro: 'Semi-pro',
+                pro: 'Pro',
+                world_class: 'World class',
+                legendary: 'Legendary',
+            },
         },
     },
 });
 
+const { locale: globalLocale } = useI18n();
+
+const props = defineProps({
+    sports: {
+        type: Object,
+        required: true,
+    },
+    rules: {
+        type: Object,
+        required: true,
+    },
+});
+
+const sportsList = computed(() => Object.values(props.sports));
+
 const form = useForm({
     name: '',
+    sport: '',
+    mode: 'virtual',
     consoles_count: 1,
     minutes_per_match: 6,
     format: 'groups_knockout',
     home_and_away: false,
+    rules: {},
     players: [],
+    teams: [],
     reminder_at: '',
     notify_email: false,
 });
 
 const newPlayer = ref('');
+const newTeam = ref('');
+const newTeamMember = ref({});
 const step = ref(1);
+const modeTouched = ref(false);
 
-// Estimador de duración: round-robin (liga o fase de grupos, ida/vuelta si aplica)
-// + eliminatorias (solo en groups_knockout), en paralelo por TV.
+function setMode(m) {
+    form.mode = m;
+    modeTouched.value = true;
+}
+
+const currentSport = computed(() => (form.sport ? props.sports[form.sport] : null));
+const isTeam = computed(() => currentSport.value?.type === 'team');
+
+const isEn = computed(() => globalLocale.value === 'en');
+
+/** Etiqueta según idioma actual (con fallback al label en español). */
+function L(label, labelEn) {
+    return isEn.value && labelEn ? labelEn : label;
+}
+
+function selectSport(key) {
+    form.sport = key;
+    form.minutes_per_match = props.sports[key].minutes ?? 6;
+    if (!modeTouched.value) {
+        form.mode = key === 'fifa' ? 'virtual' : 'physical';
+    }
+    form.players = [];
+    form.teams = [];
+    const defaults = {};
+    for (const def of props.rules[key] || []) {
+        defaults[def.key] = def.default ?? (def.type === 'boolean' ? '0' : '');
+    }
+    form.rules = defaults;
+}
+
+// Reglas del deporte seleccionado, agrupadas para la UI
+const rulesForSport = computed(() => (form.sport ? props.rules[form.sport] || [] : []));
+const rulesGroups = computed(() => {
+    const groups = [];
+    for (const def of rulesForSport.value) {
+        const name = def.group || 'general';
+        let g = groups.find((x) => x.name === name);
+        if (!g) {
+            g = { name, items: [] };
+            groups.push(g);
+        }
+        g.items.push(def);
+    }
+    return groups;
+});
+
+const groupLabel = (name) => t(`rulesGroup${name.charAt(0).toUpperCase()}${name.slice(1)}`);
+const ruleLabel = (d) => L(d.label, d.label_en);
+const ruleNote = (d) => L(d.note, d.note_en);
+const ruleOptLabel = (opt) => (t('ruleOpt')?.[opt] ?? opt);
+
+const physical = computed(() => form.mode === 'physical');
+const tvSingular = computed(() => t(physical.value ? 'estimateTvSingularPhysical' : 'estimateTvSingularVirtual'));
+const tvPlural = computed(() => t(physical.value ? 'estimateTvPluralPhysical' : 'estimateTvPluralVirtual'));
+
+// Estimador de duración: round-robin + eliminatorias, en paralelo por espacio.
 const estimate = computed(() => {
-    const p = form.players.length;
+    const n = isTeam.value ? form.teams.length : form.players.length;
     const tv = Math.max(1, form.consoles_count);
     const m = Math.max(1, form.minutes_per_match);
-    if (p < 2) return null;
-    let group = (p * (p - 1)) / 2;
+    if (n < 2) return null;
+    let group = (n * (n - 1)) / 2;
     if (form.home_and_away) group *= 2;
     let knockout = 0;
     if (form.format === 'groups_knockout') {
-        let top = p <= 4 ? 4 : (p <= 8 ? 8 : 16);
-        top = Math.min(top, p);
+        let top = n <= 4 ? 4 : (n <= 8 ? 8 : 16);
+        top = Math.min(top, n);
         top = Math.pow(2, Math.floor(Math.log2(top)));
         if (top < 2) top = 2;
         knockout = top >= 4 ? top : 1;
@@ -178,9 +348,36 @@ function removePlayer(index) {
     form.players.splice(index, 1);
 }
 
+function addTeam() {
+    const name = newTeam.value.trim();
+    if (!name) return;
+    if (form.teams.some((tm) => tm.name === name)) return;
+    form.teams.push({ name, players: [] });
+    newTeam.value = '';
+}
+
+function removeTeam(index) {
+    form.teams.splice(index, 1);
+    delete newTeamMember.value[index];
+}
+
+function addMember(teamIndex) {
+    const name = (newTeamMember.value[teamIndex] || '').trim();
+    if (!name) return;
+    const team = form.teams[teamIndex];
+    if (team.players.includes(name)) return;
+    team.players.push(name);
+    newTeamMember.value[teamIndex] = '';
+}
+
+function removeMember(teamIndex, memberIndex) {
+    form.teams[teamIndex].players.splice(memberIndex, 1);
+}
+
 function nextStep() {
-    if (step.value === 1 && !form.name.trim()) return;
-    if (step.value === 2) { step.value = 3; return; }
+    if (step.value === 1) { if (form.sport) step.value = 2; return; }
+    if (step.value === 2) { if (form.name.trim()) step.value = 3; return; }
+    if (step.value === 3) { step.value = 4; return; }
     step.value++;
 }
 
@@ -189,13 +386,23 @@ function prevStep() {
 }
 
 function submit() {
-    if (form.players.length < 2) return;
-    // El input datetime-local entrega hora LOCAL sin zona; la convertimos a ISO/UTC
-    // para que el servidor (TZ UTC) la guarde y compare en el instante correcto.
-    form.transform((data) => ({
-        ...data,
-        reminder_at: data.reminder_at ? new Date(data.reminder_at).toISOString() : null,
-    })).post(route('tournaments.store'));
+    if (isTeam.value) {
+        if (form.teams.length < 2) return;
+        form.transform((data) => ({
+            ...data,
+            sport: data.sport,
+            teams: data.teams.map((tm) => ({ name: tm.name, players: tm.players })),
+            players: [],
+            reminder_at: data.reminder_at ? new Date(data.reminder_at).toISOString() : null,
+        })).post(route('tournaments.store'));
+    } else {
+        if (form.players.length < 2) return;
+        form.transform((data) => ({
+            ...data,
+            teams: [],
+            reminder_at: data.reminder_at ? new Date(data.reminder_at).toISOString() : null,
+        })).post(route('tournaments.store'));
+    }
 }
 
 const playerCountText = computed(() => {
@@ -204,11 +411,20 @@ const playerCountText = computed(() => {
     return t('playersCount', n, { named: { n } });
 });
 
-const canNext = computed(() => {
-    if (step.value === 1) return form.name.trim().length > 0;
-    if (step.value === 2) return form.consoles_count >= 1;
-    return form.players.length >= 2;
+const teamCountText = computed(() => {
+    const n = form.teams.length;
+    if (n === 0) return t('noTeams');
+    return t('playersCount', n, { named: { n } });
 });
+
+const canNext = computed(() => {
+    if (step.value === 1) return !!form.sport;
+    if (step.value === 2) return form.name.trim().length > 0;
+    if (step.value === 3) return form.consoles_count >= 1;
+    return isTeam.value ? form.teams.length >= 2 : form.players.length >= 2;
+});
+
+const stepCount = 4;
 </script>
 
 <template>
@@ -228,30 +444,105 @@ const canNext = computed(() => {
             <div class="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
                 <!-- Steps indicator -->
                 <div class="flex items-center gap-3 sm:gap-4 mb-8 sm:mb-10">
-                    <template v-for="s in 3" :key="s">
+                    <template v-for="s in stepCount" :key="s">
                         <div class="flex items-center gap-3 sm:gap-4">
                             <div :class="[
                                 'ucl-step shrink-0',
                                 step === s ? 'ucl-step-active' :
-                                (step > s || (s === 3 && form.players.length >= 2)) ? 'ucl-step-done' : 'ucl-step-pending'
+                                (step > s || (s === 4 && canNext)) ? 'ucl-step-done' : 'ucl-step-pending'
                             ]">
-                                <span v-if="step > s || (s === 3 && form.players.length >= 2)">✓</span>
+                                <span v-if="step > s || (s === 4 && canNext)">✓</span>
                                 <span v-else>{{ s }}</span>
                             </div>
                             <span class="hidden sm:block font-condensed text-xs tracking-[0.1em] uppercase"
                                   :class="step === s ? 'text-elite-secondary' : 'text-white/20'">
-                                {{ s === 1 ? t('stepName') : s === 2 ? t('stepTvs') : t('stepPlayers') }}
+                                {{ s === 1 ? t('stepSport') : s === 2 ? t('stepName') : s === 3 ? t('stepSetup') : t('stepCompetitors') }}
                             </span>
                         </div>
-                        <div v-if="s < 3" class="flex-1 h-px bg-white/10 last:hidden" />
+                        <div v-if="s < stepCount" class="flex-1 h-px bg-white/10 last:hidden" />
                     </template>
                 </div>
 
                 <form @submit.prevent="submit">
-                    <!-- Step 1: Name -->
+                    <!-- Step 1: Sport -->
                     <div v-show="step === 1" class="ucl-card p-6 sm:p-8 animate-fade-up">
                         <div class="stars-overlay" />
                         <div class="relative">
+                            <div class="text-center mb-5">
+                                <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40">
+                                    {{ t('sportLabel') }}
+                                </label>
+                                <p class="text-xs text-white/20 mt-1">{{ t('sportHint') }}</p>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                <button v-for="sp in sportsList" :key="sp.key ?? sp.slug" type="button"
+                                        @click="selectSport(sp.key ?? sp.slug)"
+                                        class="p-3 rounded-xl border text-left transition-all group"
+                                        :class="form.sport === (sp.key ?? sp.slug)
+                                            ? 'bg-elite-secondary/15 border-elite-secondary/40'
+                                            : 'bg-white/5 border-white/5 hover:bg-white/10'">
+                                    <div class="text-2xl leading-none">{{ sp.icon }}</div>
+                                    <div class="mt-2 font-condensed font-bold text-xs sm:text-sm"
+                                         :class="form.sport === (sp.key ?? sp.slug) ? 'text-elite-secondary' : 'text-white/70'">
+                                        {{ sp.name }}
+                                    </div>
+                                    <div class="text-[10px] text-white/30 mt-0.5">
+                                        {{ sp.type === 'team' ? t('teamTag') : t('individualTag') }}
+                                        · {{ sp.players_per_side }}v{{ sp.players_per_side }}
+                                    </div>
+                                </button>
+                            </div>
+
+                            <!-- Modo de juego -->
+                            <div class="mt-8 pt-6 border-t border-white/5">
+                                <div class="text-center mb-3">
+                                    <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40">
+                                        {{ t('modeLabel') }}
+                                    </label>
+                                    <p class="text-xs text-white/20 mt-1">{{ t('modeHint') }}</p>
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button type="button" @click="setMode('virtual')"
+                                            class="p-4 rounded-xl border text-center transition-all"
+                                            :class="form.mode === 'virtual'
+                                                ? 'bg-elite-secondary/15 border-elite-secondary/40'
+                                                : 'bg-white/5 border-white/5 hover:bg-white/10'">
+                                        <span class="block text-2xl leading-none">🎮</span>
+                                        <span class="block mt-2 font-condensed font-bold text-sm"
+                                              :class="form.mode === 'virtual' ? 'text-elite-secondary' : 'text-white/70'">
+                                            {{ t('modeVirtual') }}
+                                        </span>
+                                        <span class="block text-[11px] text-white/30 mt-0.5">{{ t('modeVirtualDesc') }}</span>
+                                    </button>
+                                    <button type="button" @click="setMode('physical')"
+                                            class="p-4 rounded-xl border text-center transition-all"
+                                            :class="form.mode === 'physical'
+                                                ? 'bg-elite-secondary/15 border-elite-secondary/40'
+                                                : 'bg-white/5 border-white/5 hover:bg-white/10'">
+                                        <span class="block text-2xl leading-none">🏟️</span>
+                                        <span class="block mt-2 font-condensed font-bold text-sm"
+                                              :class="form.mode === 'physical' ? 'text-elite-secondary' : 'text-white/70'">
+                                            {{ t('modePhysical') }}
+                                        </span>
+                                        <span class="block text-[11px] text-white/30 mt-0.5">{{ t('modePhysicalDesc') }}</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <p v-if="!form.sport" class="text-center text-xs text-white/15 mt-5">{{ t('pickSportFirst') }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Name -->
+                    <div v-show="step === 2" class="ucl-card p-6 sm:p-8 animate-fade-up">
+                        <div class="stars-overlay" />
+                        <div class="relative">
+                            <div class="text-center mb-3">
+                                <span class="text-3xl">{{ currentSport?.icon }}</span>
+                                <span class="block font-condensed text-xs tracking-[0.1em] uppercase text-elite-secondary mt-1">
+                                    {{ currentSport?.name }}
+                                </span>
+                            </div>
                             <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40 mb-3">
                                 {{ t('tournamentNameLabel') }}
                             </label>
@@ -264,8 +555,8 @@ const canNext = computed(() => {
                         </div>
                     </div>
 
-                    <!-- Step 2: Consoles -->
-                    <div v-show="step === 2" class="ucl-card p-6 sm:p-8 animate-fade-up">
+                    <!-- Step 3: Format + venues -->
+                    <div v-show="step === 3" class="ucl-card p-6 sm:p-8 animate-fade-up">
                         <div class="stars-overlay" />
                         <div class="relative space-y-6">
                             <!-- Formato del torneo -->
@@ -296,7 +587,6 @@ const canNext = computed(() => {
                                         <span class="block text-[11px] text-white/30 mt-0.5">{{ t('formatLeagueDesc') }}</span>
                                     </button>
                                 </div>
-                                <!-- Ida y vuelta -->
                                 <label class="mt-2 flex items-center gap-3 cursor-pointer select-none rounded-xl border border-white/5 bg-white/5 p-3">
                                     <input v-model="form.home_and_away" type="checkbox"
                                            class="w-4 h-4 rounded accent-elite-secondary bg-white/10" />
@@ -307,11 +597,68 @@ const canNext = computed(() => {
                                 </label>
                             </div>
 
+                            <!-- Reglas parametrizables del deporte -->
+                            <div v-if="rulesForSport.length" class="pt-5 border-t border-white/5">
+                                <div class="text-center mb-3">
+                                    <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40">
+                                        {{ t('rulesLabel') }}
+                                    </label>
+                                    <p class="text-xs text-white/20 mt-1">{{ t('rulesHint') }}</p>
+                                </div>
+                                <div v-if="form.errors.rules" class="mb-3 rounded-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+                                    <template v-if="typeof form.errors.rules === 'string'">{{ form.errors.rules }}</template>
+                                    <ul v-else class="list-disc list-inside space-y-0.5">
+                                        <li v-for="(msg, k) in form.errors.rules" :key="k">{{ msg }}</li>
+                                    </ul>
+                                </div>
+                                <div v-for="g in rulesGroups" :key="g.name" class="mt-4 first:mt-0">
+                                    <h3 class="font-condensed text-[11px] tracking-[0.1em] uppercase text-elite-secondary mb-2">
+                                        {{ groupLabel(g.name) }}
+                                    </h3>
+                                    <div class="space-y-2">
+                                        <div v-for="d in g.items" :key="d.key"
+                                             class="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/5 p-3">
+                                            <div class="min-w-0">
+                                                <span class="block text-sm text-white/80 leading-snug">{{ ruleLabel(d) }}</span>
+                                                <span v-if="ruleNote(d)" class="block text-[11px] text-white/30 mt-0.5">{{ ruleNote(d) }}</span>
+                                            </div>
+                                            <div class="shrink-0">
+                                                <!-- Boolean: toggle -->
+                                                <button v-if="d.type === 'boolean'" type="button"
+                                                        @click="form.rules[d.key] = form.rules[d.key] === '1' ? '0' : '1'"
+                                                        class="relative w-11 h-6 rounded-full transition-all border"
+                                                        :class="form.rules[d.key] === '1'
+                                                            ? 'bg-elite-secondary/30 border-elite-secondary/50'
+                                                            : 'bg-white/10 border-white/10'">
+                                                    <span class="absolute top-0.5 w-5 h-5 rounded-full transition-all shadow"
+                                                          :class="form.rules[d.key] === '1'
+                                                              ? 'left-[22px] bg-elite-secondary'
+                                                              : 'left-0.5 bg-white/40'" />
+                                                </button>
+                                                <!-- Number -->
+                                                <input v-else-if="d.type === 'number'" type="number"
+                                                       v-model.number="form.rules[d.key]"
+                                                       :min="d.min" :max="d.max"
+                                                       class="w-20 px-2 py-1.5 rounded-lg bg-white/10 border border-white/10
+                                                              text-white text-sm text-center font-medium focus:outline-none focus:border-elite-secondary/50" />
+                                                <!-- Select -->
+                                                <select v-else v-model="form.rules[d.key]"
+                                                        class="px-2 py-1.5 rounded-lg bg-white/10 border border-white/10
+                                                               text-white text-sm font-medium focus:outline-none focus:border-elite-secondary/50
+                                                               [&>option]:bg-slate-900">
+                                                    <option v-for="opt in d.options" :key="opt" :value="opt">{{ ruleOptLabel(opt) }}</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="text-center pt-5 border-t border-white/5">
                                 <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40 mb-3">
-                                    {{ t('consolesLabel') }}
+                                    {{ form.mode === 'physical' ? t('venuesLabelPhysical') : t('venuesLabelVirtual') }}
                                 </label>
-                                <p class="text-xs text-white/20">{{ t('consolesHint') }}</p>
+                                <p class="text-xs text-white/20">{{ form.mode === 'physical' ? t('venuesHintPhysical') : t('venuesHintVirtual') }}</p>
                             </div>
 
                             <div class="flex items-center justify-center gap-5">
@@ -329,7 +676,6 @@ const canNext = computed(() => {
                                 </button>
                             </div>
 
-                            <!-- TV indicators -->
                             <div class="flex justify-center gap-2 flex-wrap">
                                 <div v-for="i in Math.min(form.consoles_count, 12)" :key="i"
                                      class="w-8 h-8 rounded-lg bg-gradient-to-br from-elite-secondary/20 to-orange-700/10
@@ -352,7 +698,7 @@ const canNext = computed(() => {
                                     <p class="text-xs text-white/20 mt-1">{{ t('minutesHint') }}</p>
                                 </div>
                                 <div class="flex justify-center flex-wrap gap-2">
-                                    <button v-for="m in [4, 5, 6, 8, 10, 12]" :key="m" type="button"
+                                    <button v-for="m in [5, 10, 15, 20, 30, 40, 60, 90]" :key="m" type="button"
                                             @click="form.minutes_per_match = m"
                                             class="px-4 py-2 rounded-xl font-condensed font-bold text-sm border transition-all"
                                             :class="form.minutes_per_match === m
@@ -365,60 +711,121 @@ const canNext = computed(() => {
                         </div>
                     </div>
 
-                    <!-- Step 3: Players -->
-                    <div v-show="step === 3" class="ucl-card p-6 sm:p-8 animate-fade-up">
+                    <!-- Step 4: Competitors -->
+                    <div v-show="step === 4" class="ucl-card p-6 sm:p-8 animate-fade-up">
                         <div class="stars-overlay" />
                         <div class="relative space-y-5">
                             <div class="text-center">
                                 <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40 mb-3">
-                                    {{ t('playersLabel') }}
+                                    {{ isTeam ? t('teamsLabel') : t('playersLabel') }}
                                 </label>
-                                <p class="text-xs text-white/20">{{ t('playersHint') }}</p>
+                                <p class="text-xs text-white/20">{{ isTeam ? t('teamsHint') : t('playersHint') }}</p>
                             </div>
 
-                            <!-- Add input -->
-                            <div class="flex gap-3">
-                                <input v-model="newPlayer" @keydown.enter.prevent="addPlayer" type="text"
-                                       :placeholder="t('playerNamePlaceholder')"
-                                       class="ucl-input flex-1" />
-                                <button @click="addPlayer" type="button"
-                                        class="ucl-btn-primary min-h-touch px-5 text-xs">
-                                    {{ t('addPlayer') }}
-                                </button>
-                            </div>
-
-                            <!-- Player count -->
-                            <div class="flex items-center gap-3">
-                                <div class="flex-1 h-px bg-white/5" />
-                                <span class="text-xs font-condensed tracking-wider"
-                                      :class="form.players.length >= 2 ? 'text-ucl-gold' : 'text-white/20'">
-                                    {{ playerCountText }}
-                                </span>
-                                <div class="flex-1 h-px bg-white/5" />
-                            </div>
-
-                            <!-- Player tags -->
-                            <div v-if="form.players.length > 0" class="flex flex-wrap gap-2">
-                                <div v-for="(player, idx) in form.players" :key="idx"
-                                     class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/5
-                                            group/tag transition-all hover:border-white/10">
-                                    <span class="w-6 h-6 rounded-lg bg-elite-secondary/10 flex items-center justify-center
-                                                 text-xs font-bold text-elite-secondary shrink-0">
-                                        {{ idx + 1 }}
-                                    </span>
-                                    <span class="text-sm font-medium text-white/80 truncate max-w-[120px]">{{ player }}</span>
-                                    <button @click="removePlayer(idx)" type="button"
-                                            class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center
-                                                   text-[10px] text-white/30 hover:bg-red-500/30 hover:text-red-400 transition-all shrink-0">
-                                        ✕
+                            <!-- Individual: players -->
+                            <template v-if="!isTeam">
+                                <div class="flex gap-3">
+                                    <input v-model="newPlayer" @keydown.enter.prevent="addPlayer" type="text"
+                                           :placeholder="t('playerNamePlaceholder')"
+                                           class="ucl-input flex-1" />
+                                    <button @click="addPlayer" type="button"
+                                            class="ucl-btn-primary min-h-touch px-5 text-xs">
+                                        {{ t('addPlayer') }}
                                     </button>
                                 </div>
-                            </div>
-                            <p v-else class="text-center text-xs text-white/15 py-4">
-                                {{ t('emptyPlayers') }}
-                            </p>
 
-                            <p v-if="form.errors.players" class="text-sm text-red-400 text-center">{{ form.errors.players }}</p>
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-1 h-px bg-white/5" />
+                                    <span class="text-xs font-condensed tracking-wider"
+                                          :class="form.players.length >= 2 ? 'text-ucl-gold' : 'text-white/20'">
+                                        {{ playerCountText }}
+                                    </span>
+                                    <div class="flex-1 h-px bg-white/5" />
+                                </div>
+
+                                <div v-if="form.players.length > 0" class="flex flex-wrap gap-2">
+                                    <div v-for="(player, idx) in form.players" :key="idx"
+                                         class="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 border border-white/5
+                                                group/tag transition-all hover:border-white/10">
+                                        <span class="w-6 h-6 rounded-lg bg-elite-secondary/10 flex items-center justify-center
+                                                     text-xs font-bold text-elite-secondary shrink-0">
+                                            {{ idx + 1 }}
+                                        </span>
+                                        <span class="text-sm font-medium text-white/80 truncate max-w-[120px]">{{ player }}</span>
+                                        <button @click="removePlayer(idx)" type="button"
+                                                class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center
+                                                       text-[10px] text-white/30 hover:bg-red-500/30 hover:text-red-400 transition-all shrink-0">
+                                            ✕
+                                        </button>
+                                    </div>
+                                </div>
+                                <p v-else class="text-center text-xs text-white/15 py-4">{{ t('emptyPlayers') }}</p>
+                            </template>
+
+                            <!-- Teams -->
+                            <template v-else>
+                                <div class="flex gap-3">
+                                    <input v-model="newTeam" @keydown.enter.prevent="addTeam" type="text"
+                                           :placeholder="t('teamNamePlaceholder')"
+                                           class="ucl-input flex-1" />
+                                    <button @click="addTeam" type="button"
+                                            class="ucl-btn-primary min-h-touch px-5 text-xs">
+                                        {{ t('addTeam') }}
+                                    </button>
+                                </div>
+
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-1 h-px bg-white/5" />
+                                    <span class="text-xs font-condensed tracking-wider"
+                                          :class="form.teams.length >= 2 ? 'text-ucl-gold' : 'text-white/20'">
+                                        {{ teamCountText }}
+                                    </span>
+                                    <div class="flex-1 h-px bg-white/5" />
+                                </div>
+
+                                <p v-if="form.errors.teams" class="text-sm text-red-400 text-center">{{ form.errors.teams }}</p>
+
+                                <div v-if="form.teams.length > 0" class="space-y-3">
+                                    <div v-for="(team, ti) in form.teams" :key="ti"
+                                         class="rounded-xl bg-white/5 border border-white/5 p-3 space-y-3">
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-6 h-6 rounded-lg bg-elite-secondary/10 flex items-center justify-center
+                                                         text-xs font-bold text-elite-secondary shrink-0">
+                                                {{ ti + 1 }}
+                                            </span>
+                                            <input v-model="team.name" type="text"
+                                                   class="ucl-input flex-1 py-2 text-sm font-semibold" />
+                                            <button @click="removeTeam(ti)" type="button"
+                                                    class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center
+                                                           text-[10px] text-white/30 hover:bg-red-500/30 hover:text-red-400 transition-all shrink-0">
+                                                ✕
+                                            </button>
+                                        </div>
+                                        <div class="flex gap-2 pl-8">
+                                            <input v-model="newTeamMember[ti]" @keydown.enter.prevent="addMember(ti)" type="text"
+                                                   :placeholder="t('memberPlaceholder')"
+                                                   class="ucl-input flex-1 py-2 text-sm" />
+                                            <button @click="addMember(ti)" type="button"
+                                                    class="ucl-btn-primary min-h-touch px-4 text-xs">
+                                                {{ t('addPlayer') }}
+                                            </button>
+                                        </div>
+                                        <div v-if="team.players.length" class="flex flex-wrap gap-1.5 pl-8">
+                                            <div v-for="(member, mi) in team.players" :key="mi"
+                                                 class="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/5">
+                                                <span class="text-xs text-white/70">{{ member }}</span>
+                                                <button @click="removeMember(ti, mi)" type="button"
+                                                        class="text-[10px] text-white/30 hover:text-red-400">✕</button>
+                                            </div>
+                                        </div>
+                                        <p class="pl-8 text-[11px] text-white/20">{{ t('membersCount', { n: team.players.length }) }}</p>
+                                    </div>
+                                </div>
+                                <p v-else class="text-center text-xs text-white/15 py-4">{{ t('emptyTeams') }}</p>
+                                <p class="text-center text-[11px] text-white/20">{{ t('teamPlayersHint') }}</p>
+                            </template>
+
+                            <p v-if="!isTeam && form.errors.players" class="text-sm text-red-400 text-center">{{ form.errors.players }}</p>
 
                             <!-- Simulador de duración -->
                             <div v-if="estimate" class="rounded-2xl border border-elite-secondary/25 bg-elite-secondary/[0.06] p-4 sm:p-5">
@@ -438,7 +845,7 @@ const canNext = computed(() => {
                                     <template v-else>
                                         {{ t('estimateKnockout', { total: estimate.total, group: estimate.group, extra: form.home_and_away ? t('estimateKnockoutHomeAway') : '', knockout: estimate.knockout }) }}
                                     </template>
-                                    {{ t('estimateParallel', { tv: estimate.tv, tvLabel: estimate.tv === 1 ? t('estimateTvSingular') : t('estimateTvPlural'), m: estimate.m }) }}
+                                    {{ t('estimateParallel', { tv: estimate.tv, tvLabel: estimate.tv === 1 ? tvSingular : tvPlural, m: estimate.m }) }}
                                 </p>
                                 <p class="text-[11px] text-white/20 mt-1">{{ t('estimateDisclaimer') }}</p>
                             </div>
@@ -456,9 +863,7 @@ const canNext = computed(() => {
                                 </div>
                                 <input v-model="form.reminder_at" type="datetime-local" :min="minReminder"
                                        class="ucl-input w-full" />
-                                <p class="text-xs text-white/25 leading-relaxed">
-                                    {{ t('emailReminderDesc') }}
-                                </p>
+                                <p class="text-xs text-white/25 leading-relaxed">{{ t('emailReminderDesc') }}</p>
                                 <label class="flex items-center gap-3 cursor-pointer select-none">
                                     <input v-model="form.notify_email" type="checkbox"
                                            class="w-4 h-4 rounded accent-elite-secondary bg-white/10" />
@@ -480,14 +885,15 @@ const canNext = computed(() => {
                         </button>
                         <div v-else />
 
-                        <button v-if="step < 3" @click="nextStep" type="button" :disabled="!canNext"
+                        <button v-if="step < stepCount" @click="nextStep" type="button" :disabled="!canNext"
                                 class="ucl-btn-primary text-xs sm:text-sm">
                             {{ t('next') }}
                             <svg class="w-4 h-4 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                             </svg>
                         </button>
-                        <button v-else type="submit" :disabled="form.processing || form.players.length < 2"
+                        <button v-else type="submit"
+                                :disabled="form.processing || (isTeam ? form.teams.length < 2 : form.players.length < 2)"
                                 class="ucl-btn-gold text-xs sm:text-sm">
                             <svg v-if="form.processing" class="w-4 h-4 mr-2 animate-spin" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />

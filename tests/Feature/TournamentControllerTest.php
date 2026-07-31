@@ -120,14 +120,23 @@ class TournamentControllerTest extends TestCase
             );
     }
 
-    public function test_show_allows_any_authenticated_user(): void
+    public function test_show_is_owner_only(): void
+    {
+        $tournament = Tournament::factory()->for($this->user)->create();
+
+        $this->actingAs($this->user)
+            ->get(route('tournaments.show', $tournament))
+            ->assertOk();
+    }
+
+    public function test_show_forbids_non_owner(): void
     {
         $other = User::factory()->create();
         $tournament = Tournament::factory()->for($other)->create();
 
         $this->actingAs($this->user)
             ->get(route('tournaments.show', $tournament))
-            ->assertOk();
+            ->assertForbidden();
     }
 
     public function test_update_score_marks_match_finished(): void
@@ -182,7 +191,7 @@ class TournamentControllerTest extends TestCase
 
         $this->actingAs($this->user)
             ->delete(route('tournaments.destroy', $tournament))
-            ->assertRedirect(route('dashboard'));
+            ->assertRedirect(route('tournaments.index'));
 
         $this->assertDatabaseMissing('tournaments', ['id' => $tournament->id]);
     }

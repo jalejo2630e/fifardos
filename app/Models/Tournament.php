@@ -15,6 +15,8 @@ class Tournament extends Model
         'user_id',
         'name',
         'slug',
+        'sport',
+        'mode',
         'consoles_count',
         'minutes_per_match',
         'status',
@@ -116,6 +118,11 @@ class Tournament extends Model
         return $this->hasMany(Player::class);
     }
 
+    public function teams(): HasMany
+    {
+        return $this->hasMany(Team::class);
+    }
+
     public function matches(): HasMany
     {
         return $this->hasMany(GameMatch::class);
@@ -124,5 +131,49 @@ class Tournament extends Model
     public function prizes(): HasMany
     {
         return $this->hasMany(TournamentPrize::class);
+    }
+
+    public function rules(): HasMany
+    {
+        return $this->hasMany(TournamentRule::class);
+    }
+
+    /** Reglas del torneo como mapa clave => valor. */
+    public function rulesMap(): array
+    {
+        return $this->rules->pluck('value', 'rule_key')->all();
+    }
+
+    /** ¿Modo de juego virtual (consolas) o en campo físico (canchas)? */
+    public function isPhysical(): bool
+    {
+        return ($this->mode ?? 'virtual') === 'physical';
+    }
+
+    /** Etiqueta del espacio de juego: canchas si es físico, consolas si es virtual. */
+    public function venueLabel(): string
+    {
+        return $this->isPhysical() ? 'canchas' : 'consolas';
+    }
+
+    /** ¿Este torneo es de deporte de equipo? */
+    public function isTeamSport(): bool
+    {
+        return \App\Services\SportsCatalog::isTeam($this->sport ?? 'fifa');
+    }
+
+    /** ¿Este torneo usa marcador por sets? */
+    public function isSetsSport(): bool
+    {
+        return \App\Services\SportsCatalog::isSets($this->sport ?? 'fifa');
+    }
+
+    /** Competidores del torneo (equipos si es deporte de equipo, si no jugadores). */
+    public function competitors()
+    {
+        if ($this->isTeamSport()) {
+            return $this->teams();
+        }
+        return $this->players();
     }
 }

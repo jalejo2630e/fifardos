@@ -28,7 +28,7 @@ class PublicPlayerProfileController extends Controller
         $position = null;
         $stats = null;
         foreach ($standings as $i => $row) {
-            if ($row['player_id'] === $player->id) {
+            if ($row['competitor_id'] === $player->id) {
                 $position = $i + 1;
                 $stats = collect($row)->except(['player_id', 'player_name'])->toArray();
                 break;
