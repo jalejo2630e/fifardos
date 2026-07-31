@@ -77,7 +77,7 @@ class SportRulesSeeder extends Seeder
         ];
     }
 
-    private function data(): array
+    public static function data(): array
     {
         $g = 'general';
         $t = 'tiempo';

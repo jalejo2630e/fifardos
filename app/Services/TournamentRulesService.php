@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\SportRuleDefinition;
 use App\Models\Tournament;
+use Database\Seeders\SportRulesSeeder;
 use Illuminate\Support\Collection;
 
 /**
@@ -15,20 +16,24 @@ class TournamentRulesService
     /** Definiciones agrupadas por deporte, listas para el frontend. */
     public function definitionsBySport(): array
     {
-        return SportRuleDefinition::orderBy('sort_order')
+        $fromDb = SportRuleDefinition::orderBy('sort_order')
             ->get()
             ->groupBy('sport')
             ->map(fn (Collection $group) => $group->values()->all())
             ->all();
+
+        return $fromDb !== [] ? $fromDb : $this->fallbackDefinitions();
     }
 
     /** Definiciones para un deporte concreto. */
     public function definitionsFor(string $sport): array
     {
-        return SportRuleDefinition::where('sport', $sport)
+        $fromDb = SportRuleDefinition::where('sport', $sport)
             ->orderBy('sort_order')
             ->get()
             ->all();
+
+        return $fromDb !== [] ? $fromDb : $this->fallbackDefinitions()[$sport] ?? [];
     }
 
     /**
@@ -38,6 +43,9 @@ class TournamentRulesService
     public function validate(array $values, string $sport): array
     {
         $definitions = SportRuleDefinition::where('sport', $sport)->get()->keyBy('key');
+        if ($definitions->isEmpty()) {
+            $definitions = collect($this->fallbackDefinitions()[$sport] ?? [])->keyBy('key');
+        }
         if ($definitions->isEmpty()) {
             return [];
         }
@@ -107,5 +115,20 @@ class TournamentRulesService
             }
         }
         return $normalized;
+    }
+
+    /**
+     * Respaldo: definiciones desde el seeder (misma forma que la tabla) para que
+     * el formulario funcione aunque `sport_rule_definitions` esté vacía.
+     */
+    private function fallbackDefinitions(): array
+    {
+        $definitions = [];
+        foreach (SportRulesSeeder::data() as $sport => $rules) {
+            foreach ($rules as $i => $rule) {
+                $definitions[$sport][] = (object) array_merge(['sort_order' => $i], $rule);
+            }
+        }
+        return $definitions;
     }
 }
