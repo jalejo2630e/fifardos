@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
-import 'screens/login_screen.dart';
+import 'screens/landing_screen.dart';
 import 'services/api_client.dart';
 import 'services/storage_service.dart';
 
@@ -98,7 +98,7 @@ class FifardosApp extends StatelessWidget {
       title: 'FIFARDOS',
       debugShowCheckedModeBanner: false,
       theme: buildFifardosTheme(),
-      home: loggedIn ? const HomeScreen() : const LoginScreen(),
+      home: loggedIn ? const HomeScreen() : const LandingScreen(),
     );
   }
 }

@@ -1,4 +1,6 @@
+import '../models/catalog.dart';
 import '../models/tournament.dart';
+import '../models/tournament_detail.dart';
 import '../models/tournament_match.dart';
 import '../models/standing.dart';
 import '../models/user.dart';
@@ -51,12 +53,48 @@ class AuthService {
 class TournamentService {
   final ApiClient _api = ApiClient.instance;
 
+  Future<SportCatalog> catalog() async {
+    final res = await _api.get('/api/agent/catalog');
+    return SportCatalog.fromJson(res);
+  }
+
+  Future<Map<String, dynamic>> createTournament({
+    required String name,
+    required String sport,
+    required String mode,
+    required int consolesCount,
+    required int minutesPerMatch,
+    required String format,
+    required bool homeAndAway,
+    required List<String> players,
+    required List<Map<String, dynamic>> teams,
+    Map<String, dynamic>? rules,
+  }) async {
+    return _api.post('/api/agent/tournaments', body: {
+      'name': name,
+      'sport': sport,
+      'mode': mode,
+      'consoles_count': consolesCount,
+      'minutes_per_match': minutesPerMatch,
+      'format': format,
+      'home_and_away': homeAndAway,
+      'players': players,
+      'teams': teams,
+      'rules': rules ?? {},
+    });
+  }
+
   Future<List<Tournament>> tournaments() async {
     final res = await _api.get('/api/agent/tournaments');
     final list = res['data'] as List? ?? [];
     return list
         .map((e) => Tournament.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<TournamentDetail> tournamentDetail(int tournamentId) async {
+    final res = await _api.get('/api/agent/tournaments/$tournamentId');
+    return TournamentDetail.fromJson(res['data'] as Map<String, dynamic>);
   }
 
   Future<List<TournamentMatch>> matches(int tournamentId,

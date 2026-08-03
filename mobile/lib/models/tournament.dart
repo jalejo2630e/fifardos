@@ -37,6 +37,8 @@ class Tournament {
   final int totalMatches;
   final int playedMatches;
   final int progressPercent;
+  final String mode;
+  final String sportIcon;
   final TournamentLeader? leader;
 
   Tournament({
@@ -54,6 +56,8 @@ class Tournament {
     required this.totalMatches,
     required this.playedMatches,
     required this.progressPercent,
+    this.mode = 'virtual',
+    this.sportIcon = '⚽',
     this.leader,
   });
 
@@ -75,6 +79,8 @@ class Tournament {
         totalMatches: json['total_matches'] as int? ?? 0,
         playedMatches: json['played_matches'] as int? ?? 0,
         progressPercent: json['progress_percent'] as int? ?? 0,
+        mode: json['mode'] as String? ?? 'virtual',
+        sportIcon: json['sport_icon'] as String? ?? '⚽',
         leader: json['leader'] == null
             ? null
             : TournamentLeader.fromJson(json['leader'] as Map<String, dynamic>),

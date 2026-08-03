@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/tournament.dart';
 import '../services/auth_service.dart';
+import 'create_tournament_screen.dart';
 import 'login_screen.dart';
 import 'tournament_detail_screen.dart';
 
@@ -143,6 +144,18 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          await Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const CreateTournamentScreen()),
+          );
+          _refresh();
+        },
+        backgroundColor: kAccent,
+        foregroundColor: const Color(0xFF08080A),
+        icon: const Icon(Icons.add),
+        label: const Text('NUEVO TORNEO', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 1)),
+      ),
     );
   }
 }
@@ -163,6 +176,8 @@ class _TournamentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = tournament.progressPercent.clamp(0, 100);
+    final color = _parseHex(tournament.color);
+    final modeLabel = tournament.mode == 'physical' ? 'Físico' : 'Virtual';
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
@@ -175,42 +190,87 @@ class _TournamentCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: statusColor,
-                      shape: BoxShape.circle,
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                    alignment: Alignment.center,
+                    child: Text(
+                      tournament.sportIcon,
+                      style: const TextStyle(fontSize: 22),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tournament.name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Text(
+                                tournament.sportName.isEmpty ? tournament.sport : tournament.sportName,
+                                style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.videogame_asset, color: kTextDim, size: 13),
+                            const SizedBox(width: 4),
+                            Text(modeLabel, style: const TextStyle(color: kTextDim, fontSize: 12)),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text(
-                    statusLabel,
-                    style: TextStyle(
-                      color: statusColor,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '${tournament.competitorCount} ${tournament.isTeam ? 'equipos' : 'jug.'}',
-                    style: const TextStyle(color: kTextDim, fontSize: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(color: statusColor, shape: BoxShape.circle),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            statusLabel,
+                            style: TextStyle(
+                              color: statusColor,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${tournament.competitorCount} ${tournament.isTeam ? 'equipos' : 'jug.'}',
+                        style: const TextStyle(color: kTextDim, fontSize: 12),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Text(
-                tournament.name,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 14),
               Row(
                 children: [
                   Expanded(
@@ -254,6 +314,13 @@ class _TournamentCard extends StatelessWidget {
       ),
     );
   }
+}
+
+Color _parseHex(String hex) {
+  var value = hex.replaceAll('#', '');
+  if (value.length == 6) value = 'FF$value';
+  final parsed = int.tryParse(value, radix: 16) ?? 0xFFFF5F00;
+  return Color(parsed);
 }
 
 class _ErrorView extends StatelessWidget {

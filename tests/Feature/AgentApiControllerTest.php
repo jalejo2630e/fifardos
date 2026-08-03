@@ -177,6 +177,96 @@ class AgentApiControllerTest extends TestCase
         $this->getJson('/api/agent/players/999')->assertNotFound();
     }
 
+    public function test_catalog_returns_sports_and_rules(): void
+    {
+        $this->authenticate();
+        $response = $this->getJson('/api/agent/catalog');
+
+        $response->assertOk()
+            ->assertJsonStructure([
+                'success', 'sports', 'rules',
+            ]);
+        $this->assertNotEmpty($response['sports']);
+        $this->assertArrayHasKey('fifa', $response['rules']);
+    }
+
+    public function test_create_tournament_with_format_and_rules(): void
+    {
+        $this->authenticate();
+        $response = $this->postJson('/api/agent/tournaments', [
+            'name' => 'Copa Mobile',
+            'sport' => 'soccer',
+            'mode' => 'physical',
+            'format' => 'league',
+            'home_and_away' => true,
+            'consoles_count' => 2,
+            'minutes_per_match' => 30,
+            'teams' => [
+                ['name' => 'Rojo', 'players' => ['Luis', 'Ana']],
+                ['name' => 'Azul', 'players' => ['Pedro']],
+                ['name' => 'Verde'],
+            ],
+            'rules' => [
+                'duracion_tiempo_min' => 30,
+                'cantidad_tiempos' => '2',
+                'fuera_de_juego' => true,
+            ],
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJson(['success' => true]);
+        $tournament = Tournament::where('name', 'Copa Mobile')->firstOrFail();
+        $this->assertEquals('physical', $tournament->mode);
+        $this->assertEquals('league', $tournament->format);
+        $this->assertTrue((bool) $tournament->home_and_away);
+        $this->assertEquals('soccer', $tournament->sport);
+        $this->assertCount(3, $tournament->teams);
+        $this->assertCount(3, $tournament->players);
+    }
+
+    public function test_create_tournament_rejects_invalid_rules(): void
+    {
+        $this->authenticate();
+        $response = $this->postJson('/api/agent/tournaments', [
+            'name' => 'Copa Invalida',
+            'sport' => 'soccer',
+            'teams' => [['name' => 'Rojo'], ['name' => 'Azul']],
+            'rules' => ['fuera_de_juego' => 'no-valido'],
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson(['success' => false]);
+    }
+
+    public function test_show_returns_detail_with_rules_and_rounds(): void
+    {
+        $tournament = Tournament::factory()->for($this->user)->create([
+            'sport' => 'soccer',
+            'mode' => 'physical',
+            'format' => 'league',
+        ]);
+        $p1 = Player::factory()->for($tournament)->create();
+        $p2 = Player::factory()->for($tournament)->create();
+        GameMatch::factory()->for($tournament)->create([
+            'player1_id' => $p1->id,
+            'player2_id' => $p2->id,
+            'round' => 1,
+            'status' => 'pending',
+        ]);
+        app(\App\Services\TournamentRulesService::class)->saveForTournament($tournament, ['duracion_tiempo_min' => '30']);
+
+        $this->authenticate();
+        $response = $this->getJson("/api/agent/tournaments/{$tournament->id}");
+
+        $response->assertOk()->assertJson(['success' => true]);
+        $this->assertEquals('league', $response['data']['format']);
+        $this->assertEquals('physical', $response['data']['mode']);
+        $this->assertNotEmpty($response['data']['rules']);
+        $saved = collect($response['data']['rules'])->firstWhere('key', 'duracion_tiempo_min');
+        $this->assertEquals('30', $saved['value']);
+        $this->assertCount(1, $response['data']['rounds']);
+    }
+
     public function test_rate_limiting(): void
     {
         $this->authenticate();

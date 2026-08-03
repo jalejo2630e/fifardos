@@ -52,8 +52,10 @@ class AgentApiController extends Controller
                 'name' => $t->name,
                 'sport' => $t->sport ?? 'fifa',
                 'sport_name' => \App\Services\SportsCatalog::name($t->sport ?? 'fifa'),
+                'sport_icon' => \App\Services\SportsCatalog::icon($t->sport ?? 'fifa'),
                 'is_team' => $t->isTeamSport(),
                 'status' => $t->status,
+                'mode' => $t->mode ?? 'virtual',
                 'color' => $t->color,
                 'consoles_count' => $t->consoles_count,
                 'max_players' => $t->max_players,
@@ -77,9 +79,120 @@ class AgentApiController extends Controller
     }
 
     /**
+     * GET /api/agent/tournaments/{id}
+     * Detalle de un torneo: modo, formato, reglas guardadas (con sus definiciones)
+     * y las rondas de partidos (con bracket_position) para renderizar posiciones,
+     * reglas y bracket en la app móvil.
+     */
+    public function show(Request $request, $id)
+    {
+        $tournament = Tournament::where('user_id', $request->user()->id)
+            ->with(['matches' => fn($q) => $q->with(['player1', 'player2', 'team1', 'team2'])])
+            ->findOrFail($id);
+
+        $sportKey = $tournament->sport ?? 'fifa';
+        $savedRules = $tournament->rules->pluck('value', 'rule_key');
+
+        $rules = collect(app(TournamentRulesService::class)->definitionsFor($sportKey))
+            ->map(function ($def) use ($savedRules) {
+                return [
+                    'key' => $def->key,
+                    'label' => $def->label,
+                    'type' => $def->type,
+                    'options' => $def->options ?? [],
+                    'min' => $def->min ?? null,
+                    'max' => $def->max ?? null,
+                    'unit' => $def->unit ?? null,
+                    'value' => $savedRules[$def->key] ?? ($def->default ?? null),
+                ];
+            })->values();
+
+        $rounds = $tournament->matches->groupBy('round')->values()->map(function ($group) {
+            return [
+                'round' => $group->first()->round,
+                'phase' => $group->first()->phase,
+                'matches' => $group->sortBy('bracket_position')->values()->map(function ($m) {
+                    return [
+                        'id' => $m->id,
+                        'tv_number' => $m->tv_number,
+                        'phase' => $m->phase,
+                        'bracket_position' => $m->bracket_position,
+                        'status' => $m->status,
+                        'competitor1' => ['id' => $m->competitor1Id(), 'name' => $m->competitor1Name() ?? '—'],
+                        'competitor2' => ['id' => $m->competitor2Id(), 'name' => $m->competitor2Name() ?? '—'],
+                        'score1' => $m->score1,
+                        'score2' => $m->score2,
+                        'sets' => $m->sets,
+                        'penalties1' => $m->penalties1,
+                        'penalties2' => $m->penalties2,
+                    ];
+                })->all(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $tournament->id,
+                'name' => $tournament->name,
+                'sport' => $sportKey,
+                'sport_name' => \App\Services\SportsCatalog::name($sportKey),
+                'sport_icon' => \App\Services\SportsCatalog::icon($sportKey),
+                'is_team' => $tournament->isTeamSport(),
+                'status' => $tournament->status,
+                'mode' => $tournament->mode ?? 'virtual',
+                'format' => $tournament->format,
+                'home_and_away' => (bool) $tournament->home_and_away,
+                'color' => $tournament->color,
+                'consoles_count' => $tournament->consoles_count,
+                'minutes_per_match' => $tournament->minutes_per_match,
+                'players_count' => $tournament->players_count,
+                'teams_count' => $tournament->teams_count,
+                'total_matches' => $tournament->matches->count(),
+                'played_matches' => $tournament->matches->where('status', 'finished')->count(),
+                'rules' => $rules,
+                'rounds' => $rounds,
+            ],
+        ]);
+    }
+
+    /**
+     * GET /api/agent/catalog
+     * Catálogo completo de deportes (nombre, icono, tipo individual/equipo,
+     * sistema de puntaje) y las reglas parametrizables por deporte. Lo usa la app
+     * móvil para renderizar el formulario de "crear torneo" idéntico a la web.
+     */
+    public function catalog()
+    {
+        $sports = [];
+        foreach (\App\Services\SportsCatalog::all() as $key => $sport) {
+            $sports[] = [
+                'key' => $key,
+                'name' => $sport['name'],
+                'icon' => $sport['icon'],
+                'type' => $sport['type'],
+                'is_team' => $sport['type'] === 'team',
+                'players_per_side' => $sport['players_per_side'] ?? 1,
+                'scoring' => $sport['scoring'] ?? 'goals',
+                'allows_draw' => (bool) ($sport['allows_draw'] ?? true),
+                'max_sets' => $sport['max_sets'] ?? null,
+                'minutes' => $sport['minutes'] ?? 6,
+                'uses_penalties' => (bool) ($sport['uses_penalties'] ?? false),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'sports' => $sports,
+            'rules' => app(TournamentRulesService::class)->definitionsBySport(),
+        ]);
+    }
+
+    /**
      * POST /api/agent/tournaments
-     * Crea un torneo nuevo con su lista de jugadores y genera el fixture de fase de grupos.
-     * Pensado para que un LLM/agente "arme un torneo" a pedido del usuario.
+     * Crea un torneo nuevo con su lista de jugadores/equipos y genera el fixture.
+     * Acepta los mismos campos que el formulario web (formato, ida y vuelta, reglas
+     * por deporte, modo virtual/físico) para que la app móvil sea idéntica a la web.
      */
     public function createTournament(Request $request)
     {
@@ -94,12 +207,27 @@ class AgentApiController extends Controller
             'sport' => 'nullable|string',
             'mode' => 'nullable|in:virtual,physical',
             'consoles_count' => 'nullable|integer|min:1|max:20',
+            'minutes_per_match' => 'nullable|integer|min:1|max:180',
+            'format' => 'nullable|in:groups_knockout,league',
+            'home_and_away' => 'nullable|boolean',
             'players' => $isTeam ? 'nullable|array' : 'required|array|min:2|max:32',
             'players.*' => 'required|string|max:255|distinct',
             'teams' => $isTeam ? 'required|array|min:2|max:32' : 'nullable|array',
-            'teams.*' => 'required|string|max:255|distinct',
+            'teams.*.name' => 'required|string|max:255',
+            'teams.*.players' => 'nullable|array',
+            'teams.*.players.*' => 'required|string|max:255|distinct',
             'rules' => 'nullable|array',
         ]);
+
+        if ($isTeam) {
+            $names = array_map(fn ($t) => $t['name'], $validated['teams']);
+            if (count($names) !== count(array_unique($names))) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Los nombres de equipos no pueden repetirse.',
+                ], 422);
+            }
+        }
 
         // Reglas parametrizables: validar contra las definiciones del deporte
         $rulesErrors = app(TournamentRulesService::class)->validate(
@@ -122,7 +250,9 @@ class AgentApiController extends Controller
                 $validated['name'],
                 $validated['consoles_count'] ?? 1,
                 $sport,
-                array_map(fn ($name) => ['name' => $name, 'players' => []], $validated['teams']),
+                $validated['teams'],
+                $validated['format'] ?? 'groups_knockout',
+                (bool) ($validated['home_and_away'] ?? false),
             );
             $competitorCount = count($validated['teams']);
         } else {
@@ -131,14 +261,15 @@ class AgentApiController extends Controller
                 $validated['name'],
                 $validated['consoles_count'] ?? 1,
                 $validated['players'],
-                'groups_knockout',
-                false,
+                $validated['format'] ?? 'groups_knockout',
+                (bool) ($validated['home_and_away'] ?? false),
                 $sport,
             );
             $competitorCount = count($validated['players']);
         }
 
         $tournament->update([
+            'minutes_per_match' => $validated['minutes_per_match'] ?? \App\Services\SportsCatalog::minutes($sport),
             'mode' => $validated['mode'] ?? 'virtual',
         ]);
 
@@ -157,6 +288,8 @@ class AgentApiController extends Controller
                 'name' => $tournament->name,
                 'sport' => $tournament->sport,
                 'mode' => $tournament->mode,
+                'format' => $tournament->format,
+                'home_and_away' => (bool) $tournament->home_and_away,
                 'is_team' => $isTeam,
                 'status' => $tournament->status,
                 'color' => $tournament->color,

@@ -19,6 +19,8 @@ Route::prefix('auth')->group(function () {
 Route::prefix('agent')->middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('tournaments', [AgentApiController::class, 'tournaments']);
     Route::post('tournaments', [AgentApiController::class, 'createTournament']);
+    Route::get('tournaments/{id}', [AgentApiController::class, 'show']);
+    Route::get('catalog', [AgentApiController::class, 'catalog']);
     Route::get('tournaments/{id}/standings', [AgentApiController::class, 'standings']);
     Route::get('tournaments/{id}/top-scorer', [AgentApiController::class, 'topScorer']);
     Route::get('tournaments/{id}/matches', [AgentApiController::class, 'matches']);
