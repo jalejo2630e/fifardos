@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../main.dart';
@@ -33,6 +35,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
   late Future<List<Standing>> _standingsFuture;
   late Future<Map<String, dynamic>> _topScorerFuture;
   late Future<TournamentDetail> _detailFuture;
+  Timer? _syncTimer;
 
   @override
   void initState() {
@@ -42,10 +45,14 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen>
     _standingsFuture = _service.standings(widget.tournamentId);
     _topScorerFuture = _service.topScorer(widget.tournamentId);
     _detailFuture = _service.tournamentDetail(widget.tournamentId);
+    _syncTimer = Timer.periodic(const Duration(seconds: 12), (_) {
+      if (mounted) _reload();
+    });
   }
 
   @override
   void dispose() {
+    _syncTimer?.cancel();
     _tabController.dispose();
     super.dispose();
   }

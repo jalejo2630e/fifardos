@@ -134,7 +134,7 @@ class _Header extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _BarlowText('FIFARDOS', 20, color: Colors.white, ls: 0.14),
+          Image.asset('assets/logo-horizontal.png', height: 34),
           const Spacer(),
         ],
       ),
@@ -230,11 +230,9 @@ class _OutlineButton extends StatelessWidget {
 class _BarlowText extends StatelessWidget {
   final String text;
   final double size;
-  final Color color;
-  final double ls;
-  const _BarlowText(this.text, this.size, {this.color = _tp, this.ls = 0.04});
+  const _BarlowText(this.text, this.size);
   @override
-  Widget build(BuildContext context) => Text(text, style: _barlow(size, color: color, ls: ls));
+  Widget build(BuildContext context) => Text(text, style: _barlow(size));
 }
 
 // ---- HERO ----
@@ -851,7 +849,7 @@ class _Footer extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _BarlowText('FIFARDOS', 16, color: Colors.white, ls: 0.14),
+          Image.asset('assets/logo-horizontal.png', height: 28),
           const SizedBox(height: 10),
           const Text('Hecho por fanáticos, no por EA. FIFA y EA Sports FC son marcas de sus dueños.',
               style: TextStyle(color: _tdd, fontSize: 13)),

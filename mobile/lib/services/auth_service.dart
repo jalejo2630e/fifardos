@@ -10,6 +10,12 @@ import 'storage_service.dart';
 class AuthService {
   final ApiClient _api = ApiClient.instance;
 
+  static Future<bool> isAdmin() async {
+    final user = await StorageService.getUser();
+    final value = user?['is_admin'];
+    return value == true || value == 'true';
+  }
+
   Future<({User user, String token})> login(
       String email, String password) async {
     final res = await _api.post('/api/auth/login', body: {
@@ -21,7 +27,11 @@ class AuthService {
     final user = User.fromJson(res['user'] as Map<String, dynamic>);
     _api.setToken(token);
     await StorageService.saveToken(token);
-    await StorageService.saveUser({'name': user.name, 'email': user.email});
+    await StorageService.saveUser({
+      'name': user.name,
+      'email': user.email,
+      'is_admin': user.isAdmin,
+    });
     return (user: user, token: token);
   }
 
@@ -38,7 +48,11 @@ class AuthService {
     final user = User.fromJson(res['user'] as Map<String, dynamic>);
     _api.setToken(token);
     await StorageService.saveToken(token);
-    await StorageService.saveUser({'name': user.name, 'email': user.email});
+    await StorageService.saveUser({
+      'name': user.name,
+      'email': user.email,
+      'is_admin': user.isAdmin,
+    });
     return (user: user, token: token);
   }
 
