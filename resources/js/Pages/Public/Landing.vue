@@ -6,7 +6,7 @@ import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
 import PenaltyArena from '@/Components/PenaltyArena.vue';
 import SportsCarousel from '@/Components/SportsCarousel.vue';
 
-const { t } = useI18n();
+const { t, tm } = useI18n();
 
 const props = defineProps({
     canLogin: Boolean,
@@ -41,9 +41,10 @@ const features = computed(() => [0, 1, 2, 3, 4, 5].map((i) => ({
 // Orden alineado con landing.sports (i18n). La imagen es independiente del idioma.
 const SPORT_SLUGS = ['consola', 'futbol', 'futsal', 'basquet', 'voley', 'tenis', 'padel', 'pickleball', 'handball', 'rugby'];
 const sports = computed(() => {
-    const raw = t('landing.sports');
+    // OJO: para mensajes que son array hay que usar tm() (t() devolvería el string de la clave).
+    const raw = tm('landing.sports');
     return (Array.isArray(raw) ? raw : []).map((s, i) => ({
-        ...s, slug: SPORT_SLUGS[i], img: `/sports/${SPORT_SLUGS[i]}.svg`,
+        icon: s.icon, name: s.name, slug: SPORT_SLUGS[i], img: `/sports/${SPORT_SLUGS[i]}.svg`,
     }));
 });
 
