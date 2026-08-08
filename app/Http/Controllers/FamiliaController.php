@@ -23,9 +23,9 @@ class FamiliaController extends Controller
     {
         return Inertia::render('Familia/Index', [
             'seo' => [
-                'title' => 'FIFARDOS Familia — Minijuegos en vivo para jugar en familia',
+                'title' => 'FIFARDOS Minijuegos — Jugá en vivo desde cualquier lugar',
                 'description' => 'Creá una sala, compartí el código y jugá Dibuja y Adivina, Trivia o Tutti Frutti '
-                    . 'con hasta 3 familias desde cualquier parte del mundo, en tiempo real y gratis.',
+                    . 'con hasta 3 participantes desde cualquier parte del mundo, en tiempo real y gratis.',
                 'type' => 'website',
             ],
         ]);
@@ -100,7 +100,7 @@ class FamiliaController extends Controller
                 return response()->json(['message' => 'La partida ya empezó.'], 422);
             }
             if ($room->members()->count() >= config('familia.max_families')) {
-                return response()->json(['message' => 'La sala está llena (máximo 3 familias).'], 422);
+                return response()->json(['message' => 'La sala está llena (máximo 3 participantes).'], 422);
             }
 
             $usedSlots = $room->members()->pluck('slot')->all();
@@ -117,7 +117,7 @@ class FamiliaController extends Controller
 
             $room->load('members');
             $this->emit(new RoomUpdated($room));
-            $this->emit(new ChatPosted($room->code, 'system', "La familia {$data['name']} se unió a la sala."));
+            $this->emit(new ChatPosted($room->code, 'system', "{$data['name']} se unió a la sala."));
 
             return response()->json(['code' => $room->code, 'slot' => $slot]);
         });
@@ -216,7 +216,7 @@ class FamiliaController extends Controller
             }
             $count = $room->members()->count();
             if ($count < config('familia.min_families')) {
-                return response()->json(['message' => 'Se necesitan al menos 2 familias.'], 422);
+                return response()->json(['message' => 'Se necesitan al menos 2 participantes.'], 422);
             }
 
             $total = match ($room->game) {
@@ -493,7 +493,7 @@ class FamiliaController extends Controller
             $update['drawer_member_id'] = $drawer->id;
             $update['word'] = $word;
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.pictionary.round_seconds'));
-            $sys = "Ronda {$next}/{$room->total_rounds} — dibuja la familia {$drawer->name}.";
+            $sys = "Ronda {$next}/{$room->total_rounds} — dibuja {$drawer->name}.";
         } elseif ($room->game === 'trivia') {
             $questions = config('familia.trivia.questions');
             $q = $this->pickTrivia($questions, $used);
@@ -595,7 +595,7 @@ class FamiliaController extends Controller
         $winners = $room->members->where('score', optional($top)->score);
         $msg = $winners->count() > 1
             ? '¡Empate! ' . $winners->pluck('name')->join(', ')
-            : '🏆 ¡Ganó la familia ' . optional($top)->name . '!';
+            : '🏆 ¡Ganó ' . optional($top)->name . '!';
 
         $this->emit(new RoomUpdated($room));
         $this->emit(new ChatPosted($room->code, 'system', $msg));

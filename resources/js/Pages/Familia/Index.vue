@@ -24,7 +24,7 @@ onMounted(() => {
 async function createRoom() {
     error.value = '';
     const n = name.value.trim();
-    if (!n) { error.value = 'Escribí el nombre de tu familia.'; return; }
+    if (!n) { error.value = 'Escribí tu nombre.'; return; }
     busy.value = true;
     try {
         setName(n);
@@ -40,7 +40,7 @@ async function joinRoom() {
     error.value = '';
     const n = name.value.trim();
     const code = joinCode.value.trim().toUpperCase();
-    if (!n) { error.value = 'Escribí el nombre de tu familia.'; return; }
+    if (!n) { error.value = 'Escribí tu nombre.'; return; }
     if (!code) { error.value = 'Escribí el código de la sala.'; return; }
     busy.value = true;
     try {
@@ -56,7 +56,7 @@ async function joinRoom() {
 
 <template>
     <div class="fam">
-        <Head title="Familia — Minijuegos en vivo" />
+        <Head title="Minijuegos — Jugá en vivo" />
 
         <header class="fam-hdr">
             <Link href="/" class="fam-logo"><img src="/brand/logo-horizontal-dark.png" alt="FIFARDOS" /></Link>
@@ -65,14 +65,14 @@ async function joinRoom() {
 
         <main class="fam-main">
             <div class="fam-intro">
-                <span class="fam-badge"><i class="dot"></i> En vivo · hasta 3 familias</span>
-                <h1>Jugá en <span class="accent">familia</span>,<br />estén donde estén.</h1>
-                <p>Creá una sala, compartí el código y jueguen en tiempo real a <b>Dibuja y Adivina</b>, <b>Trivia</b> o <b>Tutti Frutti</b>. ¡Gana la familia que más puntos suma!</p>
+                <span class="fam-badge"><i class="dot"></i> En vivo · hasta 3 participantes</span>
+                <h1>Jugá a los <span class="accent">minijuegos</span>,<br />estén donde estén.</h1>
+                <p>Creá una sala, compartí el código y jueguen en tiempo real a <b>Dibuja y Adivina</b>, <b>Trivia</b> o <b>Tutti Frutti</b>. ¡Gana el participante que más puntos suma!</p>
             </div>
 
             <div class="fam-field">
-                <label>Nombre de tu familia</label>
-                <input v-model="name" maxlength="24" placeholder="Los Pérez" @keyup.enter="createRoom" />
+                <label>Nombre del participante</label>
+                <input v-model="name" maxlength="24" placeholder="Tu nombre" @keyup.enter="createRoom" />
             </div>
 
             <div class="fam-cards">

@@ -7,7 +7,7 @@ import { getToken, getName, setName } from '@/familia/session';
 const props = defineProps({ code: String, room: Object, config: Object });
 
 const GAMES = {
-    pictionary: { name: 'Dibuja y Adivina', icon: '🎨', desc: 'Una familia dibuja y las otras adivinan.' },
+    pictionary: { name: 'Dibuja y Adivina', icon: '🎨', desc: 'Un participante dibuja y los otros adivinan.' },
     trivia: { name: 'Trivia', icon: '❓', desc: 'Respondan la pregunta lo más rápido posible.' },
     tuttifrutti: { name: 'Tutti Frutti', icon: '🔤', desc: 'Completá las categorías con la letra que salga.' },
 };
@@ -124,7 +124,7 @@ async function identify() {
 async function joinHere() {
     joinError.value = '';
     const n = joinName.value.trim();
-    if (!n) { joinError.value = 'Escribí el nombre de tu familia.'; return; }
+    if (!n) { joinError.value = 'Escribí tu nombre.'; return; }
     try { setName(n); await axios.post(`/familia/${props.code}/join`, { name: n, token }); await identify(); }
     catch (e) { joinError.value = e.response?.data?.message || 'No se pudo unir.'; }
 }
@@ -203,14 +203,14 @@ onBeforeUnmount(() => {
 
 <template>
     <div class="fam">
-        <Head :title="`Sala ${code} — Familia`" />
+        <Head :title="`Sala ${code} — Minijuegos`" />
 
         <!-- Unirse -->
         <div v-if="joinNeeded" class="fam-overlay">
             <div class="fam-join-card">
                 <span class="tag">Sala {{ code }}</span>
                 <h2>Sumate a esta sala</h2>
-                <input v-model="joinName" maxlength="24" placeholder="Nombre de tu familia" @keyup.enter="joinHere" />
+                <input v-model="joinName" maxlength="24" placeholder="Tu nombre" @keyup.enter="joinHere" />
                 <button class="btn btn-solid" @click="joinHere">Entrar a jugar</button>
                 <p v-if="joinError" class="err">{{ joinError }}</p>
                 <Link href="/familia" class="muted-link">← Volver</Link>
@@ -233,7 +233,7 @@ onBeforeUnmount(() => {
                     <!-- ============ LOBBY ============ -->
                     <div v-if="status === 'lobby'" class="rm-panel">
                         <h2>Sala lista</h2>
-                        <p>Compartí el código <b class="code-chip" @click="copyCode">{{ code }}</b> con las otras familias.</p>
+                        <p>Compartí el código <b class="code-chip" @click="copyCode">{{ code }}</b> con los otros participantes.</p>
                         <div class="rm-games">
                             <button v-for="(g, key) in GAMES" :key="key" class="rm-game" :class="{ on: game === key, lock: !isHost }"
                                     :disabled="!isHost" @click="chooseGame(key)">
@@ -242,8 +242,8 @@ onBeforeUnmount(() => {
                                 <span class="rm-game-ds">{{ g.desc }}</span>
                             </button>
                         </div>
-                        <p class="rm-count">{{ members.length }} / {{ config.max_families }} familias</p>
-                        <button v-if="isHost" class="btn btn-solid" :disabled="!canStart" @click="startGame">{{ canStart ? 'Empezar a jugar →' : 'Esperando familias…' }}</button>
+                        <p class="rm-count">{{ members.length }} / {{ config.max_families }} participantes</p>
+                        <button v-if="isHost" class="btn btn-solid" :disabled="!canStart" @click="startGame">{{ canStart ? 'Empezar a jugar →' : 'Esperando participantes…' }}</button>
                         <p v-else class="muted">Elige el juego el anfitrión. Esperando que empiece…</p>
                     </div>
 
@@ -361,7 +361,7 @@ onBeforeUnmount(() => {
                 <!-- Sidebar -->
                 <aside class="rm-side">
                     <div class="rm-scores">
-                        <h3>Familias</h3>
+                        <h3>Participantes</h3>
                         <div v-for="m in members" :key="m.id" class="rm-fam" :class="{ drawing: m.id === gs.drawer_member_id, off: !m.online }">
                             <span class="rm-fam-slot">{{ m.slot }}</span>
                             <span class="rm-fam-name">{{ m.name }}<b v-if="m.is_host" class="rm-host">host</b><b v-if="m.id === gs.drawer_member_id" class="rm-draw">✏️</b></span>

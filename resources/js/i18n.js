@@ -86,7 +86,7 @@ const messages = {
             footNote: 'Hecho por fanáticos, no por EA. FIFA y EA Sports FC son marcas de sus dueños.',
             footMcp: 'Integración MCP',
             navGame: 'Jugar',
-            navFamily: 'Familia',
+            navFamily: 'Minijuegos',
             menu: 'Menú',
         },
         penalty: {
@@ -191,7 +191,7 @@ const messages = {
             footNote: 'Made by fans, not by EA. FIFA and EA Sports FC are trademarks of their owners.',
             footMcp: 'MCP integration',
             navGame: 'Play',
-            navFamily: 'Family',
+            navFamily: 'Minigames',
             menu: 'Menu',
         },
         penalty: {
