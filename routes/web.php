@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\FamiliaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TournamentController;
 use App\Models\Tournament;
@@ -107,6 +108,23 @@ Route::get('/torneos/{tournament:slug}/bracket', [App\Http\Controllers\PublicBra
 Route::get('/torneos/{tournament:slug}/jugador/{player:username}', [App\Http\Controllers\PublicPlayerProfileController::class, 'show'])
     ->scopeBindings()
     ->name('players.public.profile');
+
+// --- Módulo Familia: minijuegos en tiempo real (público, sin cuenta) ---
+Route::prefix('familia')->group(function () {
+    Route::get('/', [FamiliaController::class, 'index'])->name('familia.index');
+    Route::post('/', [FamiliaController::class, 'create'])->name('familia.create');
+    Route::get('/{code}', [FamiliaController::class, 'room'])->whereAlphaNumeric('code')->name('familia.room');
+    Route::post('/{code}/join', [FamiliaController::class, 'join'])->whereAlphaNumeric('code')->name('familia.join');
+    Route::post('/{code}/hello', [FamiliaController::class, 'hello'])->whereAlphaNumeric('code');
+    Route::get('/{code}/me', [FamiliaController::class, 'me'])->whereAlphaNumeric('code');
+    Route::get('/{code}/word', [FamiliaController::class, 'word'])->whereAlphaNumeric('code');
+    Route::post('/{code}/start', [FamiliaController::class, 'start'])->whereAlphaNumeric('code');
+    Route::post('/{code}/stroke', [FamiliaController::class, 'stroke'])->whereAlphaNumeric('code');
+    Route::post('/{code}/clear', [FamiliaController::class, 'clearCanvas'])->whereAlphaNumeric('code');
+    Route::post('/{code}/guess', [FamiliaController::class, 'guess'])->whereAlphaNumeric('code');
+    Route::post('/{code}/timeout', [FamiliaController::class, 'roundTimeout'])->whereAlphaNumeric('code');
+    Route::post('/{code}/leave', [FamiliaController::class, 'leave'])->whereAlphaNumeric('code');
+});
 
 Route::get('/sitemap.xml', function () {
     $urls = [

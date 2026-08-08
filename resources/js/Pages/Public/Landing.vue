@@ -199,6 +199,7 @@ onBeforeUnmount(() => {
                 <a href="#como">{{ $t('landing.navComoVa') }}</a>
                 <a href="#modos">{{ $t('landing.navModos') }}</a>
                 <a href="#jugar">{{ $t('landing.navGame') }}</a>
+                <a href="/familia">{{ $t('landing.navFamily') }}</a>
                 <a href="#tabla">{{ $t('landing.navEnVivo') }}</a>
                 <a href="#faq">{{ $t('landing.navFaq') }}</a>
             </nav>
