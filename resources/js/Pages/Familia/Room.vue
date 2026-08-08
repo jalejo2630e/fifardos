@@ -134,6 +134,20 @@ watch(() => room.value?.round, () => {
 watch(() => [room.value?.round, phase.value], () => { ticked = false; });
 watch(() => [isDrawer.value, phase.value, game.value], fetchWord);
 
+// El canvas solo existe en el DOM cuando se está jugando a Pictionary. Cuando
+// aparece (lobby → jugando) hay que (re)inicializar el contexto y el observer,
+// porque el setupCanvas de onMounted corre cuando el canvas todavía no existe.
+const showCanvas = computed(() => game.value === 'pictionary' && status.value === 'playing');
+watch(showCanvas, async (v) => {
+    if (v) {
+        await nextTick();
+        setupCanvas();
+        if (ro && stageRef.value) ro.observe(stageRef.value);
+    } else if (ro) {
+        ro.disconnect();
+    }
+});
+
 // Timer: el anfitrión avisa al server cuando vence el deadline (play o reveal)
 watch(remaining, (r) => {
     if (status.value === 'playing' && r <= 0 && isHost.value && !ticked && room.value?.round_ends_at) {
