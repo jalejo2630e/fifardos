@@ -87,6 +87,7 @@ const messages = {
             footMcp: 'Integración MCP',
             navGame: 'Jugar',
             navFamily: 'Familia',
+            menu: 'Menú',
         },
         penalty: {
             eyebrow: 'Minijuego 3D',
@@ -191,6 +192,7 @@ const messages = {
             footMcp: 'MCP integration',
             navGame: 'Play',
             navFamily: 'Family',
+            menu: 'Menu',
         },
         penalty: {
             eyebrow: '3D mini-game',

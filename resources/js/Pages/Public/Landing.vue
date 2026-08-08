@@ -73,6 +73,9 @@ const progressRef = ref(null);
 const heroSeconds = ref(0);
 const showMcp = ref(false);
 const mcpTab = ref('claude');
+const mobileMenuOpen = ref(false);
+
+function closeMenu() { mobileMenuOpen.value = false; }
 // En móvil no cargamos el video del hero (solo la imagen webp liviana)
 const isMobile = ref(typeof window !== 'undefined' && window.matchMedia
     ? window.matchMedia('(max-width: 899px)').matches : false);
@@ -208,7 +211,29 @@ onBeforeUnmount(() => {
                 <button v-if="canLogin" class="btn btn-ghost-nav" @click="goLogin">{{ $t('common.login') }}</button>
                 <button class="btn btn-solid btn-nav" @click="goRegister">{{ $t('common.createTournament') }}</button>
             </div>
+            <button class="burger" :class="{ open: mobileMenuOpen }" @click="mobileMenuOpen = !mobileMenuOpen" :aria-label="$t('landing.menu')" :aria-expanded="mobileMenuOpen">
+                <span></span><span></span><span></span>
+            </button>
         </header>
+
+        <!-- Menú mobile (hamburguesa) -->
+        <Teleport to="body">
+            <div v-if="mobileMenuOpen" class="mm-overlay" @click.self="closeMenu">
+                <nav class="mm-panel">
+                    <a href="#como" @click="closeMenu">{{ $t('landing.navComoVa') }}</a>
+                    <a href="#modos" @click="closeMenu">{{ $t('landing.navModos') }}</a>
+                    <a href="#jugar" @click="closeMenu">{{ $t('landing.navGame') }}</a>
+                    <a href="/familia" @click="closeMenu">{{ $t('landing.navFamily') }}</a>
+                    <a href="#tabla" @click="closeMenu">{{ $t('landing.navEnVivo') }}</a>
+                    <a href="#faq" @click="closeMenu">{{ $t('landing.navFaq') }}</a>
+                    <div class="mm-actions">
+                        <button v-if="canLogin" class="btn btn-outline btn-mm" @click="closeMenu(); goLogin()">{{ $t('common.login') }}</button>
+                        <button class="btn btn-solid btn-mm" @click="closeMenu(); goRegister()">{{ $t('common.createTournament') }}</button>
+                    </div>
+                    <div class="mm-lang"><LanguageSwitcher /></div>
+                </nav>
+            </div>
+        </Teleport>
 
         <span id="top"></span>
 
@@ -517,6 +542,13 @@ Authorization: Bearer 1|tu_token
 .nav a { color: #9a9a96; text-decoration: none; font-family: var(--f-body); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; transition: color .15s ease; }
 .nav a:hover { color: var(--tp); }
 
+/* Botón hamburguesa (solo mobile) */
+.burger { display: none; margin-left: auto; flex-direction: column; justify-content: center; gap: 5px; width: 44px; height: 40px; padding: 8px; background: transparent; border: 1px solid rgba(255,255,255,.18); cursor: pointer; }
+.burger span { display: block; height: 2px; width: 100%; background: var(--tp); transition: transform .25s ease, opacity .2s ease; }
+.burger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.burger.open span:nth-child(2) { opacity: 0; }
+.burger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
 /* Hero */
 .hero { position: relative; }
 .hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 56px; align-items: center; padding: 76px 24px 40px; }
@@ -662,6 +694,8 @@ Authorization: Bearer 1|tu_token
 }
 @media (max-width: 879px) {
     .nav { display: none; }
+    .nav-cta-group { display: none; }
+    .burger { display: flex; }
     .hdr { gap: 16px; padding: 12px 20px; }
     .btn-nav { padding: 12px 18px; }
     .hero-grid { padding: 56px 20px 32px; }
@@ -712,4 +746,19 @@ Authorization: Bearer 1|tu_token
 .mcp-code { background: #08080a; border: 1px solid rgba(255,255,255,.08); padding: 14px; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.55; color: #d4d4d0; white-space: pre; overflow-x: auto; margin: 0; }
 .mcp-tools { margin: 16px 0 0; font-size: 13px; color: #8f8f8b; }
 .mcp-tools b { color: #ff8a3d; }
+
+/* Menú mobile (teleportado a body) */
+.mm-overlay { position: fixed; inset: 0; z-index: 38; background: rgba(8,8,10,.55); backdrop-filter: blur(4px);
+    /* El panel vive fuera de .fd, así que redefinimos aquí las variables de marca */
+    --accent: #ff5f00; --accent-hover: #ff7a26; --bg-base: #08080a; --tp: #f2f2f0;
+    --f-barlow: 'Barlow Condensed', sans-serif; }
+.mm-panel { position: absolute; top: 0; left: 0; right: 0; background: #0b0b0d; border-bottom: 1px solid rgba(255,255,255,.1);
+    padding: 80px 20px 24px; display: flex; flex-direction: column; gap: 2px; box-shadow: 0 24px 50px -22px rgba(0,0,0,.95); animation: mmslide .22s ease; }
+.mm-panel a { color: #e8e8e4; text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .06em; font-size: 21px; padding: 13px 6px; border-bottom: 1px solid rgba(255,255,255,.06); }
+.mm-panel a:hover { color: #ff5f00; }
+.mm-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.mm-actions .btn-mm { width: 100%; font-size: 18px; padding: 14px 18px; }
+.mm-lang { margin-top: 16px; display: flex; justify-content: center; }
+@keyframes mmslide { from { transform: translateY(-14px); opacity: 0; } to { transform: none; opacity: 1; } }
 </style>
