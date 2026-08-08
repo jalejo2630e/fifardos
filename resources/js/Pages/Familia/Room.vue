@@ -21,6 +21,7 @@ const joinError = ref('');
 const chat = ref([]);
 const now = ref(Date.now());
 const copied = ref(false);
+const advancing = ref(false);
 
 // Pictionary
 const myWord = ref('');
@@ -117,6 +118,11 @@ async function joinHere() {
 function pushChat(e) { chat.value.push(e); if (chat.value.length > 120) chat.value.shift(); nextTick(() => { const b = document.getElementById('fam-chat'); if (b) b.scrollTop = b.scrollHeight; }); }
 async function startGame() { try { await axios.post(`/familia/${props.code}/start`, { token }); } catch (e) { alert(e.response?.data?.message || 'No se pudo empezar.'); } }
 async function chooseGame(g) { if (!isHost.value) return; try { await axios.post(`/familia/${props.code}/game`, { token, game: g }); } catch (e) { /* noop */ } }
+function nextRound() {
+    if (advancing.value) return;
+    advancing.value = true;
+    axios.post(`/familia/${props.code}/next`, { token }).catch(() => {}).finally(() => setTimeout(() => { advancing.value = false; }, 1200));
+}
 function copyCode() { navigator.clipboard?.writeText(props.code).then(() => { copied.value = true; setTimeout(() => (copied.value = false), 1500); }); }
 async function fetchWord() {
     if (game.value === 'pictionary' && phase.value === 'play' && isDrawer.value) {
@@ -204,6 +210,9 @@ onBeforeUnmount(() => {
                     <span>{{ GAMES[game].icon }} {{ room.round }}/{{ room.total_rounds }}</span>
                     <span class="rm-timer" :class="{ low: remaining <= 10 }">{{ remaining }}s</span>
                 </div>
+                <button v-if="isHost && status === 'playing'" class="rm-next" :disabled="advancing" @click="nextRound">
+                    {{ phase === 'reveal' ? 'Siguiente →' : 'Saltar' }}
+                </button>
                 <Link href="/familia" class="rm-leave">Salir</Link>
             </header>
 
@@ -363,6 +372,9 @@ input:focus { border-color: var(--accent); }
 .rm-round { display: inline-flex; align-items: center; gap: 12px; font-family: var(--f-barlow); font-weight: 700; text-transform: uppercase; font-size: 15px; color: var(--ts); }
 .rm-timer { font-family: var(--f-anton); font-size: 22px; color: var(--tp); min-width: 44px; text-align: center; }
 .rm-timer.low { color: #ff5f5f; }
+.rm-next { cursor: pointer; background: var(--accent); color: #08080a; border: none; font-family: var(--f-barlow); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 14px; padding: 8px 16px; transition: background-color .15s; }
+.rm-next:hover:not(:disabled) { background: var(--accent-hover); }
+.rm-next:disabled { opacity: .5; cursor: wait; }
 .rm-leave { color: var(--tm); text-decoration: none; font-size: 13px; text-transform: uppercase; letter-spacing: .1em; }
 .rm-leave:hover { color: var(--accent); }
 

@@ -259,6 +259,30 @@ class FamiliaController extends Controller
         });
     }
 
+    public function next(Request $request, string $code)
+    {
+        $request->validate(['token' => 'required|string|max:64']);
+
+        return DB::transaction(function () use ($request, $code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room || $room->status !== 'playing') {
+                return response()->json(['ok' => false]);
+            }
+            $me = $this->getMember($room, $request->token);
+            if (! $me || ! $me->is_host) {
+                return response()->json(['message' => 'solo el anfitrión'], 403);
+            }
+            $phase = $room->state['phase'] ?? null;
+            if ($phase === 'reveal') {
+                $this->advance($room);        // siguiente ronda / fin del juego
+            } elseif ($phase === 'play') {
+                $this->finishPlay($room);     // corta la ronda actual y muestra el resultado
+            }
+
+            return response()->json(['ok' => true]);
+        });
+    }
+
     // ---------------------------------------------------------------- Pictionary
     public function stroke(Request $request, string $code)
     {
