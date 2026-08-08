@@ -86,6 +86,11 @@ class FamilyRoom extends Model
                 $out['letter'] = $s['letter'] ?? null;
                 $out['categories'] = $s['categories'] ?? [];
                 $out['submitted'] = array_map('intval', array_keys($s['submissions'] ?? []));
+            } elseif ($phase === 'validate') {
+                $out['letter'] = $s['letter'] ?? null;
+                $out['categories'] = $s['categories'] ?? [];
+                $out['entries'] = $s['entries'] ?? [];       // respuestas de todas las familias (públicas)
+                $out['votes'] = (object) ($s['votes'] ?? []); // { voterId: ["owner:cat", ...] }
             }
         }
 

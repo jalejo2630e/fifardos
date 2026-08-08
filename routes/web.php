@@ -126,6 +126,7 @@ Route::prefix('familia')->group(function () {
     Route::post('/{code}/answer', [FamiliaController::class, 'answer'])->whereAlphaNumeric('code');
     Route::post('/{code}/submit', [FamiliaController::class, 'submit'])->whereAlphaNumeric('code');
     Route::post('/{code}/stop', [FamiliaController::class, 'stop'])->whereAlphaNumeric('code');
+    Route::post('/{code}/vote', [FamiliaController::class, 'vote'])->whereAlphaNumeric('code');
     Route::post('/{code}/timeout', [FamiliaController::class, 'timeout'])->whereAlphaNumeric('code');
     Route::post('/{code}/leave', [FamiliaController::class, 'leave'])->whereAlphaNumeric('code');
 });

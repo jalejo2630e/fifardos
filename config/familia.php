@@ -66,6 +66,7 @@ return [
     'tuttifrutti' => [
         'rounds' => 4,
         'round_seconds' => 90,
+        'validate_seconds' => 35,   // tiempo para revisar/validar las respuestas
         'reveal_seconds' => 9,
         'categories' => ['Nombre', 'Apellido', 'País o ciudad', 'Animal', 'Fruta o verdura', 'Color', 'Objeto', 'Marca'],
         'letters' => ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'V'],

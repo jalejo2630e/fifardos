@@ -251,6 +251,8 @@ class FamiliaController extends Controller
             $phase = $room->state['phase'] ?? null;
             if ($phase === 'play') {
                 $this->finishPlay($room);
+            } elseif ($phase === 'validate') {
+                $this->finishValidate($room);
             } elseif ($phase === 'reveal') {
                 $this->advance($room);
             }
@@ -528,6 +530,12 @@ class FamiliaController extends Controller
         }
         $members = $room->members()->get();
 
+        // Tutti Frutti pasa a una fase de validación (votación anti-trampa) antes de puntuar.
+        if ($room->game === 'tuttifrutti') {
+            $this->startValidation($room, $state, $members);
+            return;
+        }
+
         if ($room->game === 'pictionary') {
             $winnerId = ($state['correct'] ?? [])[0] ?? null;
             $winner = $winnerId ? optional($members->firstWhere('id', $winnerId))->name : null;
@@ -547,8 +555,6 @@ class FamiliaController extends Controller
                     'pts' => $answers[$m->id]['pts'] ?? 0,
                 ])->values(),
             ];
-        } else { // tuttifrutti
-            $reveal = $this->scoreTuttiFrutti($room, $state, $members);
         }
 
         $state['phase'] = 'reveal';
@@ -595,30 +601,80 @@ class FamiliaController extends Controller
         $this->emit(new ChatPosted($room->code, 'system', $msg));
     }
 
-    private function scoreTuttiFrutti(FamilyRoom $room, array $state, $members): array
+    /** Arma la grilla de respuestas y abre la fase de validación (votación). */
+    private function startValidation(FamilyRoom $room, array $state, $members): void
     {
         $letter = $this->normalize($state['letter'] ?? '');
         $cats = $state['categories'] ?? [];
         $subs = $state['submissions'] ?? [];
 
-        // Respuesta normalizada por categoría y familia (null si inválida)
-        $normByCat = [];
+        $entries = [];
         foreach ($members as $m) {
             $ans = $subs[$m->id] ?? [];
+            $answers = [];
             foreach ($cats as $ci => $cat) {
-                $norm = $this->normalize((string) ($ans[$ci] ?? ''));
-                $valid = $norm !== '' && $letter !== '' && str_starts_with($norm, $letter);
-                $normByCat[$ci][$m->id] = $valid ? $norm : null;
+                $val = trim((string) ($ans[$ci] ?? ''));
+                $norm = $this->normalize($val);
+                // Descartamos automáticamente las que no empiezan con la letra pedida.
+                $letterOk = $norm !== '' && $letter !== '' && str_starts_with($norm, $letter);
+                $answers[] = ['cat' => $cat, 'value' => $val, 'letter_ok' => $letterOk];
+            }
+            $entries[] = ['owner_id' => $m->id, 'name' => $m->name, 'answers' => $answers];
+        }
+
+        $state['phase'] = 'validate';
+        $state['entries'] = $entries;
+        $state['votes'] = [];   // { voterId: ["ownerId:catIndex", ...] } → rechazos
+        $room->update([
+            'state' => $state,
+            'round_ends_at' => now()->addSeconds((int) config('familia.tuttifrutti.validate_seconds')),
+        ]);
+        $room->load('members');
+        $this->emit(new RoomUpdated($room));
+        $this->emit(new ChatPosted($room->code, 'system', 'Revisen las respuestas y destilden las que no valgan.'));
+    }
+
+    /** Cierra la validación: puntúa solo las respuestas válidas y aceptadas. */
+    private function finishValidate(FamilyRoom $room): void
+    {
+        $state = $room->state ?? [];
+        if (($state['phase'] ?? null) !== 'validate') {
+            return;
+        }
+        $members = $room->members()->get();
+        $reviewers = max(1, $members->count() - 1);
+        $cats = $state['categories'] ?? [];
+        $entries = $state['entries'] ?? [];
+        $votes = $state['votes'] ?? [];
+
+        // Conteo de rechazos por "owner:cat"
+        $rej = [];
+        foreach ($votes as $keys) {
+            foreach ((array) $keys as $k) {
+                $rej[$k] = ($rej[$k] ?? 0) + 1;
+            }
+        }
+        // Rechazada si la mayoría de los revisores la destildó.
+        $isRejected = fn ($owner, $ci) => (($rej["{$owner}:{$ci}"] ?? 0) * 2) > $reviewers;
+
+        // Normalizadas que cuentan (válidas por letra Y aceptadas)
+        $normByCat = [];
+        foreach ($entries as $e) {
+            foreach ($cats as $ci => $cat) {
+                $a = $e['answers'][$ci] ?? null;
+                $ok = $a && ! empty($a['letter_ok']) && ! $isRejected($e['owner_id'], $ci);
+                $normByCat[$ci][$e['owner_id']] = $ok ? $this->normalize($a['value']) : null;
             }
         }
 
         $rows = [];
-        foreach ($members as $m) {
-            $ans = $subs[$m->id] ?? [];
+        foreach ($entries as $e) {
+            $m = $members->firstWhere('id', $e['owner_id']);
             $rowAnswers = [];
             $total = 0;
             foreach ($cats as $ci => $cat) {
-                $norm = $normByCat[$ci][$m->id] ?? null;
+                $a = $e['answers'][$ci] ?? ['value' => '', 'letter_ok' => false];
+                $norm = $normByCat[$ci][$e['owner_id']] ?? null;
                 $p = 0;
                 if ($norm !== null) {
                     $count = 0;
@@ -630,13 +686,63 @@ class FamiliaController extends Controller
                     $p = $count === 1 ? 10 : 5;
                 }
                 $total += $p;
-                $rowAnswers[] = ['cat' => $cat, 'value' => (string) ($ans[$ci] ?? ''), 'pts' => $p];
+                $rowAnswers[] = [
+                    'cat' => $cat,
+                    'value' => $a['value'],
+                    'pts' => $p,
+                    'letter_ok' => (bool) ($a['letter_ok'] ?? false),
+                    'rejected' => $isRejected($e['owner_id'], $ci),
+                ];
             }
-            $m->increment('score', $total);
-            $rows[] = ['member_id' => $m->id, 'name' => $m->name, 'answers' => $rowAnswers, 'total' => $total];
+            if ($m) {
+                $m->increment('score', $total);
+            }
+            $rows[] = ['member_id' => $e['owner_id'], 'name' => $e['name'], 'answers' => $rowAnswers, 'total' => $total];
         }
 
-        return ['letter' => $state['letter'] ?? '', 'categories' => $cats, 'rows' => $rows];
+        $state['phase'] = 'reveal';
+        $state['reveal'] = ['letter' => $state['letter'] ?? '', 'categories' => $cats, 'rows' => $rows];
+        unset($state['entries'], $state['votes']);
+        $revealSecs = (int) (config('familia.tuttifrutti.reveal_seconds') ?? config('familia.reveal_seconds'));
+        $room->update(['state' => $state, 'round_ends_at' => now()->addSeconds($revealSecs)]);
+        $room->load('members');
+        $this->emit(new RoomUpdated($room));
+    }
+
+    /** Voto de validación en Tutti Frutti (aceptar/rechazar la respuesta de otra familia). */
+    public function vote(Request $request, string $code)
+    {
+        $data = $request->validate([
+            'token' => 'required|string|max:64',
+            'owner' => 'required|integer',
+            'cat' => 'required|integer|min:0',
+            'accept' => 'required|boolean',
+        ]);
+
+        return DB::transaction(function () use ($data, $code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room || $room->game !== 'tuttifrutti' || ($room->state['phase'] ?? null) !== 'validate') {
+                return response()->json(['ok' => false]);
+            }
+            $me = $this->getMember($room, $data['token']);
+            if (! $me || $me->id === (int) $data['owner']) {
+                return response()->json(['message' => 'forbidden'], 403); // no podés votar tu propia respuesta
+            }
+            $state = $room->state;
+            $votes = $state['votes'] ?? [];
+            $mine = $votes[$me->id] ?? [];
+            $key = $data['owner'] . ':' . $data['cat'];
+            $mine = array_values(array_filter($mine, fn ($k) => $k !== $key));
+            if (! $data['accept']) {
+                $mine[] = $key; // destildar = rechazar
+            }
+            $votes[$me->id] = $mine;
+            $state['votes'] = $votes;
+            $room->update(['state' => $state]);
+            $this->emit(new RoomUpdated($room->fresh('members')));
+
+            return response()->json(['ok' => true]);
+        });
     }
 
     // ---------------------------------------------------------------- utilidades

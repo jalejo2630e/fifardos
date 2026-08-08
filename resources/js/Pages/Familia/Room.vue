@@ -37,6 +37,7 @@ const myAnswer = ref(null);
 // Tutti Frutti
 const tf = reactive({});
 let tfTimer = null;
+const myRejects = ref([]);   // mis rechazos locales (feedback instantáneo, sin esperar el broadcast)
 
 // --- Derivados ---
 const game = computed(() => room.value?.game || 'pictionary');
@@ -101,6 +102,19 @@ function submitTf() { axios.post(`/familia/${props.code}/submit`, { token, answe
 function onTfInput() { if (tfTimer) clearTimeout(tfTimer); tfTimer = setTimeout(submitTf, 600); }
 async function callBasta() { if (tfTimer) clearTimeout(tfTimer); await submitTf(); axios.post(`/familia/${props.code}/stop`, { token }).catch(() => {}); }
 
+// --- Validación (anti-trampa) ---
+function tfNorm(s) { return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase(); }
+function startsWithLetter(v) { const L = tfNorm(gs.value.letter); const s = tfNorm(v); return !!s && !!L && s.startsWith(L); }
+function myRejected(owner, cat) { return myRejects.value.includes(owner + ':' + cat); }
+function rejCount(owner, cat) { const v = gs.value.votes || {}; const key = owner + ':' + cat; let n = 0; for (const k in v) { if ((v[k] || []).includes(key)) n++; } return n; }
+function isRejectedFinal(owner, cat) { return rejCount(owner, cat) * 2 > Math.max(1, members.value.length - 1); }
+function toggleVote(owner, cat) {
+    const key = owner + ':' + cat;
+    const willReject = !myRejects.value.includes(key);
+    myRejects.value = willReject ? [...myRejects.value, key] : myRejects.value.filter((k) => k !== key);
+    axios.post(`/familia/${props.code}/vote`, { token, owner, cat, accept: !willReject }).catch(() => {});
+}
+
 // ===================== Red / estado =====================
 let channel = null, heartbeat = null, ticker = null, ticked = false, ro = null;
 
@@ -129,7 +143,12 @@ watch(() => room.value?.round, () => {
     clearCanvasLocal();
     myAnswer.value = null;
     Object.keys(tf).forEach((k) => delete tf[k]);
+    myRejects.value = [];
     fetchWord();
+});
+// Al entrar a validación, sembramos mis rechazos desde el server (para reconexión).
+watch(phase, (p) => {
+    if (p === 'validate') myRejects.value = [...((gs.value.votes || {})[myId.value] || [])];
 });
 watch(() => [room.value?.round, phase.value], () => { ticked = false; });
 watch(() => [isDrawer.value, phase.value, game.value], fetchWord);
@@ -280,6 +299,7 @@ onBeforeUnmount(() => {
 
                     <!-- ============ TUTTI FRUTTI ============ -->
                     <template v-else-if="game === 'tuttifrutti'">
+                        <!-- Jugar -->
                         <div v-if="phase === 'play'" class="rm-tf">
                             <div class="rm-tf-head">Letra <b class="rm-letter">{{ gs.letter }}</b>
                                 <button class="btn btn-basta" @click="callBasta">¡Basta!</button>
@@ -287,17 +307,48 @@ onBeforeUnmount(() => {
                             <div class="rm-tf-grid">
                                 <label v-for="(cat, i) in gs.categories" :key="i" class="rm-tf-cell">
                                     <span>{{ cat }}</span>
-                                    <input v-model="tf[i]" maxlength="40" :placeholder="gs.letter + '…'" @input="onTfInput" @blur="submitTf" />
+                                    <input v-model="tf[i]" maxlength="40" :placeholder="gs.letter + '…'"
+                                           :class="{ bad: tf[i] && !startsWithLetter(tf[i]) }" @input="onTfInput" @blur="submitTf" />
                                 </label>
                             </div>
                         </div>
+
+                        <!-- Validar (anti-trampa): cada familia destilda lo que crea trampa -->
+                        <div v-else-if="phase === 'validate'" class="rm-tf-validate">
+                            <div class="rm-tf-head">
+                                <span>Validen · letra <b class="rm-letter">{{ gs.letter }}</b></span>
+                                <span class="rv-count">Puntúa en <b>{{ remaining }}</b>s</span>
+                            </div>
+                            <p class="rm-tf-note">Destildá (✗) las respuestas que creas trampa. Las que no empiezan con «{{ gs.letter }}» ya quedan descartadas.</p>
+                            <div class="rm-tf-table">
+                                <div class="rm-tf-row head"><span>Categoría</span><span v-for="e in gs.entries" :key="e.owner_id">{{ e.name }}</span></div>
+                                <div v-for="(cat, ci) in gs.categories" :key="ci" class="rm-tf-row">
+                                    <span class="cat">{{ cat }}</span>
+                                    <span v-for="e in gs.entries" :key="e.owner_id" class="vcell"
+                                          :class="{ empty: !e.answers[ci].value, bad: e.answers[ci].value && !e.answers[ci].letter_ok, struck: isRejectedFinal(e.owner_id, ci) }">
+                                        <template v-if="e.answers[ci].value">
+                                            <span class="vval">{{ e.answers[ci].value }}</span>
+                                            <button v-if="e.owner_id !== myId && e.answers[ci].letter_ok" class="vchk"
+                                                    :class="{ off: myRejected(e.owner_id, ci) }" @click="toggleVote(e.owner_id, ci)">
+                                                {{ myRejected(e.owner_id, ci) ? '✗' : '✓' }}
+                                            </button>
+                                            <span v-else-if="!e.answers[ci].letter_ok" class="vbad" title="No empieza con la letra">✗</span>
+                                        </template>
+                                        <template v-else>—</template>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resultado -->
                         <div v-else class="rm-tf-result">
                             <h2>Letra {{ reveal?.letter }} <span class="rv-count">· siguiente en <b>{{ remaining }}</b>s</span></h2>
                             <div class="rm-tf-table">
                                 <div class="rm-tf-row head"><span>Categoría</span><span v-for="r in reveal?.rows" :key="r.member_id">{{ r.name }}</span></div>
                                 <div v-for="(cat, ci) in reveal?.categories" :key="ci" class="rm-tf-row">
                                     <span class="cat">{{ cat }}</span>
-                                    <span v-for="r in reveal?.rows" :key="r.member_id" class="cell" :class="{ z: r.answers[ci].pts === 0, u: r.answers[ci].pts === 10 }">
+                                    <span v-for="r in reveal?.rows" :key="r.member_id" class="cell"
+                                          :class="{ z: r.answers[ci].pts === 0, u: r.answers[ci].pts === 10, struck: r.answers[ci].rejected || (r.answers[ci].value && !r.answers[ci].letter_ok) }">
                                         {{ r.answers[ci].value || '—' }} <b v-if="r.answers[ci].pts">+{{ r.answers[ci].pts }}</b>
                                     </span>
                                 </div>
@@ -449,6 +500,22 @@ input:focus { border-color: var(--accent); }
 .rm-tf-row .cell b { color: var(--lime); }
 .rm-tf-row .cell.z { color: var(--tdd, #6d6d69); }
 .rm-tf-row .cell.u b { color: var(--accent); }
+.rm-tf-row .cell.struck { text-decoration: line-through; opacity: .5; }
+
+/* Input con letra incorrecta */
+.rm-tf-cell input.bad { border-color: #ff5f5f; color: #ff8a8a; }
+
+/* Fase de validación */
+.rm-tf-validate { background: var(--card); border: 1px solid var(--hair); padding: 20px; }
+.rm-tf-note { color: var(--tm); font-size: 13px; margin: 4px 0 14px; }
+.vcell { display: inline-flex; align-items: center; justify-content: space-between; gap: 6px; min-width: 0; }
+.vval { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vcell.empty { color: var(--tdd, #6d6d69); }
+.vcell.bad .vval { color: #ff7a6b; text-decoration: line-through; }
+.vcell.struck .vval { text-decoration: line-through; opacity: .55; }
+.vchk { flex-shrink: 0; width: 22px; height: 22px; border: 1px solid rgba(182,255,46,.4); background: rgba(182,255,46,.14); color: var(--lime); cursor: pointer; font-size: 12px; line-height: 1; }
+.vchk.off { background: rgba(255,95,95,.14); color: #ff7a6b; border-color: rgba(255,95,95,.4); }
+.vbad { flex-shrink: 0; color: #ff7a6b; font-size: 12px; }
 
 /* Sidebar */
 .rm-side { display: flex; flex-direction: column; gap: 16px; }
