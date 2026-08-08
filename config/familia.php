@@ -10,6 +10,8 @@ return [
     'pictionary' => [
         'rounds_per_family' => 2,
         'round_seconds' => 80,
+        'reveal_seconds' => 4,   // cuenta regresiva antes de la próxima ronda
+
         'words' => [
             'perro', 'gato', 'elefante', 'jirafa', 'pingüino', 'tortuga', 'caballo', 'delfín',
             'mariposa', 'araña', 'cocodrilo', 'pulpo', 'canguro', 'búho', 'ballena', 'abeja',
@@ -34,6 +36,7 @@ return [
     'trivia' => [
         'rounds' => 8,
         'round_seconds' => 22,
+        'reveal_seconds' => 5,
         // answer = índice (0..3) de la opción correcta
         'questions' => [
             ['q' => '¿Cuál es el planeta más grande del sistema solar?', 'options' => ['Marte', 'Júpiter', 'Saturno', 'La Tierra'], 'answer' => 1],
@@ -63,6 +66,7 @@ return [
     'tuttifrutti' => [
         'rounds' => 4,
         'round_seconds' => 90,
+        'reveal_seconds' => 9,
         'categories' => ['Nombre', 'Apellido', 'País o ciudad', 'Animal', 'Fruta o verdura', 'Color', 'Objeto', 'Marca'],
         'letters' => ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'L', 'M', 'N', 'O', 'P', 'R', 'S', 'T', 'V'],
     ],

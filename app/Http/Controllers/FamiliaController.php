@@ -259,30 +259,6 @@ class FamiliaController extends Controller
         });
     }
 
-    public function next(Request $request, string $code)
-    {
-        $request->validate(['token' => 'required|string|max:64']);
-
-        return DB::transaction(function () use ($request, $code) {
-            $room = $this->findRoom($code, lock: true);
-            if (! $room || $room->status !== 'playing') {
-                return response()->json(['ok' => false]);
-            }
-            $me = $this->getMember($room, $request->token);
-            if (! $me || ! $me->is_host) {
-                return response()->json(['message' => 'solo el anfitrión'], 403);
-            }
-            $phase = $room->state['phase'] ?? null;
-            if ($phase === 'reveal') {
-                $this->advance($room);        // siguiente ronda / fin del juego
-            } elseif ($phase === 'play') {
-                $this->finishPlay($room);     // corta la ronda actual y muestra el resultado
-            }
-
-            return response()->json(['ok' => true]);
-        });
-    }
-
     // ---------------------------------------------------------------- Pictionary
     public function stroke(Request $request, string $code)
     {
@@ -363,12 +339,8 @@ class FamiliaController extends Controller
                 $room->update(['state' => $state]);
                 $room->load('members');
                 $this->emit(new ChatPosted($room->code, 'correct', "¡{$me->name} adivinó!", $me->name, $me->id));
-                $this->emit(new RoomUpdated($room));
-
-                $guessers = $room->members()->where('id', '!=', $room->drawer_member_id)->count();
-                if (count($correct) >= $guessers) {
-                    $this->finishPlay($room);
-                }
+                // El primero que adivina gana y la ronda termina de inmediato.
+                $this->finishPlay($room);
 
                 return response()->json(['ok' => true, 'correct' => true]);
             }
@@ -557,7 +529,9 @@ class FamiliaController extends Controller
         $members = $room->members()->get();
 
         if ($room->game === 'pictionary') {
-            $reveal = ['word' => $room->word];
+            $winnerId = ($state['correct'] ?? [])[0] ?? null;
+            $winner = $winnerId ? optional($members->firstWhere('id', $winnerId))->name : null;
+            $reveal = ['word' => $room->word, 'winner' => $winner];
         } elseif ($room->game === 'trivia') {
             $correct = (int) $room->word;
             $answers = $state['answers'] ?? [];
@@ -579,9 +553,10 @@ class FamiliaController extends Controller
 
         $state['phase'] = 'reveal';
         $state['reveal'] = $reveal;
+        $revealSecs = (int) (config("familia.{$room->game}.reveal_seconds") ?? config('familia.reveal_seconds'));
         $room->update([
             'state' => $state,
-            'round_ends_at' => now()->addSeconds((int) config('familia.reveal_seconds')),
+            'round_ends_at' => now()->addSeconds($revealSecs),
         ]);
         $room->load('members');
         $this->emit(new RoomUpdated($room));

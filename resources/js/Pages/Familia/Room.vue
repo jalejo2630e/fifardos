@@ -21,7 +21,6 @@ const joinError = ref('');
 const chat = ref([]);
 const now = ref(Date.now());
 const copied = ref(false);
-const advancing = ref(false);
 
 // Pictionary
 const myWord = ref('');
@@ -118,11 +117,6 @@ async function joinHere() {
 function pushChat(e) { chat.value.push(e); if (chat.value.length > 120) chat.value.shift(); nextTick(() => { const b = document.getElementById('fam-chat'); if (b) b.scrollTop = b.scrollHeight; }); }
 async function startGame() { try { await axios.post(`/familia/${props.code}/start`, { token }); } catch (e) { alert(e.response?.data?.message || 'No se pudo empezar.'); } }
 async function chooseGame(g) { if (!isHost.value) return; try { await axios.post(`/familia/${props.code}/game`, { token, game: g }); } catch (e) { /* noop */ } }
-function nextRound() {
-    if (advancing.value) return;
-    advancing.value = true;
-    axios.post(`/familia/${props.code}/next`, { token }).catch(() => {}).finally(() => setTimeout(() => { advancing.value = false; }, 1200));
-}
 function copyCode() { navigator.clipboard?.writeText(props.code).then(() => { copied.value = true; setTimeout(() => (copied.value = false), 1500); }); }
 async function fetchWord() {
     if (game.value === 'pictionary' && phase.value === 'play' && isDrawer.value) {
@@ -154,9 +148,11 @@ watch(showCanvas, async (v) => {
     }
 });
 
-// Timer: el anfitrión avisa al server cuando vence el deadline (play o reveal)
+// Avance automático: cualquier cliente avisa al server cuando vence el deadline
+// (play o reveal). El server procesa una sola vez (lock + guardas de fase), así
+// que no se traba aunque el anfitrión cierre la pestaña.
 watch(remaining, (r) => {
-    if (status.value === 'playing' && r <= 0 && isHost.value && !ticked && room.value?.round_ends_at) {
+    if (status.value === 'playing' && r <= 0 && !ticked && room.value?.round_ends_at) {
         ticked = true;
         axios.post(`/familia/${props.code}/timeout`, { token }).catch(() => {});
     }
@@ -210,9 +206,6 @@ onBeforeUnmount(() => {
                     <span>{{ GAMES[game].icon }} {{ room.round }}/{{ room.total_rounds }}</span>
                     <span class="rm-timer" :class="{ low: remaining <= 10 }">{{ remaining }}s</span>
                 </div>
-                <button v-if="isHost && status === 'playing'" class="rm-next" :disabled="advancing" @click="nextRound">
-                    {{ phase === 'reveal' ? 'Siguiente →' : 'Saltar' }}
-                </button>
                 <Link href="/familia" class="rm-leave">Salir</Link>
             </header>
 
@@ -245,14 +238,18 @@ onBeforeUnmount(() => {
 
                     <!-- ============ PICTIONARY ============ -->
                     <template v-else-if="game === 'pictionary'">
-                        <div class="rm-turn">
-                            <template v-if="phase === 'reveal'">La palabra era: <b class="word">{{ reveal?.word }}</b></template>
-                            <template v-else-if="isDrawer">Te toca dibujar: <b class="word">{{ myWord || '…' }}</b></template>
+                        <div class="rm-turn" v-if="phase === 'play'">
+                            <template v-if="isDrawer">Te toca dibujar: <b class="word">{{ myWord || '…' }}</b></template>
                             <template v-else>Dibuja <b>{{ drawerName }}</b> · adiviná: <span class="hint">{{ '_ '.repeat(gs.word_length || 0) }}</span></template>
                         </div>
                         <div ref="stageRef" class="rm-stage">
                             <canvas ref="canvasRef" class="rm-canvas" :class="{ drawer: isDrawer && phase === 'play' }"
                                     @pointerdown="onDown" @pointermove="onMove" @pointerup="onUp" @pointerleave="onUp"></canvas>
+                            <div v-if="phase === 'reveal'" class="rm-reveal">
+                                <span class="rv-title">{{ reveal?.winner ? '🎉 ¡' + reveal.winner + ' adivinó!' : '⏱ ¡Nadie adivinó!' }}</span>
+                                <span class="rv-word">La palabra era <b>{{ reveal?.word }}</b></span>
+                                <span class="rv-count">Siguiente ronda en <b>{{ remaining }}</b>…</span>
+                            </div>
                         </div>
                         <div v-if="phase === 'play' && isDrawer" class="rm-tools">
                             <button v-for="c in colors" :key="c" class="swatch" :class="{ on: currentColor === c }" :style="{ background: c }" @click="currentColor = c"></button>
@@ -275,6 +272,7 @@ onBeforeUnmount(() => {
                             </div>
                             <p v-if="phase === 'play'" class="rm-quiz-note">{{ iAnswered ? 'Respuesta enviada — esperando a las demás…' : 'Elegí una opción' }} · {{ (gs.answered || []).length }}/{{ members.length }}</p>
                             <div v-else class="rm-quiz-note">
+                                <span class="rv-count">Siguiente en <b>{{ remaining }}</b>s</span>
                                 <span v-for="b in reveal?.breakdown" :key="b.member_id" class="rm-bd" :class="{ ok: b.correct }">{{ b.name }} {{ b.correct ? '+' + b.pts : '✗' }}</span>
                             </div>
                         </div>
@@ -294,7 +292,7 @@ onBeforeUnmount(() => {
                             </div>
                         </div>
                         <div v-else class="rm-tf-result">
-                            <h2>Letra {{ reveal?.letter }}</h2>
+                            <h2>Letra {{ reveal?.letter }} <span class="rv-count">· siguiente en <b>{{ remaining }}</b>s</span></h2>
                             <div class="rm-tf-table">
                                 <div class="rm-tf-row head"><span>Categoría</span><span v-for="r in reveal?.rows" :key="r.member_id">{{ r.name }}</span></div>
                                 <div v-for="(cat, ci) in reveal?.categories" :key="ci" class="rm-tf-row">
@@ -372,9 +370,6 @@ input:focus { border-color: var(--accent); }
 .rm-round { display: inline-flex; align-items: center; gap: 12px; font-family: var(--f-barlow); font-weight: 700; text-transform: uppercase; font-size: 15px; color: var(--ts); }
 .rm-timer { font-family: var(--f-anton); font-size: 22px; color: var(--tp); min-width: 44px; text-align: center; }
 .rm-timer.low { color: #ff5f5f; }
-.rm-next { cursor: pointer; background: var(--accent); color: #08080a; border: none; font-family: var(--f-barlow); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 14px; padding: 8px 16px; transition: background-color .15s; }
-.rm-next:hover:not(:disabled) { background: var(--accent-hover); }
-.rm-next:disabled { opacity: .5; cursor: wait; }
 .rm-leave { color: var(--tm); text-decoration: none; font-size: 13px; text-transform: uppercase; letter-spacing: .1em; }
 .rm-leave:hover { color: var(--accent); }
 
@@ -403,6 +398,14 @@ input:focus { border-color: var(--accent); }
 .rm-stage { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #fff; border: 1px solid var(--hair); overflow: hidden; }
 .rm-canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: default; }
 .rm-canvas.drawer { cursor: crosshair; }
+.rm-reveal { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 20px;
+    background: rgba(8,8,10,.86); color: var(--tp); animation: rvin .25s ease; }
+.rv-title { font-family: var(--f-anton); text-transform: uppercase; font-size: clamp(24px, 5vw, 42px); color: var(--lime); }
+.rv-word { font-family: var(--f-barlow); font-size: 20px; text-transform: uppercase; letter-spacing: .04em; color: var(--ts); }
+.rv-word b { color: var(--tp); }
+.rv-count { font-size: 14px; color: var(--tm); letter-spacing: .04em; }
+.rv-count b { font-family: var(--f-anton); color: var(--accent); font-size: 18px; }
+@keyframes rvin { from { opacity: 0; transform: scale(1.05); } to { opacity: 1; transform: none; } }
 .rm-tools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 10px; background: var(--card); border: 1px solid var(--hair); border-top: none; }
 .swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
 .swatch.on { border-color: var(--tp); box-shadow: 0 0 0 2px var(--bg) inset; }
