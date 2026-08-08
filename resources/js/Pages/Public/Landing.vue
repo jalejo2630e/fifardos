@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
+import PenaltyArena from '@/Components/PenaltyArena.vue';
 
 const { t } = useI18n();
 
@@ -188,6 +189,7 @@ onBeforeUnmount(() => {
             <nav class="nav">
                 <a href="#como">{{ $t('landing.navComoVa') }}</a>
                 <a href="#modos">{{ $t('landing.navModos') }}</a>
+                <a href="#jugar">{{ $t('landing.navGame') }}</a>
                 <a href="#tabla">{{ $t('landing.navEnVivo') }}</a>
                 <a href="#faq">{{ $t('landing.navFaq') }}</a>
             </nav>
@@ -285,6 +287,9 @@ onBeforeUnmount(() => {
                 </div>
             </div>
         </section>
+
+        <!-- MINIJUEGO DE PENALES (3D · lazy-load) -->
+        <PenaltyArena />
 
         <!-- FEATURES -->
         <section id="modos" class="sec sec-alt">
