@@ -22,6 +22,17 @@ RUN npm ci
 COPY . .
 # Ziggy se importa desde vendor/ dentro de resources/js/app.js
 COPY --from=vendor /app/vendor/tightenco/ziggy ./vendor/tightenco/ziggy
+# Config del cliente Reverb/Echo: se EMBEBE en el bundle al buildear (build-time).
+# Son valores PÚBLICOS (la app key viaja al navegador); el SECRET nunca va acá.
+# Sobreescribibles con --build-arg en Dokploy si usás otro dominio/subdominio.
+ARG VITE_REVERB_APP_KEY=580d6ab39dd5091b41cd
+ARG VITE_REVERB_HOST=fifardos.com
+ARG VITE_REVERB_PORT=443
+ARG VITE_REVERB_SCHEME=https
+ENV VITE_REVERB_APP_KEY=$VITE_REVERB_APP_KEY \
+    VITE_REVERB_HOST=$VITE_REVERB_HOST \
+    VITE_REVERB_PORT=$VITE_REVERB_PORT \
+    VITE_REVERB_SCHEME=$VITE_REVERB_SCHEME
 RUN npm run build
 
 # ---------- Stage 3: runtime (PHP-FPM + Nginx + Supervisor) ----------
