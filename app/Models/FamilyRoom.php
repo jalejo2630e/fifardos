@@ -30,7 +30,7 @@ class FamilyRoom extends Model
     }
 
     /**
-     * Snapshot público de la sala (SIN la palabra secreta) para transmitir a todos.
+     * Snapshot público (sin datos secretos: palabra, respuestas privadas, etc.).
      */
     public function publicSnapshot(): array
     {
@@ -42,11 +42,8 @@ class FamilyRoom extends Model
             'status' => $this->status,
             'round' => $this->round,
             'total_rounds' => $this->total_rounds,
-            'drawer_member_id' => $this->drawer_member_id,
-            'has_word' => filled($this->word),
-            'word_length' => filled($this->word) ? mb_strlen($this->word) : null,
             'round_ends_at' => optional($this->round_ends_at)->toIso8601String(),
-            'state' => $this->state ?? [],
+            'game_state' => $this->publicGameState(),
             'members' => $this->members->map(fn (FamilyMember $m) => [
                 'id' => $m->id,
                 'name' => $m->name,
@@ -56,5 +53,42 @@ class FamilyRoom extends Model
                 'online' => $m->last_seen_at && $m->last_seen_at->gt(now()->subSeconds(30)),
             ])->values(),
         ];
+    }
+
+    /**
+     * Vista pública del estado del juego según fase. Durante 'play' NO expone las
+     * respuestas privadas (dibujo/palabra, opción elegida, textos de tutti frutti).
+     */
+    public function publicGameState(): array
+    {
+        $s = $this->state ?? [];
+        $phase = $s['phase'] ?? null;               // play | reveal
+        $out = ['phase' => $phase];
+
+        if ($phase === 'reveal') {
+            $out['reveal'] = $s['reveal'] ?? null;  // el resultado sí es público
+        }
+
+        if ($this->game === 'pictionary') {
+            $out['drawer_member_id'] = $this->drawer_member_id;
+            if ($phase === 'play') {
+                $out['word_length'] = filled($this->word) ? mb_strlen($this->word) : null;
+                $out['correct'] = $s['correct'] ?? [];
+            }
+        } elseif ($this->game === 'trivia') {
+            if ($phase === 'play') {
+                $out['question'] = $s['question'] ?? null;
+                $out['options'] = $s['options'] ?? [];
+                $out['answered'] = array_map('intval', array_keys($s['answers'] ?? []));
+            }
+        } elseif ($this->game === 'tuttifrutti') {
+            if ($phase === 'play') {
+                $out['letter'] = $s['letter'] ?? null;
+                $out['categories'] = $s['categories'] ?? [];
+                $out['submitted'] = array_map('intval', array_keys($s['submissions'] ?? []));
+            }
+        }
+
+        return $out;
     }
 }

@@ -115,6 +115,7 @@ Route::prefix('familia')->group(function () {
     Route::post('/', [FamiliaController::class, 'create'])->name('familia.create');
     Route::get('/{code}', [FamiliaController::class, 'room'])->whereAlphaNumeric('code')->name('familia.room');
     Route::post('/{code}/join', [FamiliaController::class, 'join'])->whereAlphaNumeric('code')->name('familia.join');
+    Route::post('/{code}/game', [FamiliaController::class, 'setGame'])->whereAlphaNumeric('code');
     Route::post('/{code}/hello', [FamiliaController::class, 'hello'])->whereAlphaNumeric('code');
     Route::get('/{code}/me', [FamiliaController::class, 'me'])->whereAlphaNumeric('code');
     Route::get('/{code}/word', [FamiliaController::class, 'word'])->whereAlphaNumeric('code');
@@ -122,7 +123,10 @@ Route::prefix('familia')->group(function () {
     Route::post('/{code}/stroke', [FamiliaController::class, 'stroke'])->whereAlphaNumeric('code');
     Route::post('/{code}/clear', [FamiliaController::class, 'clearCanvas'])->whereAlphaNumeric('code');
     Route::post('/{code}/guess', [FamiliaController::class, 'guess'])->whereAlphaNumeric('code');
-    Route::post('/{code}/timeout', [FamiliaController::class, 'roundTimeout'])->whereAlphaNumeric('code');
+    Route::post('/{code}/answer', [FamiliaController::class, 'answer'])->whereAlphaNumeric('code');
+    Route::post('/{code}/submit', [FamiliaController::class, 'submit'])->whereAlphaNumeric('code');
+    Route::post('/{code}/stop', [FamiliaController::class, 'stop'])->whereAlphaNumeric('code');
+    Route::post('/{code}/timeout', [FamiliaController::class, 'timeout'])->whereAlphaNumeric('code');
     Route::post('/{code}/leave', [FamiliaController::class, 'leave'])->whereAlphaNumeric('code');
 });
 

@@ -3,7 +3,14 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
 import { getToken, getName, setName } from '@/familia/session';
 
+const GAMES = {
+    pictionary: { icon: '🎨', name: 'Dibuja y Adivina' },
+    trivia: { icon: '❓', name: 'Trivia' },
+    tuttifrutti: { icon: '🔤', name: 'Tutti Frutti' },
+};
+
 const name = ref('');
+const game = ref('pictionary');
 const joinCode = ref('');
 const error = ref('');
 const busy = ref(false);
@@ -21,7 +28,7 @@ async function createRoom() {
     busy.value = true;
     try {
         setName(n);
-        const { data } = await axios.post('/familia', { name: n, token: getToken() });
+        const { data } = await axios.post('/familia', { name: n, token: getToken(), game: game.value });
         router.visit(`/familia/${data.code}`);
     } catch (e) {
         error.value = e.response?.data?.message || 'No se pudo crear la sala.';
@@ -60,7 +67,7 @@ async function joinRoom() {
             <div class="fam-intro">
                 <span class="fam-badge"><i class="dot"></i> En vivo · hasta 3 familias</span>
                 <h1>Jugá en <span class="accent">familia</span>,<br />estén donde estén.</h1>
-                <p>Creá una sala, compartí el código y jueguen <b>Dibuja y Adivina</b> en tiempo real: una familia dibuja y las otras adivinan. ¡Gana quien más acierta!</p>
+                <p>Creá una sala, compartí el código y jueguen en tiempo real a <b>Dibuja y Adivina</b>, <b>Trivia</b> o <b>Tutti Frutti</b>. ¡Gana la familia que más puntos suma!</p>
             </div>
 
             <div class="fam-field">
@@ -72,7 +79,12 @@ async function joinRoom() {
                 <div class="fam-card">
                     <span class="fam-card-tag">Anfitrión</span>
                     <h2>Crear una sala</h2>
-                    <p>Creás la sala y recibís un código para compartir con las otras familias.</p>
+                    <p>Elegí un juego (podés cambiarlo después en la sala) y compartí el código.</p>
+                    <div class="fam-games">
+                        <button v-for="(g, key) in GAMES" :key="key" type="button" class="fam-game" :class="{ on: game === key }" @click="game = key">
+                            <span class="fam-game-ic">{{ g.icon }}</span><span class="fam-game-nm">{{ g.name }}</span>
+                        </button>
+                    </div>
                     <button class="btn btn-solid" :disabled="busy" @click="createRoom">Crear sala →</button>
                 </div>
 
@@ -126,6 +138,13 @@ async function joinRoom() {
 .fam-card-tag { font-family: var(--f-anton); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--accent); }
 .fam-card h2 { font-family: var(--f-barlow); font-weight: 800; font-size: 26px; text-transform: uppercase; letter-spacing: .02em; margin: 0; }
 .fam-card p { color: var(--tm); font-size: 14.5px; margin: 0 0 6px; flex: 1; }
+
+.fam-games { display: flex; gap: 6px; margin-bottom: 4px; }
+.fam-game { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; cursor: pointer;
+    background: var(--bg); border: 1px solid var(--hair); color: var(--tp); transition: border-color .15s, background .15s; }
+.fam-game.on { border-color: var(--accent); background: rgba(255,95,0,.1); }
+.fam-game-ic { font-size: 20px; }
+.fam-game-nm { font-family: var(--f-barlow); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; text-align: center; }
 
 .fam-join { display: flex; gap: 8px; }
 .code-input { text-transform: uppercase; letter-spacing: .2em; font-family: var(--f-barlow); font-weight: 700; }
