@@ -46,6 +46,7 @@ class FamilyRoom extends Model
             'total_rounds' => $this->total_rounds,
             'playlist' => $this->playlist ?? [],
             'playlist_pos' => (int) $this->playlist_pos,
+            'kick' => $this->state['kick'] ?? null,   // expulsión pendiente (con cuenta regresiva)
             'round_ends_at' => optional($this->round_ends_at)->toIso8601String(),
             'game_state' => $this->publicGameState(),
             'members' => $this->members->map(fn (FamilyMember $m) => [

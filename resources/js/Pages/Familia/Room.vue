@@ -3,6 +3,9 @@ import { Head, Link } from '@inertiajs/vue3';
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { getEcho, leaveChannel } from '@/echo';
 import { getToken, getName, setName } from '@/familia/session';
+import { useToast } from '@/composables/useToast';
+
+const toast = useToast();
 
 const props = defineProps({ code: String, room: Object, config: Object });
 
@@ -24,6 +27,8 @@ const joinError = ref('');
 const chat = ref([]);
 const now = ref(Date.now());
 const copied = ref(false);
+const confirmClose = ref(false);   // modal de confirmación para cerrar la sala (host)
+let leaving = false;               // evita redirigir dos veces
 // Tanda (playlist) de juegos elegida por el anfitrión, en orden
 const pl = ref(props.room.playlist && props.room.playlist.length ? [...props.room.playlist] : [props.room.game]);
 
@@ -51,6 +56,9 @@ const phase = computed(() => gs.value.phase);
 const reveal = computed(() => gs.value.reveal || null);
 const isMyTurn = computed(() => gs.value.turn != null && gs.value.turn === myId.value);
 const turnName = computed(() => members.value.find((m) => m.id === gs.value.turn)?.name ?? '');
+const kick = computed(() => room.value?.kick || null);
+const kickedMe = computed(() => !!kick.value && kick.value.member_id === myId.value);
+const kickRemaining = computed(() => (kick.value ? Math.max(0, Math.ceil((new Date(kick.value.at).getTime() - now.value) / 1000)) : 0));
 const status = computed(() => room.value?.status);
 const members = computed(() => room.value?.members ?? []);
 const myId = computed(() => me.value?.id ?? null);
@@ -152,8 +160,32 @@ function flipCard(id) {
     axios.post(`/familia/${props.code}/flip`, { token, card: id }).catch(() => {});
 }
 
+// --- Host: expulsar / cerrar ---
+function goHome(msg) {
+    if (leaving) return;
+    leaving = true;
+    if (msg) toast.info(msg);
+    router.visit('/familia');
+}
+function onLeaveClick() {
+    if (isHost.value) { confirmClose.value = true; } else { goHome(); }
+}
+function closeRoom() {
+    confirmClose.value = false;
+    axios.post(`/familia/${props.code}/close`, { token }).catch(() => {});
+    goHome();
+}
+function kickMember(id) {
+    if (!isHost.value) return;
+    axios.post(`/familia/${props.code}/kick`, { token, member: id }).catch(() => {});
+}
+function acceptKick() {
+    axios.post(`/familia/${props.code}/kick-finalize`, { token }).catch(() => {});
+    goHome('Saliste de la sala.');
+}
+
 // ===================== Red / estado =====================
-let channel = null, heartbeat = null, ticker = null, lastTimeoutAt = 0, lastResolveAt = 0, ro = null;
+let channel = null, heartbeat = null, ticker = null, lastTimeoutAt = 0, lastResolveAt = 0, lastKickAt = 0, ro = null;
 
 async function identify() {
     try { const { data } = await axios.post(`/familia/${props.code}/hello`, { token }); room.value = data.room; me.value = data.me; joinNeeded.value = !data.me; } catch (e) { /* noop */ }
@@ -201,6 +233,14 @@ watch(phase, (p) => {
 });
 // La tanda mostrada sigue lo que hay en el server (para todos los participantes).
 watch(() => room.value?.playlist, (v) => { pl.value = (v && v.length) ? [...v] : [room.value?.game].filter(Boolean); });
+// El anfitrión cerró la sala → todos afuera.
+watch(() => room.value?.status, (s) => { if (s === 'closed') goHome('El anfitrión cerró la sala.'); });
+// Me sacaron (ya no figuro entre los participantes) → afuera.
+watch(() => members.value.map((m) => m.id).join(','), () => {
+    if (me.value && room.value?.status !== 'closed' && !members.value.some((m) => m.id === myId.value)) {
+        goHome('Te sacaron de la sala.');
+    }
+});
 watch(() => [isDrawer.value, phase.value, game.value], fetchWord);
 
 // El canvas solo existe en el DOM cuando se está jugando a Pictionary. Cuando
@@ -243,6 +283,11 @@ onMounted(async () => {
             lastResolveAt = now.value;
             axios.post(`/familia/${props.code}/resolve`, { token }).catch(() => {});
         }
+        // Expulsión: el anfitrión la concreta cuando vencen los 5s (si el objetivo no salió antes).
+        if (isHost.value && kick.value && now.value >= new Date(kick.value.at).getTime() && (now.value - lastKickAt > 1500)) {
+            lastKickAt = now.value;
+            axios.post(`/familia/${props.code}/kick-finalize`, { token }).catch(() => {});
+        }
     }, 250);
     flushTimer = setInterval(() => { if (batch.length) flush(); }, 80);
     heartbeat = setInterval(identify, 15000);
@@ -281,7 +326,7 @@ onBeforeUnmount(() => {
                     <span>{{ GAMES[game].icon }} {{ room.round }}/{{ room.total_rounds }}</span>
                     <span class="rm-timer" :class="{ low: remaining <= 10 }">{{ remaining }}s</span>
                 </div>
-                <Link href="/familia" class="rm-leave">Salir</Link>
+                <button class="rm-leave" @click="onLeaveClick">Salir</button>
             </header>
 
             <main class="rm-main">
@@ -515,6 +560,7 @@ onBeforeUnmount(() => {
                             <span class="rm-fam-slot">{{ m.slot }}</span>
                             <span class="rm-fam-name">{{ m.name }}<b v-if="m.is_host" class="rm-host">host</b><b v-if="m.id === gs.drawer_member_id" class="rm-draw">✏️</b></span>
                             <span class="rm-fam-score">{{ m.score }}<small v-if="(room.playlist || []).length > 1 && status === 'playing'" class="rm-fam-gs">+{{ m.game_score }}</small></span>
+                            <button v-if="isHost && !m.is_host" class="rm-kick" title="Sacar de la sala" @click="kickMember(m.id)">✕</button>
                         </div>
                     </div>
                     <div class="rm-chatbox">
@@ -533,6 +579,27 @@ onBeforeUnmount(() => {
                     </div>
                 </aside>
             </main>
+
+            <!-- Te van a sacar (cuenta regresiva de 5s) -->
+            <div v-if="kickedMe" class="fam-overlay">
+                <div class="fam-join-card">
+                    <span class="tag">Atención</span>
+                    <h2>El anfitrión te va a sacar</h2>
+                    <p class="rm-kick-count">Salís en <b>{{ kickRemaining }}</b>s…</p>
+                    <button class="btn btn-solid" @click="acceptKick">Salir ahora</button>
+                </div>
+            </div>
+
+            <!-- Confirmar cerrar la sala (host) -->
+            <div v-if="confirmClose" class="fam-overlay" @click.self="confirmClose = false">
+                <div class="fam-join-card">
+                    <span class="tag">Cerrar sala</span>
+                    <h2>¿Salir y cerrar la sala?</h2>
+                    <p class="rm-close-note">Se cerrará para <b>todos</b> los participantes.</p>
+                    <button class="btn btn-solid" @click="closeRoom">Sí, cerrar la sala</button>
+                    <button class="btn-cancel" @click="confirmClose = false">Cancelar</button>
+                </div>
+            </div>
         </template>
     </div>
 </template>
@@ -720,6 +787,16 @@ input:focus { border-color: var(--accent); }
 .rm-card.up { background: var(--bg); border-color: rgba(255,255,255,.2); }
 .rm-card.found { background: rgba(182,255,46,.14); border-color: rgba(182,255,46,.5); }
 .rm-card-back { font-family: var(--f-anton); font-size: 22px; color: var(--tm); }
+
+/* Host: expulsar / cerrar */
+.rm-kick { margin-left: 6px; width: 22px; height: 22px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: 1px solid var(--hair); color: var(--tm); font-size: 11px; cursor: pointer; }
+.rm-kick:hover { border-color: #ff5f5f; color: #ff5f5f; }
+.rm-kick-count { font-family: var(--f-anton); font-size: 22px; color: var(--tp); margin: 0; }
+.rm-kick-count b { color: #ff5f5f; }
+.rm-close-note { color: var(--tm); font-size: 14px; margin: 0; }
+.rm-close-note b { color: #ff7a6b; }
+.btn-cancel { background: transparent; border: 1px solid var(--hair); color: var(--ts); font-family: var(--f-barlow); font-weight: 700; text-transform: uppercase; letter-spacing: .06em; font-size: 14px; padding: 10px; cursor: pointer; }
+.btn-cancel:hover { color: var(--tp); border-color: var(--tp); }
 .rm-word { display: flex; flex-wrap: wrap; gap: 10px 12px; justify-content: center; font-family: var(--f-anton); font-size: clamp(30px, 7vw, 44px); }
 .rm-slot { min-width: 28px; text-align: center; text-transform: uppercase; color: var(--ts); line-height: 1.1; }
 .rm-slot.on { color: var(--lime); }

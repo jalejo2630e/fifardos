@@ -720,6 +720,94 @@ class FamiliaController extends Controller
         });
     }
 
+    // ---------------------------------------------------------------- host: expulsar / cerrar
+    public function kick(Request $request, string $code)
+    {
+        $data = $request->validate(['token' => 'required|string|max:64', 'member' => 'required|integer']);
+
+        return DB::transaction(function () use ($data, $code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room) {
+                return response()->json(['message' => 'not found'], 404);
+            }
+            $me = $this->getMember($room, $data['token']);
+            if (! $me || ! $me->is_host) {
+                return response()->json(['message' => 'solo el anfitrión'], 403);
+            }
+            $target = $room->members()->find((int) $data['member']);
+            if (! $target || $target->is_host || $target->id === $me->id) {
+                return response()->json(['ok' => false]);
+            }
+            $state = $room->state ?? [];
+            $state['kick'] = ['member_id' => $target->id, 'name' => $target->name, 'at' => now()->addSeconds(5)->toIso8601String()];
+            $room->update(['state' => $state]);
+            $this->emit(new RoomUpdated($room->fresh('members')));
+            $this->emit(new ChatPosted($room->code, 'system', "El anfitrión va a sacar a {$target->name}…"));
+
+            return response()->json(['ok' => true]);
+        });
+    }
+
+    public function kickFinalize(Request $request, string $code)
+    {
+        $request->validate(['token' => 'required|string|max:64']);
+
+        return DB::transaction(function () use ($request, $code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room) {
+                return response()->json(['ok' => false]);
+            }
+            $state = $room->state ?? [];
+            $kick = $state['kick'] ?? null;
+            if (! $kick) {
+                return response()->json(['ok' => false]);
+            }
+            $me = $this->getMember($room, $request->token);
+            $isTarget = $me && $me->id === $kick['member_id'];   // el propio expulsado acepta salir
+            $due = \Illuminate\Support\Carbon::parse($kick['at'])->lte(now()->addSecond());
+            if (! $isTarget && ! $due) {
+                return response()->json(['ok' => false]);   // todavía tiene sus 5s
+            }
+            $target = $room->members()->find($kick['member_id']);
+            $name = $target->name ?? 'Alguien';
+            if ($target) {
+                $target->delete();
+            }
+            unset($state['kick']);
+            if (($state['turn'] ?? null) === $kick['member_id']) {
+                $state['turn'] = $this->nextHangmanTurn($room->members()->get(), $kick['member_id']);
+            }
+            $room->update(['state' => $state]);
+            $this->emit(new RoomUpdated($room->fresh('members')));
+            $this->emit(new ChatPosted($room->code, 'system', "{$name} salió de la sala."));
+
+            return response()->json(['ok' => true]);
+        });
+    }
+
+    public function close(Request $request, string $code)
+    {
+        $request->validate(['token' => 'required|string|max:64']);
+
+        return DB::transaction(function () use ($request, $code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room) {
+                return response()->json(['ok' => true]);
+            }
+            $me = $this->getMember($room, $request->token);
+            if (! $me || ! $me->is_host) {
+                return response()->json(['message' => 'solo el anfitrión'], 403);
+            }
+            $room->update(['status' => 'closed']);
+            $room->load('members');
+            $this->emit(new RoomUpdated($room));   // status 'closed' → todos redirigen
+            $this->emit(new ChatPosted($room->code, 'system', 'El anfitrión cerró la sala.'));
+            $room->delete();   // libera la DB (el snapshot ya viajó en el evento)
+
+            return response()->json(['ok' => true]);
+        });
+    }
+
     public function leave(Request $request, string $code)
     {
         $request->validate(['token' => 'required|string|max:64']);
