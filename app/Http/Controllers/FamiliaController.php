@@ -16,7 +16,7 @@ use Inertia\Inertia;
 class FamiliaController extends Controller
 {
     private const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-    private const GAMES = ['pictionary', 'trivia', 'tuttifrutti'];
+    private const GAMES = ['pictionary', 'trivia', 'tuttifrutti', 'hangman'];
 
     // ---------------------------------------------------------------- páginas
     public function index()
@@ -268,11 +268,11 @@ class FamiliaController extends Controller
         $total = match ($room->game) {
             'trivia' => min((int) config('familia.trivia.rounds'), count(config('familia.trivia.questions'))),
             'tuttifrutti' => (int) config('familia.tuttifrutti.rounds'),
+            'hangman' => (int) config('familia.hangman.rounds'),
             default => $count * (int) config('familia.pictionary.rounds_per_family'),
         };
-        if ($resetScores) {
-            $room->members()->update(['score' => 0]);
-        }
+        // game_score se reinicia cada partida; score (total de la tanda) solo al empezar la tanda.
+        $room->members()->update($resetScores ? ['score' => 0, 'game_score' => 0] : ['game_score' => 0]);
         $room->update([
             'status' => 'playing',
             'round' => 0,
@@ -301,6 +301,8 @@ class FamiliaController extends Controller
                 $this->finishValidate($room);
             } elseif ($phase === 'reveal') {
                 $this->advance($room);
+            } elseif ($phase === 'gameover') {
+                $this->advanceToNextGame($room);
             }
 
             return response()->json(['ok' => true]);
@@ -378,9 +380,9 @@ class FamiliaController extends Controller
             if ($this->normalize($data['text']) === $this->normalize($room->word)) {
                 $order = count($correct) + 1;
                 $points = max(1, 4 - $order);
-                $me->increment('score', $points);
+                $this->award($me, $points);
                 if ($room->drawer) {
-                    $room->drawer->increment('score', 1);
+                    $this->award($room->drawer, 1);
                 }
                 $correct[] = $me->id;
                 $state['correct'] = $correct;
@@ -428,7 +430,7 @@ class FamiliaController extends Controller
                 $secs = max(1, (int) config('familia.trivia.round_seconds'));
                 $remain = $room->round_ends_at ? max(0, $room->round_ends_at->getTimestamp() - now()->getTimestamp()) : 0;
                 $pts = 2 + (int) round(($remain / $secs) * 3); // 2..5 según rapidez
-                $me->increment('score', $pts);
+                $this->award($me, $pts);
             }
             $answers[$me->id] = ['index' => (int) $data['index'], 'correct' => $isCorrect, 'pts' => $pts];
             $state['answers'] = $answers;
@@ -496,6 +498,127 @@ class FamiliaController extends Controller
         });
     }
 
+    // ---------------------------------------------------------------- Ahorcado
+    public function letter(Request $request, string $code)
+    {
+        $data = $request->validate(['token' => 'required|string|max:64', 'letter' => 'required|string|max:2']);
+
+        return DB::transaction(function () use ($data, $code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room || $room->status !== 'playing' || $room->game !== 'hangman') {
+                return response()->json(['ok' => false]);
+            }
+            $state = $room->state ?? [];
+            if (($state['phase'] ?? null) !== 'play') {
+                return response()->json(['ok' => false]);
+            }
+            $me = $this->getMember($room, $data['token']);
+            if (! $me) {
+                return response()->json(['message' => 'forbidden'], 403);
+            }
+            $ch = mb_strtolower(trim($data['letter']));
+            if (mb_strlen($ch) !== 1) {
+                return response()->json(['ok' => false]);
+            }
+            $guessed = $state['guessed'] ?? [];
+            if (in_array($ch, $guessed, true)) {
+                return response()->json(['ok' => true, 'already' => true]);
+            }
+            $guessed[] = $ch;
+            $state['guessed'] = $guessed;
+
+            $wordLc = mb_strtolower($room->word);
+            $hits = 0;
+            foreach (mb_str_split($wordLc) as $c) {
+                if ($c === $ch) {
+                    $hits++;
+                }
+            }
+
+            if ($hits > 0) {
+                $this->award($me, $hits);   // +1 por letra revelada
+                $complete = true;
+                foreach (mb_str_split($wordLc) as $c) {
+                    if ($c !== ' ' && ! in_array($c, $guessed, true)) {
+                        $complete = false;
+                        break;
+                    }
+                }
+                if ($complete) {
+                    $this->award($me, 2);   // bonus por completar
+                    $state['solved'] = true;
+                }
+                $room->update(['state' => $state]);
+                $room->load('members');
+                $this->emit(new ChatPosted($room->code, 'correct', "{$me->name}: «" . mb_strtoupper($ch) . "» ✓ (+{$hits})", $me->name, $me->id));
+                $this->emit(new RoomUpdated($room));
+                if ($complete) {
+                    $this->finishPlay($room);
+                }
+            } else {
+                $state['misses'] = (int) ($state['misses'] ?? 0) + 1;
+                $room->update(['state' => $state]);
+                $room->load('members');
+                $this->emit(new ChatPosted($room->code, 'guess', mb_strtoupper($ch) . ' ✗', $me->name, $me->id));
+                $this->emit(new RoomUpdated($room));
+                if ($state['misses'] >= (int) config('familia.hangman.max_misses')) {
+                    $this->finishPlay($room);
+                }
+            }
+
+            return response()->json(['ok' => true, 'hit' => $hits > 0]);
+        });
+    }
+
+    public function solve(Request $request, string $code)
+    {
+        $data = $request->validate(['token' => 'required|string|max:64', 'text' => 'required|string|max:60']);
+
+        return DB::transaction(function () use ($data, $code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room || $room->status !== 'playing' || $room->game !== 'hangman') {
+                return response()->json(['ok' => false]);
+            }
+            $state = $room->state ?? [];
+            if (($state['phase'] ?? null) !== 'play') {
+                return response()->json(['ok' => false]);
+            }
+            $me = $this->getMember($room, $data['token']);
+            if (! $me) {
+                return response()->json(['message' => 'forbidden'], 403);
+            }
+
+            if ($this->normalize($data['text']) === $this->normalize($room->word)) {
+                $letters = [];
+                foreach (mb_str_split(mb_strtolower($room->word)) as $c) {
+                    if ($c !== ' ') {
+                        $letters[$c] = true;
+                    }
+                }
+                $state['guessed'] = array_keys($letters);
+                $state['solved'] = true;
+                $this->award($me, 5);   // resolver la palabra completa
+                $room->update(['state' => $state]);
+                $room->load('members');
+                $this->emit(new ChatPosted($room->code, 'correct', "¡{$me->name} resolvió la palabra! (+5)", $me->name, $me->id));
+                $this->finishPlay($room);
+
+                return response()->json(['ok' => true, 'correct' => true]);
+            }
+
+            $state['misses'] = (int) ($state['misses'] ?? 0) + 1;
+            $room->update(['state' => $state]);
+            $room->load('members');
+            $this->emit(new ChatPosted($room->code, 'guess', $data['text'] . ' ✗', $me->name, $me->id));
+            $this->emit(new RoomUpdated($room));
+            if ($state['misses'] >= (int) config('familia.hangman.max_misses')) {
+                $this->finishPlay($room);
+            }
+
+            return response()->json(['ok' => true, 'correct' => false]);
+        });
+    }
+
     public function leave(Request $request, string $code)
     {
         $request->validate(['token' => 'required|string|max:64']);
@@ -550,7 +673,7 @@ class FamiliaController extends Controller
             $update['word'] = (string) $q['answer'];
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.trivia.round_seconds'));
             $sys = "Pregunta {$next}/{$room->total_rounds}";
-        } else { // tuttifrutti
+        } elseif ($room->game === 'tuttifrutti') {
             $letter = $this->pickOne(config('familia.tuttifrutti.letters'), $used);
             $used[] = $letter;
             $state['letter'] = $letter;
@@ -558,6 +681,14 @@ class FamiliaController extends Controller
             $state['submissions'] = [];
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.tuttifrutti.round_seconds'));
             $sys = "Ronda {$next}/{$room->total_rounds} — letra «{$letter}»";
+        } else { // hangman
+            $word = $this->pickOne(config('familia.hangman.words'), $used);
+            $used[] = $word;
+            $state['guessed'] = [];
+            $state['misses'] = 0;
+            $update['word'] = $word;   // secreta (no se expone en el snapshot)
+            $update['round_ends_at'] = now()->addSeconds((int) config('familia.hangman.round_seconds'));
+            $sys = "Ronda {$next}/{$room->total_rounds} — ¡a adivinar la palabra!";
         }
 
         $state['used'] = $used;
@@ -601,6 +732,8 @@ class FamiliaController extends Controller
                     'pts' => $answers[$m->id]['pts'] ?? 0,
                 ])->values(),
             ];
+        } else { // hangman
+            $reveal = ['word' => $room->word, 'solved' => (bool) ($state['solved'] ?? false)];
         }
 
         $state['phase'] = 'reveal';
@@ -628,40 +761,86 @@ class FamiliaController extends Controller
 
     private function endGame(FamilyRoom $room): void
     {
+        $room->load('members');
         $playlist = $room->playlist ?: [];
         $pos = (int) $room->playlist_pos;
+        $multi = count($playlist) > 1;
+        $hasNext = count($playlist) > $pos + 1;
 
-        // ¿Hay otro juego en la tanda? → encadenar (los puntajes se acumulan)
-        if (count($playlist) > $pos + 1) {
+        $gamePodium = $this->podium($room->members, 'game_score');
+        $gameWinner = $this->winnerName($room->members, 'game_score');
+
+        // ¿Hay otro juego en la tanda? → intermedio con el ganador de la partida, luego sigue
+        if ($hasNext) {
             $nextGame = $playlist[$pos + 1];
-            $room->update(['playlist_pos' => $pos + 1, 'game' => $nextGame, 'word' => null, 'drawer_member_id' => null]);
-            $this->emit(new ChatPosted($room->code, 'system', 'Cambiamos de juego → ' . $this->gameLabel($nextGame) . ' (siguen sumando puntos).'));
-            $this->beginGame($room, resetScores: false);
+            $room->update([
+                'status' => 'playing', 'word' => null, 'drawer_member_id' => null,
+                'round_ends_at' => now()->addSeconds(7),
+                'state' => ['phase' => 'gameover', 'result' => [
+                    'label' => $this->gameLabel($room->game),
+                    'winner' => $gameWinner,
+                    'podium' => $gamePodium,
+                    'next' => $this->gameLabel($nextGame),
+                    'final' => false,
+                ]],
+            ]);
+            $room->load('members');
+            $this->emit(new RoomUpdated($room));
+            $this->emit(new ChatPosted($room->code, 'system', '🏆 ' . $this->gameLabel($room->game) . ': ' . $gameWinner));
             return;
         }
 
-        // Fin de la tanda → resultado general
+        // Última partida → fin de la tanda (total)
+        $totalWinner = $this->winnerName($room->members, 'score');
         $room->update([
-            'status' => 'ended',
-            'word' => null,
-            'drawer_member_id' => null,
-            'round_ends_at' => null,
-            'state' => ['phase' => 'ended'],
+            'status' => 'ended', 'word' => null, 'drawer_member_id' => null, 'round_ends_at' => null,
+            'state' => ['phase' => 'ended', 'result' => [
+                'label' => $multi ? 'Total de la tanda' : $this->gameLabel($room->game),
+                'winner' => $multi ? $totalWinner : $gameWinner,
+                'podium' => $this->podium($room->members, $multi ? 'score' : 'game_score'),
+                'final' => true,
+            ]],
         ]);
         $room->load('members');
-        $top = $room->members->sortByDesc('score')->first();
-        $winners = $room->members->where('score', optional($top)->score);
-        $msg = $winners->count() > 1
-            ? '¡Empate! ' . $winners->pluck('name')->join(', ')
-            : '🏆 ¡Ganó ' . optional($top)->name . '!';
-
         $this->emit(new RoomUpdated($room));
-        $this->emit(new ChatPosted($room->code, 'system', $msg));
+        if ($multi) {
+            $this->emit(new ChatPosted($room->code, 'system', '🏆 ' . $this->gameLabel($room->game) . ': ' . $gameWinner));
+        }
+        $this->emit(new ChatPosted($room->code, 'system', '🏆 ' . ($multi ? 'TOTAL' : 'Ganador') . ': ' . ($multi ? $totalWinner : $gameWinner)));
+    }
+
+    private function advanceToNextGame(FamilyRoom $room): void
+    {
+        $playlist = $room->playlist ?: [];
+        $pos = (int) $room->playlist_pos;
+        if (count($playlist) <= $pos + 1) {
+            return;
+        }
+        $room->update(['playlist_pos' => $pos + 1, 'game' => $playlist[$pos + 1]]);
+        $this->beginGame($room, resetScores: false);
+    }
+
+    private function podium($members, string $field): array
+    {
+        return $members->sortByDesc($field)->values()
+            ->map(fn ($m) => ['name' => $m->name, 'pts' => (int) $m->{$field}])->all();
+    }
+
+    private function winnerName($members, string $field): string
+    {
+        if ($members->isEmpty()) {
+            return '—';
+        }
+        $max = (int) $members->max($field);
+        $top = $members->where($field, $max);
+        return $top->count() > 1
+            ? 'Empate: ' . $top->pluck('name')->join(', ') . " ({$max})"
+            : optional($top->first())->name . " ({$max})";
     }
 
     private function gameLabel(string $g): string
     {
-        return ['pictionary' => 'Dibuja y Adivina', 'trivia' => 'Trivia', 'tuttifrutti' => 'Tutti Frutti'][$g] ?? $g;
+        return ['pictionary' => 'Dibuja y Adivina', 'trivia' => 'Trivia', 'tuttifrutti' => 'Tutti Frutti', 'hangman' => 'Ahorcado'][$g] ?? $g;
     }
 
     /** Arma la grilla de respuestas y abre la fase de validación (votación). */
@@ -758,7 +937,7 @@ class FamiliaController extends Controller
                 ];
             }
             if ($m) {
-                $m->increment('score', $total);
+                $this->award($m, $total);
             }
             $rows[] = ['member_id' => $e['owner_id'], 'name' => $e['name'], 'answers' => $rowAnswers, 'total' => $total];
         }
@@ -818,6 +997,13 @@ class FamiliaController extends Controller
             $pending = broadcast($event);
             unset($pending);
         }, report: false);
+    }
+
+    /** Suma puntos al total de la tanda (score) y al de la partida actual (game_score). */
+    private function award(FamilyMember $m, int $pts): void
+    {
+        $m->increment('score', $pts);
+        $m->increment('game_score', $pts);
     }
 
     private function findRoom(string $code, bool $lock = false): ?FamilyRoom

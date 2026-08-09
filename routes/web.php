@@ -128,6 +128,8 @@ Route::prefix('familia')->group(function () {
     Route::post('/{code}/submit', [FamiliaController::class, 'submit'])->whereAlphaNumeric('code');
     Route::post('/{code}/stop', [FamiliaController::class, 'stop'])->whereAlphaNumeric('code');
     Route::post('/{code}/vote', [FamiliaController::class, 'vote'])->whereAlphaNumeric('code');
+    Route::post('/{code}/letter', [FamiliaController::class, 'letter'])->whereAlphaNumeric('code');
+    Route::post('/{code}/solve', [FamiliaController::class, 'solve'])->whereAlphaNumeric('code');
     Route::post('/{code}/timeout', [FamiliaController::class, 'timeout'])->whereAlphaNumeric('code');
     Route::post('/{code}/leave', [FamiliaController::class, 'leave'])->whereAlphaNumeric('code');
 });

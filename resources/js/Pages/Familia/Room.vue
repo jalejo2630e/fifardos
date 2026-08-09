@@ -10,7 +10,9 @@ const GAMES = {
     pictionary: { name: 'Dibuja y Adivina', icon: '🎨', desc: 'Un participante dibuja y los otros adivinan.' },
     trivia: { name: 'Trivia', icon: '❓', desc: 'Respondan la pregunta lo más rápido posible.' },
     tuttifrutti: { name: 'Tutti Frutti', icon: '🔤', desc: 'Completá las categorías con la letra que salga.' },
+    hangman: { name: 'Ahorcado', icon: '🔠', desc: 'Adiviná la palabra letra por letra.' },
 };
+const HANG_KEYS = 'A B C D E F G H I J K L M N Ñ O P Q R S T U V W X Y Z'.split(' ');
 
 const token = getToken();
 const room = ref(props.room);
@@ -117,6 +119,28 @@ function toggleVote(owner, cat) {
     axios.post(`/familia/${props.code}/vote`, { token, owner, cat, accept: !willReject }).catch(() => {});
 }
 
+// --- Ahorcado ---
+const solveText = ref('');
+const pendingKeys = reactive(new Set());   // teclas recién tocadas (feedback instantáneo)
+function letterUsed(k) { const lc = k.toLowerCase(); return (gs.value.guessed || []).includes(lc) || pendingKeys.has(lc); }
+function letterClass(k) {
+    if (!letterUsed(k)) return '';
+    const lc = k.toLowerCase();
+    return (gs.value.masked || []).some((c) => (c || '').toLowerCase() === lc) ? 'hit' : 'miss';
+}
+function guessLetter(k) {
+    const lc = k.toLowerCase();
+    if (letterUsed(k)) return;
+    pendingKeys.add(lc);
+    axios.post(`/familia/${props.code}/letter`, { token, letter: lc }).catch(() => {});
+}
+function solveWord() {
+    const t = solveText.value.trim();
+    if (!t) return;
+    solveText.value = '';
+    axios.post(`/familia/${props.code}/solve`, { token, text: t }).catch(() => {});
+}
+
 // ===================== Red / estado =====================
 let channel = null, heartbeat = null, ticker = null, lastTimeoutAt = 0, ro = null;
 
@@ -156,6 +180,8 @@ watch(() => room.value?.round, () => {
     myAnswer.value = null;
     Object.keys(tf).forEach((k) => delete tf[k]);
     myRejects.value = [];
+    pendingKeys.clear();
+    solveText.value = '';
     fetchWord();
 });
 // Al entrar a validación, sembramos mis rechazos desde el server (para reconexión).
@@ -266,8 +292,11 @@ onBeforeUnmount(() => {
 
                     <!-- ============ FIN ============ -->
                     <div v-else-if="status === 'ended'" class="rm-panel">
-                        <h2 v-if="winner">{{ winner.tie ? '¡Empate!' : '🏆 ¡Ganó ' + winner.names[0] + '!' }}</h2>
-                        <p v-if="winner">{{ winner.names.join(', ') }} · {{ winner.score }} pts</p>
+                        <span class="rm-again-lbl">{{ gs.result?.label || 'Resultado' }}</span>
+                        <h2>🏆 {{ gs.result?.winner || (winner ? winner.names[0] : '') }}</h2>
+                        <ol class="rm-podium" v-if="gs.result?.podium?.length">
+                            <li v-for="(p, i) in gs.result.podium" :key="i"><span>{{ i + 1 }}. {{ p.name }}</span><b>{{ p.pts }}</b></li>
+                        </ol>
                         <template v-if="isHost">
                             <p class="rm-again-lbl">Armá la próxima tanda:</p>
                             <div class="rm-games">
@@ -280,6 +309,16 @@ onBeforeUnmount(() => {
                             <button class="btn btn-solid" :disabled="!pl.length" @click="startGame">{{ pl.length > 1 ? `Jugar tanda (${pl.length}) →` : 'Jugar de nuevo →' }}</button>
                         </template>
                         <p v-else class="muted">El anfitrión arma la próxima tanda…</p>
+                    </div>
+
+                    <!-- ============ INTERMEDIO ENTRE JUEGOS (tanda) ============ -->
+                    <div v-else-if="phase === 'gameover'" class="rm-panel">
+                        <span class="rm-again-lbl">Fin de {{ gs.result?.label }}</span>
+                        <h2>🏆 {{ gs.result?.winner }}</h2>
+                        <ol class="rm-podium" v-if="gs.result?.podium?.length">
+                            <li v-for="(p, i) in gs.result.podium" :key="i"><span>{{ i + 1 }}. {{ p.name }}</span><b>{{ p.pts }}</b></li>
+                        </ol>
+                        <p class="muted">Sigue <b>{{ gs.result?.next }}</b> en {{ remaining }}s…</p>
                     </div>
 
                     <!-- ============ PICTIONARY ============ -->
@@ -383,6 +422,31 @@ onBeforeUnmount(() => {
                             </div>
                         </div>
                     </template>
+
+                    <!-- ============ AHORCADO ============ -->
+                    <template v-else-if="game === 'hangman'">
+                        <div v-if="phase === 'play'" class="rm-hang">
+                            <div class="rm-hang-top">
+                                <span class="rm-hang-misses">Errores: <b :class="{ danger: gs.misses >= gs.max_misses - 1 }">{{ gs.misses }}/{{ gs.max_misses }}</b></span>
+                                <span class="rm-hang-lives">{{ '🟢'.repeat(Math.max(0, gs.max_misses - gs.misses)) }}{{ '⚪'.repeat(gs.misses) }}</span>
+                            </div>
+                            <div class="rm-word">
+                                <span v-for="(c, i) in gs.masked" :key="i" class="rm-slot" :class="{ gap: c === ' ', on: c && c !== ' ' }">{{ c === ' ' ? '' : (c || '') }}</span>
+                            </div>
+                            <div class="rm-keys">
+                                <button v-for="k in HANG_KEYS" :key="k" class="rm-key" :class="letterClass(k)" :disabled="letterUsed(k)" @click="guessLetter(k)">{{ k }}</button>
+                            </div>
+                            <form class="rm-solve" @submit.prevent="solveWord">
+                                <input v-model="solveText" maxlength="40" placeholder="¿Sabés la palabra? Escribila…" />
+                                <button class="btn btn-solid" type="submit">Resolver</button>
+                            </form>
+                        </div>
+                        <div v-else class="rm-panel">
+                            <h2>{{ reveal?.solved ? '¡Adivinada!' : 'Se acabó' }}</h2>
+                            <p>La palabra era <b class="word">{{ reveal?.word }}</b></p>
+                            <p class="rv-count">Siguiente en <b>{{ remaining }}</b>s</p>
+                        </div>
+                    </template>
                 </section>
 
                 <!-- Sidebar -->
@@ -392,7 +456,7 @@ onBeforeUnmount(() => {
                         <div v-for="m in members" :key="m.id" class="rm-fam" :class="{ drawing: m.id === gs.drawer_member_id, off: !m.online }">
                             <span class="rm-fam-slot">{{ m.slot }}</span>
                             <span class="rm-fam-name">{{ m.name }}<b v-if="m.is_host" class="rm-host">host</b><b v-if="m.id === gs.drawer_member_id" class="rm-draw">✏️</b></span>
-                            <span class="rm-fam-score">{{ m.score }}</span>
+                            <span class="rm-fam-score">{{ m.score }}<small v-if="(room.playlist || []).length > 1 && status === 'playing'" class="rm-fam-gs">+{{ m.game_score }}</small></span>
                         </div>
                     </div>
                     <div class="rm-chatbox">
@@ -568,10 +632,39 @@ input:focus { border-color: var(--accent); }
 .rm-guess { display: flex; gap: 8px; margin-top: 10px; }
 .rm-guess .btn { padding: 10px 16px; font-size: 14px; }
 
+/* Podio (fin de partida / total) */
+.rm-podium { list-style: none; margin: 6px 0; padding: 0; width: 100%; max-width: 340px; display: flex; flex-direction: column; gap: 4px; }
+.rm-podium li { display: flex; justify-content: space-between; padding: 8px 12px; background: var(--card2); border: 1px solid var(--hair); }
+.rm-podium li:first-child { border-color: var(--accent); background: rgba(255,95,0,.1); }
+.rm-podium b { font-family: var(--f-anton); color: var(--lime); }
+.rm-fam-gs { font-family: var(--f-body); font-size: 11px; color: var(--accent); margin-left: 4px; }
+
+/* Ahorcado */
+.rm-hang { background: var(--card); border: 1px solid var(--hair); padding: 20px; display: flex; flex-direction: column; gap: 18px; align-items: center; }
+.rm-hang-top { width: 100%; display: flex; justify-content: space-between; align-items: center; font-family: var(--f-barlow); font-weight: 700; text-transform: uppercase; font-size: 14px; color: var(--ts); }
+.rm-hang-misses b { font-family: var(--f-anton); color: var(--tp); }
+.rm-hang-misses b.danger { color: #ff5f5f; }
+.rm-hang-lives { letter-spacing: 2px; font-size: 12px; }
+.rm-word { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.rm-slot { width: 34px; height: 44px; display: inline-flex; align-items: flex-end; justify-content: center; border-bottom: 3px solid var(--hair); font-family: var(--f-anton); font-size: 28px; text-transform: uppercase; }
+.rm-slot.on { border-bottom-color: var(--lime); color: var(--tp); }
+.rm-slot.gap { border-bottom: none; width: 14px; }
+.rm-keys { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; width: 100%; max-width: 520px; }
+.rm-key { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--card2); border: 1px solid var(--hair); color: var(--tp); font-family: var(--f-barlow); font-weight: 700; font-size: 16px; cursor: pointer; text-transform: uppercase; transition: all .12s; }
+.rm-key:hover:not(:disabled) { border-color: var(--accent); }
+.rm-key:disabled { cursor: default; }
+.rm-key.hit { background: rgba(182,255,46,.18); border-color: rgba(182,255,46,.5); color: var(--lime); }
+.rm-key.miss { background: rgba(255,95,95,.14); border-color: rgba(255,95,95,.4); color: #ff7a6b; opacity: .7; }
+.rm-solve { display: flex; gap: 8px; width: 100%; max-width: 520px; }
+.rm-solve input { flex: 1; }
+.rm-solve .btn { padding: 12px 18px; font-size: 15px; }
+
 @media (max-width: 900px) {
     .rm-main { grid-template-columns: 1fr; }
     .rm-opts { grid-template-columns: 1fr; }
     .rm-games { grid-template-columns: 1fr; }
     .rm-chat { height: 160px; }
+    .rm-keys { grid-template-columns: repeat(7, 1fr); }
+    .rm-slot { width: 26px; height: 36px; font-size: 22px; }
 }
 </style>

@@ -12,3 +12,8 @@ Artisan::command('inspire', function () {
 Schedule::command('tournaments:send-reminders')
     ->everyMinute()
     ->withoutOverlapping();
+
+// Limpiar salas de minijuegos inactivas (evita acumular filas en la DB).
+Schedule::command('familia:prune')
+    ->hourly()
+    ->withoutOverlapping();

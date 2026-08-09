@@ -53,6 +53,7 @@ class FamilyRoom extends Model
                 'name' => $m->name,
                 'slot' => $m->slot,
                 'score' => $m->score,
+                'game_score' => (int) $m->game_score,
                 'is_host' => (bool) $m->is_host,
                 'online' => $m->last_seen_at && $m->last_seen_at->gt(now()->subSeconds(30)),
             ])->values(),
@@ -71,6 +72,9 @@ class FamilyRoom extends Model
 
         if ($phase === 'reveal') {
             $out['reveal'] = $s['reveal'] ?? null;  // el resultado sí es público
+        }
+        if ($phase === 'gameover' || $phase === 'ended') {
+            $out['result'] = $s['result'] ?? null;  // podio de la partida / total de la tanda
         }
 
         if ($this->game === 'pictionary') {
@@ -95,6 +99,24 @@ class FamilyRoom extends Model
                 $out['categories'] = $s['categories'] ?? [];
                 $out['entries'] = $s['entries'] ?? [];       // respuestas de todas las familias (públicas)
                 $out['votes'] = (object) ($s['votes'] ?? []); // { voterId: ["owner:cat", ...] }
+            }
+        } elseif ($this->game === 'hangman') {
+            if ($phase === 'play') {
+                $guessed = $s['guessed'] ?? [];
+                $masked = [];
+                foreach (mb_str_split((string) $this->word) as $ch) {
+                    if ($ch === ' ') {
+                        $masked[] = ' ';
+                    } elseif (in_array(mb_strtolower($ch), $guessed, true)) {
+                        $masked[] = $ch;   // letra ya adivinada → visible
+                    } else {
+                        $masked[] = '';    // oculta
+                    }
+                }
+                $out['masked'] = $masked;
+                $out['guessed'] = $guessed;
+                $out['misses'] = (int) ($s['misses'] ?? 0);
+                $out['max_misses'] = (int) config('familia.hangman.max_misses');
             }
         }
 

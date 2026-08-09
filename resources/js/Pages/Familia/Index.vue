@@ -7,6 +7,7 @@ const GAMES = {
     pictionary: { icon: '🎨', name: 'Dibuja y Adivina' },
     trivia: { icon: '❓', name: 'Trivia' },
     tuttifrutti: { icon: '🔤', name: 'Tutti Frutti' },
+    hangman: { icon: '🔠', name: 'Ahorcado' },
 };
 
 const name = ref('');
