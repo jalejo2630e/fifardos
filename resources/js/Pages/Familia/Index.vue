@@ -65,7 +65,7 @@ async function joinRoom() {
 
         <main class="fam-main">
             <div class="fam-intro">
-                <span class="fam-badge"><i class="dot"></i> En vivo · hasta 3 participantes</span>
+                <span class="fam-badge"><i class="dot"></i> En vivo · hasta 10 participantes</span>
                 <h1>Jugá a los <span class="accent">minijuegos</span>,<br />estén donde estén.</h1>
                 <p>Creá una sala, compartí el código y jueguen en tiempo real a <b>Dibuja y Adivina</b>, <b>Trivia</b> o <b>Tutti Frutti</b>. ¡Gana el participante que más puntos suma!</p>
             </div>

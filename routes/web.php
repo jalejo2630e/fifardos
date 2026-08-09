@@ -116,6 +116,7 @@ Route::prefix('familia')->group(function () {
     Route::get('/{code}', [FamiliaController::class, 'room'])->whereAlphaNumeric('code')->name('familia.room');
     Route::post('/{code}/join', [FamiliaController::class, 'join'])->whereAlphaNumeric('code')->name('familia.join');
     Route::post('/{code}/game', [FamiliaController::class, 'setGame'])->whereAlphaNumeric('code');
+    Route::post('/{code}/playlist', [FamiliaController::class, 'setPlaylist'])->whereAlphaNumeric('code');
     Route::post('/{code}/hello', [FamiliaController::class, 'hello'])->whereAlphaNumeric('code');
     Route::get('/{code}/me', [FamiliaController::class, 'me'])->whereAlphaNumeric('code');
     Route::get('/{code}/word', [FamiliaController::class, 'word'])->whereAlphaNumeric('code');

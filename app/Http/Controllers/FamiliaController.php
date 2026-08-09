@@ -25,7 +25,7 @@ class FamiliaController extends Controller
             'seo' => [
                 'title' => 'FIFARDOS Minijuegos — Jugá en vivo desde cualquier lugar',
                 'description' => 'Creá una sala, compartí el código y jugá Dibuja y Adivina, Trivia o Tutti Frutti '
-                    . 'con hasta 3 participantes desde cualquier parte del mundo, en tiempo real y gratis.',
+                    . 'con hasta 10 participantes desde cualquier parte del mundo, en tiempo real y gratis.',
                 'type' => 'website',
             ],
         ]);
@@ -100,7 +100,7 @@ class FamiliaController extends Controller
                 return response()->json(['message' => 'La partida ya empezó.'], 422);
             }
             if ($room->members()->count() >= config('familia.max_families')) {
-                return response()->json(['message' => 'La sala está llena (máximo 3 participantes).'], 422);
+                return response()->json(['message' => 'La sala está llena (máximo ' . config('familia.max_families') . ' participantes).'], 422);
             }
 
             $usedSlots = $room->members()->pluck('slot')->all();
@@ -203,39 +203,83 @@ class FamiliaController extends Controller
     // ---------------------------------------------------------------- inicio / ciclo
     public function start(Request $request, string $code)
     {
-        $request->validate(['token' => 'required|string|max:64']);
+        $data = $request->validate([
+            'token' => 'required|string|max:64',
+            'games' => 'nullable|array|min:1|max:3',
+            'games.*' => 'in:' . implode(',', self::GAMES),
+        ]);
 
-        return DB::transaction(function () use ($request, $code) {
+        return DB::transaction(function () use ($data, $code) {
             $room = $this->findRoom($code, lock: true);
             if (! $room) {
                 return response()->json(['message' => 'not found'], 404);
             }
-            $me = $this->getMember($room, $request->token);
+            $me = $this->getMember($room, $data['token']);
             if (! $me || ! $me->is_host) {
                 return response()->json(['message' => 'solo el anfitrión puede empezar'], 403);
             }
-            $count = $room->members()->count();
-            if ($count < config('familia.min_families')) {
+            if ($room->members()->count() < config('familia.min_families')) {
                 return response()->json(['message' => 'Se necesitan al menos 2 participantes.'], 422);
             }
 
-            $total = match ($room->game) {
-                'trivia' => min((int) config('familia.trivia.rounds'), count(config('familia.trivia.questions'))),
-                'tuttifrutti' => (int) config('familia.tuttifrutti.rounds'),
-                default => $count * (int) config('familia.pictionary.rounds_per_family'),
-            };
+            // Tanda elegida (1 a 3 juegos, en orden); respaldo: la guardada o el juego actual.
+            $playlist = ! empty($data['games'])
+                ? array_values(array_unique($data['games']))
+                : ($room->playlist ?: [$room->game]);
 
-            $room->members()->update(['score' => 0]);
-            $room->update([
-                'status' => 'playing',
-                'round' => 0,
-                'total_rounds' => $total,
-                'state' => ['used' => []],
-            ]);
-            $this->startNextRound($room);
+            $room->update(['playlist' => $playlist, 'playlist_pos' => 0, 'game' => $playlist[0]]);
+            $this->beginGame($room, resetScores: true);
 
             return response()->json(['ok' => true]);
         });
+    }
+
+    public function setPlaylist(Request $request, string $code)
+    {
+        $data = $request->validate([
+            'token' => 'required|string|max:64',
+            'games' => 'present|array|max:3',
+            'games.*' => 'in:' . implode(',', self::GAMES),
+        ]);
+
+        return DB::transaction(function () use ($data, $code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room) {
+                return response()->json(['message' => 'not found'], 404);
+            }
+            $me = $this->getMember($room, $data['token']);
+            if (! $me || ! $me->is_host) {
+                return response()->json(['message' => 'solo el anfitrión'], 403);
+            }
+            if ($room->status === 'playing') {
+                return response()->json(['message' => 'la partida está en curso'], 422);
+            }
+            $games = array_values(array_unique($data['games']));
+            $room->update(['playlist' => $games, 'game' => $games[0] ?? $room->game]);
+            $this->emit(new RoomUpdated($room->fresh('members')));
+
+            return response()->json(['ok' => true]);
+        });
+    }
+
+    private function beginGame(FamilyRoom $room, bool $resetScores): void
+    {
+        $count = $room->members()->count();
+        $total = match ($room->game) {
+            'trivia' => min((int) config('familia.trivia.rounds'), count(config('familia.trivia.questions'))),
+            'tuttifrutti' => (int) config('familia.tuttifrutti.rounds'),
+            default => $count * (int) config('familia.pictionary.rounds_per_family'),
+        };
+        if ($resetScores) {
+            $room->members()->update(['score' => 0]);
+        }
+        $room->update([
+            'status' => 'playing',
+            'round' => 0,
+            'total_rounds' => $total,
+            'state' => ['used' => []],
+        ]);
+        $this->startNextRound($room);
     }
 
     public function timeout(Request $request, string $code)
@@ -582,6 +626,19 @@ class FamiliaController extends Controller
 
     private function endGame(FamilyRoom $room): void
     {
+        $playlist = $room->playlist ?: [];
+        $pos = (int) $room->playlist_pos;
+
+        // ¿Hay otro juego en la tanda? → encadenar (los puntajes se acumulan)
+        if (count($playlist) > $pos + 1) {
+            $nextGame = $playlist[$pos + 1];
+            $room->update(['playlist_pos' => $pos + 1, 'game' => $nextGame, 'word' => null, 'drawer_member_id' => null]);
+            $this->emit(new ChatPosted($room->code, 'system', 'Cambiamos de juego → ' . $this->gameLabel($nextGame) . ' (siguen sumando puntos).'));
+            $this->beginGame($room, resetScores: false);
+            return;
+        }
+
+        // Fin de la tanda → resultado general
         $room->update([
             'status' => 'ended',
             'word' => null,
@@ -590,7 +647,6 @@ class FamiliaController extends Controller
             'state' => ['phase' => 'ended'],
         ]);
         $room->load('members');
-
         $top = $room->members->sortByDesc('score')->first();
         $winners = $room->members->where('score', optional($top)->score);
         $msg = $winners->count() > 1
@@ -599,6 +655,11 @@ class FamiliaController extends Controller
 
         $this->emit(new RoomUpdated($room));
         $this->emit(new ChatPosted($room->code, 'system', $msg));
+    }
+
+    private function gameLabel(string $g): string
+    {
+        return ['pictionary' => 'Dibuja y Adivina', 'trivia' => 'Trivia', 'tuttifrutti' => 'Tutti Frutti'][$g] ?? $g;
     }
 
     /** Arma la grilla de respuestas y abre la fase de validación (votación). */

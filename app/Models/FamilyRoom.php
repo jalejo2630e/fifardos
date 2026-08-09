@@ -11,10 +11,12 @@ class FamilyRoom extends Model
     protected $fillable = [
         'code', 'game', 'status', 'host_token', 'round', 'total_rounds',
         'drawer_member_id', 'word', 'round_started_at', 'round_ends_at', 'state',
+        'playlist', 'playlist_pos',
     ];
 
     protected $casts = [
         'state' => 'array',
+        'playlist' => 'array',
         'round_started_at' => 'datetime',
         'round_ends_at' => 'datetime',
     ];
@@ -42,6 +44,8 @@ class FamilyRoom extends Model
             'status' => $this->status,
             'round' => $this->round,
             'total_rounds' => $this->total_rounds,
+            'playlist' => $this->playlist ?? [],
+            'playlist_pos' => (int) $this->playlist_pos,
             'round_ends_at' => optional($this->round_ends_at)->toIso8601String(),
             'game_state' => $this->publicGameState(),
             'members' => $this->members->map(fn (FamilyMember $m) => [

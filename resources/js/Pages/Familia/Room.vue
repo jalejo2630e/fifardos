@@ -21,6 +21,8 @@ const joinError = ref('');
 const chat = ref([]);
 const now = ref(Date.now());
 const copied = ref(false);
+// Tanda (playlist) de juegos elegida por el anfitrión, en orden
+const pl = ref(props.room.playlist && props.room.playlist.length ? [...props.room.playlist] : [props.room.game]);
 
 // Pictionary
 const myWord = ref('');
@@ -129,8 +131,18 @@ async function joinHere() {
     catch (e) { joinError.value = e.response?.data?.message || 'No se pudo unir.'; }
 }
 function pushChat(e) { chat.value.push(e); if (chat.value.length > 120) chat.value.shift(); nextTick(() => { const b = document.getElementById('fam-chat'); if (b) b.scrollTop = b.scrollHeight; }); }
-async function startGame() { try { await axios.post(`/familia/${props.code}/start`, { token }); } catch (e) { alert(e.response?.data?.message || 'No se pudo empezar.'); } }
-async function chooseGame(g) { if (!isHost.value) return; try { await axios.post(`/familia/${props.code}/game`, { token, game: g }); } catch (e) { /* noop */ } }
+async function startGame() {
+    if (!pl.value.length) return;
+    try { await axios.post(`/familia/${props.code}/start`, { token, games: pl.value }); }
+    catch (e) { alert(e.response?.data?.message || 'No se pudo empezar.'); }
+}
+function playlistIndex(key) { return pl.value.indexOf(key); }
+function togglePlaylist(key) {
+    if (!isHost.value) return;
+    const idx = pl.value.indexOf(key);
+    pl.value = idx >= 0 ? pl.value.filter((g) => g !== key) : [...pl.value, key];
+    axios.post(`/familia/${props.code}/playlist`, { token, games: pl.value }).catch(() => {});
+}
 function copyCode() { navigator.clipboard?.writeText(props.code).then(() => { copied.value = true; setTimeout(() => (copied.value = false), 1500); }); }
 async function fetchWord() {
     if (game.value === 'pictionary' && phase.value === 'play' && isDrawer.value) {
@@ -150,6 +162,8 @@ watch(() => room.value?.round, () => {
 watch(phase, (p) => {
     if (p === 'validate') myRejects.value = [...((gs.value.votes || {})[myId.value] || [])];
 });
+// La tanda mostrada sigue lo que hay en el server (para todos los participantes).
+watch(() => room.value?.playlist, (v) => { pl.value = (v && v.length) ? [...v] : [room.value?.game].filter(Boolean); });
 watch(() => [room.value?.round, phase.value], () => { ticked = false; });
 watch(() => [isDrawer.value, phase.value, game.value], fetchWord);
 
@@ -222,6 +236,7 @@ onBeforeUnmount(() => {
                 <Link href="/" class="rm-logo"><img src="/brand/logo-horizontal-dark.png" alt="FIFARDOS" /></Link>
                 <div class="rm-code" @click="copyCode"><span class="rm-code-lbl">Código</span><span class="rm-code-val">{{ code }}</span><span class="rm-copy">{{ copied ? '¡copiado!' : 'copiar' }}</span></div>
                 <div v-if="status === 'playing'" class="rm-round">
+                    <span v-if="(room.playlist || []).length > 1" class="rm-seq">Juego {{ (room.playlist_pos || 0) + 1 }}/{{ room.playlist.length }}</span>
                     <span>{{ GAMES[game].icon }} {{ room.round }}/{{ room.total_rounds }}</span>
                     <span class="rm-timer" :class="{ low: remaining <= 10 }">{{ remaining }}s</span>
                 </div>
@@ -235,16 +250,20 @@ onBeforeUnmount(() => {
                         <h2>Sala lista</h2>
                         <p>Compartí el código <b class="code-chip" @click="copyCode">{{ code }}</b> con los otros participantes.</p>
                         <div class="rm-games">
-                            <button v-for="(g, key) in GAMES" :key="key" class="rm-game" :class="{ on: game === key, lock: !isHost }"
-                                    :disabled="!isHost" @click="chooseGame(key)">
+                            <button v-for="(g, key) in GAMES" :key="key" class="rm-game" :class="{ on: playlistIndex(key) >= 0, lock: !isHost }"
+                                    :disabled="!isHost" @click="togglePlaylist(key)">
+                                <span v-if="playlistIndex(key) >= 0" class="rm-order">{{ playlistIndex(key) + 1 }}</span>
                                 <span class="rm-game-ic">{{ g.icon }}</span>
                                 <span class="rm-game-nm">{{ g.name }}</span>
                                 <span class="rm-game-ds">{{ g.desc }}</span>
                             </button>
                         </div>
+                        <p class="rm-hint" v-if="isHost">Tocá los juegos en el orden que quieras (1, 2, 3). Podés elegir uno solo.</p>
                         <p class="rm-count">{{ members.length }} / {{ config.max_families }} participantes</p>
-                        <button v-if="isHost" class="btn btn-solid" :disabled="!canStart" @click="startGame">{{ canStart ? 'Empezar a jugar →' : 'Esperando participantes…' }}</button>
-                        <p v-else class="muted">Elige el juego el anfitrión. Esperando que empiece…</p>
+                        <button v-if="isHost" class="btn btn-solid" :disabled="!canStart || !pl.length" @click="startGame">
+                            {{ !canStart ? 'Esperando participantes…' : (pl.length > 1 ? `Empezar tanda (${pl.length}) →` : 'Empezar a jugar →') }}
+                        </button>
+                        <p v-else class="muted">Arma la tanda el anfitrión. Esperando que empiece…</p>
                     </div>
 
                     <!-- ============ FIN ============ -->
@@ -252,16 +271,17 @@ onBeforeUnmount(() => {
                         <h2 v-if="winner">{{ winner.tie ? '¡Empate!' : '🏆 ¡Ganó ' + winner.names[0] + '!' }}</h2>
                         <p v-if="winner">{{ winner.names.join(', ') }} · {{ winner.score }} pts</p>
                         <template v-if="isHost">
-                            <p class="rm-again-lbl">Elegí un juego para la próxima:</p>
+                            <p class="rm-again-lbl">Armá la próxima tanda:</p>
                             <div class="rm-games">
-                                <button v-for="(g, key) in GAMES" :key="key" class="rm-game" :class="{ on: game === key }" @click="chooseGame(key)">
+                                <button v-for="(g, key) in GAMES" :key="key" class="rm-game" :class="{ on: playlistIndex(key) >= 0 }" @click="togglePlaylist(key)">
+                                    <span v-if="playlistIndex(key) >= 0" class="rm-order">{{ playlistIndex(key) + 1 }}</span>
                                     <span class="rm-game-ic">{{ g.icon }}</span>
                                     <span class="rm-game-nm">{{ g.name }}</span>
                                 </button>
                             </div>
-                            <button class="btn btn-solid" @click="startGame">Jugar a {{ GAMES[game].name }} →</button>
+                            <button class="btn btn-solid" :disabled="!pl.length" @click="startGame">{{ pl.length > 1 ? `Jugar tanda (${pl.length}) →` : 'Jugar de nuevo →' }}</button>
                         </template>
-                        <p v-else class="muted">El anfitrión elige el próximo juego. {{ GAMES[game].icon }} {{ GAMES[game].name }}</p>
+                        <p v-else class="muted">El anfitrión arma la próxima tanda…</p>
                     </div>
 
                     <!-- ============ PICTIONARY ============ -->
@@ -329,7 +349,7 @@ onBeforeUnmount(() => {
                                 <span class="rv-count">Puntúa en <b>{{ remaining }}</b>s</span>
                             </div>
                             <p class="rm-tf-note">Destildá (✗) las respuestas que creas trampa. Las que no empiezan con «{{ gs.letter }}» ya quedan descartadas.</p>
-                            <div class="rm-tf-table">
+                            <div class="rm-tf-table" :style="{ '--cols': (gs.entries || []).length }">
                                 <div class="rm-tf-row head"><span>Categoría</span><span v-for="e in gs.entries" :key="e.owner_id">{{ e.name }}</span></div>
                                 <div v-for="(cat, ci) in gs.categories" :key="ci" class="rm-tf-row">
                                     <span class="cat">{{ cat }}</span>
@@ -352,7 +372,7 @@ onBeforeUnmount(() => {
                         <!-- Resultado -->
                         <div v-else class="rm-tf-result">
                             <h2>Letra {{ reveal?.letter }} <span class="rv-count">· siguiente en <b>{{ remaining }}</b>s</span></h2>
-                            <div class="rm-tf-table">
+                            <div class="rm-tf-table" :style="{ '--cols': (reveal?.rows || []).length }">
                                 <div class="rm-tf-row head"><span>Categoría</span><span v-for="r in reveal?.rows" :key="r.member_id">{{ r.name }}</span></div>
                                 <div v-for="(cat, ci) in reveal?.categories" :key="ci" class="rm-tf-row">
                                     <span class="cat">{{ cat }}</span>
@@ -445,8 +465,11 @@ input:focus { border-color: var(--accent); }
 .muted { color: var(--tm); }
 .rm-again-lbl { color: var(--tm); font-size: 13px; letter-spacing: .04em; text-transform: uppercase; margin: 6px 0 -4px; }
 .rm-games { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 620px; margin: 6px 0; }
-.rm-game { background: var(--card2); border: 1px solid var(--hair); padding: 16px 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: border-color .15s; }
+.rm-game { position: relative; background: var(--card2); border: 1px solid var(--hair); padding: 16px 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: border-color .15s; }
 .rm-game.on { border-color: var(--accent); background: rgba(255,95,0,.1); }
+.rm-order { position: absolute; top: 6px; right: 6px; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; background: var(--accent); color: #08080a; font-family: var(--f-anton); font-size: 13px; border-radius: 50%; }
+.rm-hint { color: var(--tm); font-size: 12.5px; margin: 2px 0 0; }
+.rm-seq { color: var(--accent); font-weight: 700; }
 .rm-game.lock { cursor: default; }
 .rm-game-ic { font-size: 30px; }
 .rm-game-nm { font-family: var(--f-barlow); font-weight: 800; text-transform: uppercase; font-size: 16px; }
@@ -502,8 +525,8 @@ input:focus { border-color: var(--accent); }
 .rm-tf-cell span { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--tm); }
 .rm-tf-result { background: var(--card); border: 1px solid var(--hair); padding: 20px; }
 .rm-tf-result h2 { font-family: var(--f-anton); text-transform: uppercase; margin: 0 0 12px; }
-.rm-tf-table { display: flex; flex-direction: column; font-size: 14px; }
-.rm-tf-row { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 6px; padding: 6px 4px; border-top: 1px solid rgba(255,255,255,.06); align-items: center; }
+.rm-tf-table { display: flex; flex-direction: column; font-size: 14px; overflow-x: auto; }
+.rm-tf-row { display: grid; grid-template-columns: 150px repeat(var(--cols, 3), minmax(96px, 1fr)); gap: 6px; padding: 6px 4px; border-top: 1px solid rgba(255,255,255,.06); align-items: center; min-width: max(100%, calc(150px + var(--cols, 3) * 102px)); }
 .rm-tf-row.head { color: var(--tm); text-transform: uppercase; font-size: 11px; letter-spacing: .08em; border-top: none; }
 .rm-tf-row.total { font-family: var(--f-anton); color: var(--lime); border-top: 1px solid var(--hair); }
 .rm-tf-row .cat { color: var(--ts); }

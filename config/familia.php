@@ -2,7 +2,7 @@
 
 return [
     // Comunes a todas las salas
-    'max_families' => 3,
+    'max_families' => 10,   // máximo de participantes por sala
     'min_families' => 2,
     'reveal_seconds' => 6,   // pausa mostrando el resultado entre rondas
 
