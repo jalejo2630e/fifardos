@@ -117,6 +117,7 @@ class FamilyRoom extends Model
                 $out['guessed'] = $guessed;
                 $out['misses'] = (int) ($s['misses'] ?? 0);
                 $out['max_misses'] = (int) config('familia.hangman.max_misses');
+                $out['turn'] = $s['turn'] ?? null;   // de quién es el turno
             }
         }
 

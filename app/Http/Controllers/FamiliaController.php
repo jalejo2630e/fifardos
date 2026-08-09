@@ -516,6 +516,10 @@ class FamiliaController extends Controller
             if (! $me) {
                 return response()->json(['message' => 'forbidden'], 403);
             }
+            $members = $room->members()->get();
+            if (($state['turn'] ?? null) !== $me->id) {
+                return response()->json(['ok' => false, 'message' => 'No es tu turno.'], 403);
+            }
             $ch = mb_strtolower(trim($data['letter']));
             if (mb_strlen($ch) !== 1) {
                 return response()->json(['ok' => false]);
@@ -557,6 +561,7 @@ class FamiliaController extends Controller
                 }
             } else {
                 $state['misses'] = (int) ($state['misses'] ?? 0) + 1;
+                $state['turn'] = $this->nextHangmanTurn($members, $me->id);   // falló → pasa el turno
                 $room->update(['state' => $state]);
                 $room->load('members');
                 $this->emit(new ChatPosted($room->code, 'guess', mb_strtoupper($ch) . ' ✗', $me->name, $me->id));
@@ -587,6 +592,10 @@ class FamiliaController extends Controller
             if (! $me) {
                 return response()->json(['message' => 'forbidden'], 403);
             }
+            $members = $room->members()->get();
+            if (($state['turn'] ?? null) !== $me->id) {
+                return response()->json(['ok' => false, 'message' => 'No es tu turno.'], 403);
+            }
 
             if ($this->normalize($data['text']) === $this->normalize($room->word)) {
                 $letters = [];
@@ -607,6 +616,7 @@ class FamiliaController extends Controller
             }
 
             $state['misses'] = (int) ($state['misses'] ?? 0) + 1;
+            $state['turn'] = $this->nextHangmanTurn($members, $me->id);   // falló → pasa el turno
             $room->update(['state' => $state]);
             $room->load('members');
             $this->emit(new ChatPosted($room->code, 'guess', $data['text'] . ' ✗', $me->name, $me->id));
@@ -686,9 +696,10 @@ class FamiliaController extends Controller
             $used[] = $word;
             $state['guessed'] = [];
             $state['misses'] = 0;
+            $state['turn'] = $members->first()->id;   // arranca el de menor slot
             $update['word'] = $word;   // secreta (no se expone en el snapshot)
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.hangman.round_seconds'));
-            $sys = "Ronda {$next}/{$room->total_rounds} — ¡a adivinar la palabra!";
+            $sys = "Ronda {$next}/{$room->total_rounds} — Ahorcado: empieza {$members->first()->name}.";
         }
 
         $state['used'] = $used;
@@ -841,6 +852,25 @@ class FamiliaController extends Controller
     private function gameLabel(string $g): string
     {
         return ['pictionary' => 'Dibuja y Adivina', 'trivia' => 'Trivia', 'tuttifrutti' => 'Tutti Frutti', 'hangman' => 'Ahorcado'][$g] ?? $g;
+    }
+
+    /** Siguiente turno del Ahorcado (por slot, salteando a los desconectados). */
+    private function nextHangmanTurn($members, ?int $currentId): ?int
+    {
+        $ordered = $members->sortBy('slot')->values();
+        if ($ordered->isEmpty()) {
+            return null;
+        }
+        $idx = $ordered->search(fn ($m) => $m->id === $currentId);
+        $idx = $idx === false ? -1 : $idx;
+        $n = $ordered->count();
+        for ($i = 1; $i <= $n; $i++) {
+            $cand = $ordered[($idx + $i) % $n];
+            if ($cand->last_seen_at && $cand->last_seen_at->gt(now()->subSeconds(40))) {
+                return $cand->id;   // preferimos a alguien conectado
+            }
+        }
+        return $ordered[($idx + 1) % $n]->id;   // si nadie está online, el siguiente por slot
     }
 
     /** Arma la grilla de respuestas y abre la fase de validación (votación). */

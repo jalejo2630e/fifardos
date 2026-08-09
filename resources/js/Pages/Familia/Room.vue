@@ -48,6 +48,8 @@ const game = computed(() => room.value?.game || 'pictionary');
 const gs = computed(() => room.value?.game_state || {});
 const phase = computed(() => gs.value.phase);
 const reveal = computed(() => gs.value.reveal || null);
+const isMyTurn = computed(() => game.value === 'hangman' && gs.value.turn === myId.value);
+const turnName = computed(() => members.value.find((m) => m.id === gs.value.turn)?.name ?? '');
 const status = computed(() => room.value?.status);
 const members = computed(() => room.value?.members ?? []);
 const myId = computed(() => me.value?.id ?? null);
@@ -129,12 +131,14 @@ function letterClass(k) {
     return (gs.value.masked || []).some((c) => (c || '').toLowerCase() === lc) ? 'hit' : 'miss';
 }
 function guessLetter(k) {
+    if (!isMyTurn.value) return;
     const lc = k.toLowerCase();
     if (letterUsed(k)) return;
     pendingKeys.add(lc);
     axios.post(`/familia/${props.code}/letter`, { token, letter: lc }).catch(() => {});
 }
 function solveWord() {
+    if (!isMyTurn.value) return;
     const t = solveText.value.trim();
     if (!t) return;
     solveText.value = '';
@@ -427,19 +431,36 @@ onBeforeUnmount(() => {
                     <template v-else-if="game === 'hangman'">
                         <div v-if="phase === 'play'" class="rm-hang">
                             <div class="rm-hang-top">
-                                <span class="rm-hang-misses">Errores: <b :class="{ danger: gs.misses >= gs.max_misses - 1 }">{{ gs.misses }}/{{ gs.max_misses }}</b></span>
-                                <span class="rm-hang-lives">{{ '🟢'.repeat(Math.max(0, gs.max_misses - gs.misses)) }}{{ '⚪'.repeat(gs.misses) }}</span>
+                                <svg class="rm-gallows" viewBox="0 0 120 145">
+                                    <g class="base">
+                                        <line x1="6" y1="140" x2="70" y2="140" />
+                                        <line x1="26" y1="140" x2="26" y2="8" />
+                                        <line x1="26" y1="8" x2="82" y2="8" />
+                                        <line x1="82" y1="8" x2="82" y2="22" />
+                                    </g>
+                                    <circle v-if="gs.misses >= 1" class="part" cx="82" cy="33" r="11" />
+                                    <line v-if="gs.misses >= 2" class="part" x1="82" y1="44" x2="82" y2="84" />
+                                    <line v-if="gs.misses >= 3" class="part" x1="82" y1="54" x2="66" y2="70" />
+                                    <line v-if="gs.misses >= 4" class="part" x1="82" y1="54" x2="98" y2="70" />
+                                    <line v-if="gs.misses >= 5" class="part" x1="82" y1="84" x2="70" y2="106" />
+                                    <line v-if="gs.misses >= 6" class="part" x1="82" y1="84" x2="94" y2="106" />
+                                </svg>
+                                <div class="rm-hang-info">
+                                    <p class="rm-turn-lbl" :class="{ mine: isMyTurn }">{{ isMyTurn ? '¡Es tu turno!' : ('Turno de ' + turnName) }}</p>
+                                    <span class="rm-hang-misses">Errores: <b :class="{ danger: gs.misses >= gs.max_misses - 1 }">{{ gs.misses }}/{{ gs.max_misses }}</b></span>
+                                </div>
                             </div>
                             <div class="rm-word">
                                 <span v-for="(c, i) in gs.masked" :key="i" class="rm-slot" :class="{ gap: c === ' ', on: c && c !== ' ' }">{{ c === ' ' ? '' : (c || '_') }}</span>
                             </div>
                             <div class="rm-keys">
-                                <button v-for="k in HANG_KEYS" :key="k" class="rm-key" :class="letterClass(k)" :disabled="letterUsed(k)" @click="guessLetter(k)">{{ k }}</button>
+                                <button v-for="k in HANG_KEYS" :key="k" class="rm-key" :class="letterClass(k)" :disabled="letterUsed(k) || !isMyTurn" @click="guessLetter(k)">{{ k }}</button>
                             </div>
-                            <form class="rm-solve" @submit.prevent="solveWord">
+                            <form v-if="isMyTurn" class="rm-solve" @submit.prevent="solveWord">
                                 <input v-model="solveText" maxlength="40" placeholder="¿Sabés la palabra? Escribila…" />
                                 <button class="btn btn-solid" type="submit">Resolver</button>
                             </form>
+                            <p v-else class="rm-turn-wait">Esperá tu turno… juega <b>{{ turnName }}</b></p>
                         </div>
                         <div v-else class="rm-panel">
                             <h2>{{ reveal?.solved ? '¡Adivinada!' : 'Se acabó' }}</h2>
@@ -641,10 +662,16 @@ input:focus { border-color: var(--accent); }
 
 /* Ahorcado */
 .rm-hang { background: var(--card); border: 1px solid var(--hair); padding: 20px; display: flex; flex-direction: column; gap: 18px; align-items: center; }
-.rm-hang-top { width: 100%; display: flex; justify-content: space-between; align-items: center; font-family: var(--f-barlow); font-weight: 700; text-transform: uppercase; font-size: 14px; color: var(--ts); }
+.rm-hang-top { width: 100%; display: flex; justify-content: center; align-items: center; gap: 22px; }
+.rm-gallows { width: 110px; height: 132px; }
+.rm-gallows .base line { stroke: var(--ts); stroke-width: 4; stroke-linecap: round; fill: none; }
+.rm-gallows .part { stroke: #ff7a6b; stroke-width: 4; stroke-linecap: round; fill: none; }
+.rm-hang-info { display: flex; flex-direction: column; gap: 6px; font-family: var(--f-barlow); font-weight: 700; text-transform: uppercase; color: var(--ts); }
+.rm-turn-lbl { margin: 0; font-family: var(--f-anton); font-size: 22px; color: var(--tp); }
+.rm-turn-lbl.mine { color: var(--lime); }
 .rm-hang-misses b { font-family: var(--f-anton); color: var(--tp); }
 .rm-hang-misses b.danger { color: #ff5f5f; }
-.rm-hang-lives { letter-spacing: 2px; font-size: 12px; }
+.rm-turn-wait { color: var(--tm); font-size: 14px; text-align: center; margin: 0; }
 .rm-word { display: flex; flex-wrap: wrap; gap: 10px 12px; justify-content: center; font-family: var(--f-anton); font-size: clamp(30px, 7vw, 44px); }
 .rm-slot { min-width: 28px; text-align: center; text-transform: uppercase; color: var(--ts); line-height: 1.1; }
 .rm-slot.on { color: var(--lime); }
