@@ -505,6 +505,7 @@ onBeforeUnmount(() => {
                                 </svg>
                                 <div class="rm-hang-info">
                                     <p class="rm-turn-lbl" :class="{ mine: isMyTurn }">{{ isMyTurn ? '¡Es tu turno!' : ('Turno de ' + turnName) }}</p>
+                                    <span v-if="gs.hint" class="rm-hint-lbl">Pista: <b>{{ gs.hint }}</b></span>
                                     <span class="rm-hang-misses">Errores: <b :class="{ danger: gs.misses >= gs.max_misses - 1 }">{{ gs.misses }}/{{ gs.max_misses }}</b></span>
                                 </div>
                             </div>
@@ -773,6 +774,8 @@ input:focus { border-color: var(--accent); }
 .rm-hang-info { display: flex; flex-direction: column; gap: 6px; font-family: var(--f-barlow); font-weight: 700; text-transform: uppercase; color: var(--ts); }
 .rm-turn-lbl { margin: 0; font-family: var(--f-anton); font-size: 22px; color: var(--tp); }
 .rm-turn-lbl.mine { color: var(--lime); }
+.rm-hint-lbl { font-size: 14px; }
+.rm-hint-lbl b { color: var(--accent); font-family: var(--f-barlow); font-weight: 800; }
 .rm-hang-misses b { font-family: var(--f-anton); color: var(--tp); }
 .rm-hang-misses b.danger { color: #ff5f5f; }
 .rm-turn-wait { color: var(--tm); font-size: 14px; text-align: center; margin: 0; }

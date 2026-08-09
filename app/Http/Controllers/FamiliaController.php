@@ -871,14 +871,26 @@ class FamiliaController extends Controller
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.tuttifrutti.round_seconds'));
             $sys = "Ronda {$next}/{$room->total_rounds} — letra «{$letter}»";
         } elseif ($room->game === 'hangman') {
-            $word = $this->pickOne(config('familia.hangman.words'), $used);
-            $used[] = $word;
+            // Aplanamos las palabras con su categoría (= pista)
+            $pairs = [];
+            foreach (config('familia.hangman.words') as $cat => $ws) {
+                foreach ($ws as $w) {
+                    $pairs[] = ['word' => $w, 'hint' => $cat];
+                }
+            }
+            $available = array_values(array_filter($pairs, fn ($p) => ! in_array($p['word'], $used, true)));
+            if (empty($available)) {
+                $available = $pairs;
+            }
+            $pick = $available[array_rand($available)];
+            $used[] = $pick['word'];
             $state['guessed'] = [];
             $state['misses'] = 0;
+            $state['hint'] = $pick['hint'];
             $state['turn'] = $members->first()->id;   // arranca el de menor slot
-            $update['word'] = $word;   // secreta (no se expone en el snapshot)
+            $update['word'] = $pick['word'];   // secreta (no se expone en el snapshot)
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.hangman.round_seconds'));
-            $sys = "Ronda {$next}/{$room->total_rounds} — Ahorcado: empieza {$members->first()->name}.";
+            $sys = "Ronda {$next}/{$room->total_rounds} — Ahorcado ({$pick['hint']}): empieza {$members->first()->name}.";
         } else { // memoria
             $faces = config('familia.memoria.faces');
             shuffle($faces);

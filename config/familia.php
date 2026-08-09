@@ -326,13 +326,15 @@ return [
         'round_seconds' => 100,
         'max_misses' => 6,   // partes del muñeco (cabeza, cuerpo, 2 brazos, 2 piernas)
         // Palabras sin tildes (para el teclado); se comparan en minúscula (ñ incluida).
+        // Agrupadas por categoría: la categoría se muestra como PISTA.
         'words' => [
-            'perro', 'gato', 'elefante', 'jirafa', 'tortuga', 'caballo', 'delfin', 'mariposa', 'araña', 'pulpo',
-            'ballena', 'abeja', 'zorro', 'lobo', 'oveja', 'gallina', 'serpiente', 'cangrejo', 'caracol', 'pinguino',
-            'pizza', 'helado', 'banana', 'hamburguesa', 'sandia', 'zanahoria', 'empanada', 'manzana', 'naranja', 'chocolate',
-            'guitarra', 'piano', 'bicicleta', 'telefono', 'televisor', 'computadora', 'ventana', 'puerta', 'cocina', 'escoba',
-            'escuela', 'familia', 'amigo', 'pelota', 'futbol', 'basquet', 'montaña', 'playa', 'arbol', 'girasol',
-            'estrella', 'planeta', 'cohete', 'robot', 'pirata', 'dragon', 'castillo', 'tesoro', 'brujula', 'volcan',
+            'Animal' => ['perro', 'gato', 'elefante', 'jirafa', 'tortuga', 'caballo', 'delfin', 'mariposa', 'araña', 'pulpo', 'ballena', 'abeja', 'zorro', 'lobo', 'gallina', 'serpiente', 'cangrejo', 'pinguino', 'tigre', 'leon'],
+            'Comida' => ['pizza', 'helado', 'banana', 'hamburguesa', 'sandia', 'zanahoria', 'empanada', 'manzana', 'naranja', 'chocolate', 'queso', 'fideos', 'galleta', 'durazno'],
+            'Objeto' => ['guitarra', 'piano', 'telefono', 'televisor', 'ventana', 'puerta', 'escoba', 'reloj', 'lampara', 'martillo', 'paraguas', 'mochila', 'tijera'],
+            'Lugar' => ['escuela', 'playa', 'montaña', 'castillo', 'hospital', 'iglesia', 'estadio', 'museo', 'biblioteca', 'aeropuerto'],
+            'Naturaleza' => ['arbol', 'flor', 'girasol', 'estrella', 'planeta', 'volcan', 'cascada', 'nube', 'rio'],
+            'Transporte' => ['auto', 'camion', 'avion', 'barco', 'tren', 'moto', 'cohete', 'bicicleta', 'submarino', 'helicoptero'],
+            'Profesion' => ['bombero', 'medico', 'policia', 'cartero', 'cocinero', 'maestro', 'piloto', 'pintor', 'carpintero', 'jardinero'],
         ],
     ],
 ];

@@ -119,6 +119,7 @@ class FamilyRoom extends Model
                 $out['misses'] = (int) ($s['misses'] ?? 0);
                 $out['max_misses'] = (int) config('familia.hangman.max_misses');
                 $out['turn'] = $s['turn'] ?? null;   // de quién es el turno
+                $out['hint'] = $s['hint'] ?? null;   // categoría (pista)
             }
         } elseif ($this->game === 'memoria') {
             if ($phase === 'play') {
