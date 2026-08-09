@@ -842,6 +842,8 @@ class FamiliaController extends Controller
         unset($state['reveal']);
         $used = $state['used'] ?? [];
         $update = ['round' => $next, 'round_started_at' => now(), 'drawer_member_id' => null, 'word' => null];
+        // Quien arranca la ronda rota por número de ronda (para que no empiece siempre el primero).
+        $starter = $members[($next - 1) % $members->count()];
 
         if ($room->game === 'pictionary') {
             $drawer = $members[($next - 1) % $members->count()];
@@ -887,10 +889,10 @@ class FamiliaController extends Controller
             $state['guessed'] = [];
             $state['misses'] = 0;
             $state['hint'] = $pick['hint'];
-            $state['turn'] = $members->first()->id;   // arranca el de menor slot
+            $state['turn'] = $starter->id;
             $update['word'] = $pick['word'];   // secreta (no se expone en el snapshot)
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.hangman.round_seconds'));
-            $sys = "Ronda {$next}/{$room->total_rounds} — Ahorcado ({$pick['hint']}): empieza {$members->first()->name}.";
+            $sys = "Ronda {$next}/{$room->total_rounds} — Ahorcado ({$pick['hint']}): empieza {$starter->name}.";
         } else { // memoria
             $faces = config('familia.memoria.faces');
             shuffle($faces);
@@ -905,10 +907,10 @@ class FamiliaController extends Controller
             $state['cards'] = $deck;      // secreto: el snapshot solo revela lo destapado
             $state['flipped'] = [];
             $state['found'] = [];
-            $state['turn'] = $members->first()->id;
+            $state['turn'] = $starter->id;
             unset($state['resolve_at']);
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.memoria.round_seconds'));
-            $sys = "Ronda {$next}/{$room->total_rounds} — Memoria: empieza {$members->first()->name}.";
+            $sys = "Ronda {$next}/{$room->total_rounds} — Memoria: empieza {$starter->name}.";
         }
 
         $state['used'] = $used;

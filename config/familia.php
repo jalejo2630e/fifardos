@@ -335,6 +335,10 @@ return [
             'Naturaleza' => ['arbol', 'flor', 'girasol', 'estrella', 'planeta', 'volcan', 'cascada', 'nube', 'rio'],
             'Transporte' => ['auto', 'camion', 'avion', 'barco', 'tren', 'moto', 'cohete', 'bicicleta', 'submarino', 'helicoptero'],
             'Profesion' => ['bombero', 'medico', 'policia', 'cartero', 'cocinero', 'maestro', 'piloto', 'pintor', 'carpintero', 'jardinero'],
+            'Pais' => ['argentina', 'brasil', 'chile', 'uruguay', 'peru', 'colombia', 'mexico', 'españa', 'francia', 'italia', 'japon', 'canada', 'egipto', 'portugal', 'alemania'],
+            'Ciudad' => ['madrid', 'barcelona', 'roma', 'paris', 'londres', 'tokio', 'lima', 'bogota', 'santiago', 'miami', 'berlin', 'moscu'],
+            'Color' => ['rojo', 'azul', 'verde', 'amarillo', 'violeta', 'rosa', 'marron', 'negro', 'blanco', 'gris', 'celeste'],
+            'Deporte' => ['futbol', 'basquet', 'tenis', 'voley', 'natacion', 'boxeo', 'ciclismo', 'golf', 'rugby', 'hockey', 'atletismo', 'esqui'],
         ],
     ],
 ];
