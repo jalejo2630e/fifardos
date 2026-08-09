@@ -782,8 +782,8 @@ input:focus { border-color: var(--accent); }
 
 /* Memoria */
 .rm-memo { background: var(--card); border: 1px solid var(--hair); padding: 20px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
-.rm-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 440px; }
-.rm-card { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: clamp(24px, 6vw, 34px); background: var(--card2); border: 1px solid var(--hair); cursor: pointer; transition: border-color .15s, background .15s, transform .1s; }
+.rm-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(58px, 1fr)); gap: 8px; width: 100%; max-width: 640px; }
+.rm-card { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: clamp(20px, 5vw, 30px); background: var(--card2); border: 1px solid var(--hair); cursor: pointer; transition: border-color .15s, background .15s, transform .1s; }
 .rm-card:hover:not(:disabled) { border-color: var(--accent); }
 .rm-card:active:not(:disabled) { transform: scale(.96); }
 .rm-card:disabled { cursor: default; }

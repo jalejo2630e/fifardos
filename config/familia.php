@@ -311,8 +311,8 @@ return [
     // ------------------------------------------------------------ Memoria (memotest)
     'memoria' => [
         'rounds' => 1,
-        'round_seconds' => 200,
-        'pairs' => 8,            // 8 pares = 16 cartas (4x4)
+        'round_seconds' => 320,
+        'pairs' => 16,           // 16 pares = 32 cartas
         'flip_ms' => 1500,       // cuánto quedan visibles las cartas que no coinciden
         'faces' => [
             '🐶', '🐱', '🦊', '🐸', '🐼', '🦁', '🐵', '🐷', '🐧', '🐙', '🦄', '🐝',
