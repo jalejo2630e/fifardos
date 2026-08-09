@@ -431,7 +431,7 @@ onBeforeUnmount(() => {
                                 <span class="rm-hang-lives">{{ '🟢'.repeat(Math.max(0, gs.max_misses - gs.misses)) }}{{ '⚪'.repeat(gs.misses) }}</span>
                             </div>
                             <div class="rm-word">
-                                <span v-for="(c, i) in gs.masked" :key="i" class="rm-slot" :class="{ gap: c === ' ', on: c && c !== ' ' }">{{ c === ' ' ? '' : (c || '') }}</span>
+                                <span v-for="(c, i) in gs.masked" :key="i" class="rm-slot" :class="{ gap: c === ' ', on: c && c !== ' ' }">{{ c === ' ' ? '' : (c || '_') }}</span>
                             </div>
                             <div class="rm-keys">
                                 <button v-for="k in HANG_KEYS" :key="k" class="rm-key" :class="letterClass(k)" :disabled="letterUsed(k)" @click="guessLetter(k)">{{ k }}</button>
@@ -645,10 +645,10 @@ input:focus { border-color: var(--accent); }
 .rm-hang-misses b { font-family: var(--f-anton); color: var(--tp); }
 .rm-hang-misses b.danger { color: #ff5f5f; }
 .rm-hang-lives { letter-spacing: 2px; font-size: 12px; }
-.rm-word { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-.rm-slot { width: 34px; height: 44px; display: inline-flex; align-items: flex-end; justify-content: center; border-bottom: 3px solid var(--hair); font-family: var(--f-anton); font-size: 28px; text-transform: uppercase; }
-.rm-slot.on { border-bottom-color: var(--lime); color: var(--tp); }
-.rm-slot.gap { border-bottom: none; width: 14px; }
+.rm-word { display: flex; flex-wrap: wrap; gap: 10px 12px; justify-content: center; font-family: var(--f-anton); font-size: clamp(30px, 7vw, 44px); }
+.rm-slot { min-width: 28px; text-align: center; text-transform: uppercase; color: var(--ts); line-height: 1.1; }
+.rm-slot.on { color: var(--lime); }
+.rm-slot.gap { min-width: 18px; }
 .rm-keys { display: grid; grid-template-columns: repeat(9, 1fr); gap: 6px; width: 100%; max-width: 520px; }
 .rm-key { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; background: var(--card2); border: 1px solid var(--hair); color: var(--tp); font-family: var(--f-barlow); font-weight: 700; font-size: 16px; cursor: pointer; text-transform: uppercase; transition: all .12s; }
 .rm-key:hover:not(:disabled) { border-color: var(--accent); }
@@ -665,6 +665,7 @@ input:focus { border-color: var(--accent); }
     .rm-games { grid-template-columns: 1fr; }
     .rm-chat { height: 160px; }
     .rm-keys { grid-template-columns: repeat(7, 1fr); }
-    .rm-slot { width: 26px; height: 36px; font-size: 22px; }
+    .rm-word { font-size: 28px; gap: 8px 10px; }
+    .rm-slot { min-width: 22px; }
 }
 </style>
