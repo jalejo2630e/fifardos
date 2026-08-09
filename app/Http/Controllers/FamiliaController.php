@@ -289,7 +289,9 @@ class FamiliaController extends Controller
             if (! $room || $room->status !== 'playing') {
                 return response()->json(['ok' => false]);
             }
-            if ($room->round_ends_at && $room->round_ends_at->isFuture()) {
+            // Tolerancia de 1s: el cliente puede pedir el avance un pelín antes por
+            // el redondeo del contador. Solo rechazamos si aún falta más de 1 segundo.
+            if ($room->round_ends_at && $room->round_ends_at->gt(now()->addSecond())) {
                 return response()->json(['ok' => false]);
             }
             $phase = $room->state['phase'] ?? null;

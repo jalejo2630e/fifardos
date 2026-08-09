@@ -118,7 +118,7 @@ function toggleVote(owner, cat) {
 }
 
 // ===================== Red / estado =====================
-let channel = null, heartbeat = null, ticker = null, ticked = false, ro = null;
+let channel = null, heartbeat = null, ticker = null, lastTimeoutAt = 0, ro = null;
 
 async function identify() {
     try { const { data } = await axios.post(`/familia/${props.code}/hello`, { token }); room.value = data.room; me.value = data.me; joinNeeded.value = !data.me; } catch (e) { /* noop */ }
@@ -164,7 +164,6 @@ watch(phase, (p) => {
 });
 // La tanda mostrada sigue lo que hay en el server (para todos los participantes).
 watch(() => room.value?.playlist, (v) => { pl.value = (v && v.length) ? [...v] : [room.value?.game].filter(Boolean); });
-watch(() => [room.value?.round, phase.value], () => { ticked = false; });
 watch(() => [isDrawer.value, phase.value, game.value], fetchWord);
 
 // El canvas solo existe en el DOM cuando se está jugando a Pictionary. Cuando
@@ -181,16 +180,6 @@ watch(showCanvas, async (v) => {
     }
 });
 
-// Avance automático: cualquier cliente avisa al server cuando vence el deadline
-// (play o reveal). El server procesa una sola vez (lock + guardas de fase), así
-// que no se traba aunque el anfitrión cierre la pestaña.
-watch(remaining, (r) => {
-    if (status.value === 'playing' && r <= 0 && !ticked && room.value?.round_ends_at) {
-        ticked = true;
-        axios.post(`/familia/${props.code}/timeout`, { token }).catch(() => {});
-    }
-});
-
 onMounted(async () => {
     await identify();
     channel = getEcho().channel(`family-room.${props.code}`);
@@ -202,7 +191,16 @@ onMounted(async () => {
     await nextTick(); setupCanvas();
     ro = new ResizeObserver(setupCanvas);
     if (stageRef.value) ro.observe(stageRef.value);
-    ticker = setInterval(() => (now.value = Date.now()), 250);
+    ticker = setInterval(() => {
+        now.value = Date.now();
+        // Avance automático: cuando vence el deadline (jugar/validar/revelar) cualquier
+        // cliente avisa al server. Reintenta cada ~1.5s hasta que avanza (no se traba).
+        if (status.value === 'playing' && room.value?.round_ends_at && remaining.value <= 0
+            && (now.value - lastTimeoutAt > 1500)) {
+            lastTimeoutAt = now.value;
+            axios.post(`/familia/${props.code}/timeout`, { token }).catch(() => {});
+        }
+    }, 250);
     flushTimer = setInterval(() => { if (batch.length) flush(); }, 80);
     heartbeat = setInterval(identify, 15000);
     fetchWord();
