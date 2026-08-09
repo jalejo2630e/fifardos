@@ -139,8 +139,8 @@ class FamiliaController extends Controller
             if (! $me || ! $me->is_host) {
                 return response()->json(['message' => 'solo el anfitrión'], 403);
             }
-            if ($room->status !== 'lobby') {
-                return response()->json(['message' => 'la partida ya empezó'], 422);
+            if ($room->status === 'playing') {
+                return response()->json(['message' => 'la partida está en curso'], 422);
             }
             $room->update(['game' => $data['game']]);
             $this->emit(new RoomUpdated($room->fresh('members')));

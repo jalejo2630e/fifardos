@@ -251,8 +251,17 @@ onBeforeUnmount(() => {
                     <div v-else-if="status === 'ended'" class="rm-panel">
                         <h2 v-if="winner">{{ winner.tie ? '¡Empate!' : '🏆 ¡Ganó ' + winner.names[0] + '!' }}</h2>
                         <p v-if="winner">{{ winner.names.join(', ') }} · {{ winner.score }} pts</p>
-                        <button v-if="isHost" class="btn btn-solid" @click="startGame">Jugar de nuevo</button>
-                        <p v-else class="muted">El anfitrión puede iniciar otra ronda.</p>
+                        <template v-if="isHost">
+                            <p class="rm-again-lbl">Elegí un juego para la próxima:</p>
+                            <div class="rm-games">
+                                <button v-for="(g, key) in GAMES" :key="key" class="rm-game" :class="{ on: game === key }" @click="chooseGame(key)">
+                                    <span class="rm-game-ic">{{ g.icon }}</span>
+                                    <span class="rm-game-nm">{{ g.name }}</span>
+                                </button>
+                            </div>
+                            <button class="btn btn-solid" @click="startGame">Jugar a {{ GAMES[game].name }} →</button>
+                        </template>
+                        <p v-else class="muted">El anfitrión elige el próximo juego. {{ GAMES[game].icon }} {{ GAMES[game].name }}</p>
                     </div>
 
                     <!-- ============ PICTIONARY ============ -->
@@ -434,6 +443,7 @@ input:focus { border-color: var(--accent); }
 .code-chip { cursor: pointer; }
 .rm-count { color: var(--accent); font-size: 20px; }
 .muted { color: var(--tm); }
+.rm-again-lbl { color: var(--tm); font-size: 13px; letter-spacing: .04em; text-transform: uppercase; margin: 6px 0 -4px; }
 .rm-games { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 100%; max-width: 620px; margin: 6px 0; }
 .rm-game { background: var(--card2); border: 1px solid var(--hair); padding: 16px 12px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; transition: border-color .15s; }
 .rm-game.on { border-color: var(--accent); background: rgba(255,95,0,.1); }
