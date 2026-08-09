@@ -3,7 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
-import PenaltyArena from '@/Components/PenaltyArena.vue';
+import FootballArena from '@/Components/FootballArena.vue';
 import SportsCarousel from '@/Components/SportsCarousel.vue';
 
 const { t, tm } = useI18n();
@@ -320,8 +320,8 @@ onBeforeUnmount(() => {
             </div>
         </section>
 
-        <!-- MINIJUEGO DE PENALES (3D · lazy-load) -->
-        <PenaltyArena />
+        <!-- MINIJUEGO 11 vs 11 (3D · lazy-load) -->
+        <FootballArena />
 
         <!-- FEATURES -->
         <section id="modos" class="sec sec-alt">
