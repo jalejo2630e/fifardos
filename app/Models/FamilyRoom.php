@@ -119,6 +119,25 @@ class FamilyRoom extends Model
                 $out['max_misses'] = (int) config('familia.hangman.max_misses');
                 $out['turn'] = $s['turn'] ?? null;   // de quién es el turno
             }
+        } elseif ($this->game === 'memoria') {
+            if ($phase === 'play') {
+                $cards = $s['cards'] ?? [];
+                $flipped = $s['flipped'] ?? [];
+                $found = $s['found'] ?? [];
+                $out['cards'] = array_map(function ($c) use ($flipped, $found) {
+                    $up = in_array($c['id'], $flipped, true) || in_array($c['id'], $found, true);
+                    return [
+                        'id' => $c['id'],
+                        'found' => in_array($c['id'], $found, true),
+                        'up' => $up,
+                        'value' => $up ? $c['value'] : null,   // oculta el resto
+                    ];
+                }, $cards);
+                $out['turn'] = $s['turn'] ?? null;
+                $out['pairs_total'] = intdiv(count($cards), 2);
+                $out['pairs_found'] = intdiv(count($found), 2);
+                $out['resolve_at'] = $s['resolve_at'] ?? null;
+            }
         }
 
         return $out;

@@ -11,6 +11,7 @@ const GAMES = {
     trivia: { name: 'Trivia', icon: '❓', desc: 'Respondan la pregunta lo más rápido posible.' },
     tuttifrutti: { name: 'Tutti Frutti', icon: '🔤', desc: 'Completá las categorías con la letra que salga.' },
     hangman: { name: 'Ahorcado', icon: '🔠', desc: 'Adiviná la palabra letra por letra.' },
+    memoria: { name: 'Memoria', icon: '🧠', desc: 'Encontrá los pares de cartas iguales.' },
 };
 const HANG_KEYS = 'A B C D E F G H I J K L M N Ñ O P Q R S T U V W X Y Z'.split(' ');
 
@@ -48,7 +49,7 @@ const game = computed(() => room.value?.game || 'pictionary');
 const gs = computed(() => room.value?.game_state || {});
 const phase = computed(() => gs.value.phase);
 const reveal = computed(() => gs.value.reveal || null);
-const isMyTurn = computed(() => game.value === 'hangman' && gs.value.turn === myId.value);
+const isMyTurn = computed(() => gs.value.turn != null && gs.value.turn === myId.value);
 const turnName = computed(() => members.value.find((m) => m.id === gs.value.turn)?.name ?? '');
 const status = computed(() => room.value?.status);
 const members = computed(() => room.value?.members ?? []);
@@ -145,8 +146,14 @@ function solveWord() {
     axios.post(`/familia/${props.code}/solve`, { token, text: t }).catch(() => {});
 }
 
+// --- Memoria ---
+function flipCard(id) {
+    if (!isMyTurn.value) return;
+    axios.post(`/familia/${props.code}/flip`, { token, card: id }).catch(() => {});
+}
+
 // ===================== Red / estado =====================
-let channel = null, heartbeat = null, ticker = null, lastTimeoutAt = 0, ro = null;
+let channel = null, heartbeat = null, ticker = null, lastTimeoutAt = 0, lastResolveAt = 0, ro = null;
 
 async function identify() {
     try { const { data } = await axios.post(`/familia/${props.code}/hello`, { token }); room.value = data.room; me.value = data.me; joinNeeded.value = !data.me; } catch (e) { /* noop */ }
@@ -229,6 +236,12 @@ onMounted(async () => {
             && (now.value - lastTimeoutAt > 1500)) {
             lastTimeoutAt = now.value;
             axios.post(`/familia/${props.code}/timeout`, { token }).catch(() => {});
+        }
+        // Memoria: volver a tapar las cartas que no coincidieron (cualquier cliente lo dispara).
+        const ra = gs.value.resolve_at;
+        if (status.value === 'playing' && ra && now.value >= new Date(ra).getTime() && (now.value - lastResolveAt > 1200)) {
+            lastResolveAt = now.value;
+            axios.post(`/familia/${props.code}/resolve`, { token }).catch(() => {});
         }
     }, 250);
     flushTimer = setInterval(() => { if (batch.length) flush(); }, 80);
@@ -468,6 +481,30 @@ onBeforeUnmount(() => {
                             <p class="rv-count">Siguiente en <b>{{ remaining }}</b>s</p>
                         </div>
                     </template>
+
+                    <!-- ============ MEMORIA ============ -->
+                    <template v-else-if="game === 'memoria'">
+                        <div v-if="phase === 'play'" class="rm-memo">
+                            <div class="rm-hang-top">
+                                <div class="rm-hang-info">
+                                    <p class="rm-turn-lbl" :class="{ mine: isMyTurn }">{{ isMyTurn ? '¡Es tu turno!' : ('Turno de ' + turnName) }}</p>
+                                    <span class="rm-hang-misses">Pares: <b>{{ gs.pairs_found }}/{{ gs.pairs_total }}</b></span>
+                                </div>
+                            </div>
+                            <div class="rm-cards">
+                                <button v-for="c in gs.cards" :key="c.id" class="rm-card" :class="{ up: c.up, found: c.found }"
+                                        :disabled="!isMyTurn || c.up || !!gs.resolve_at" @click="flipCard(c.id)">
+                                    <span v-if="c.up" class="rm-card-face">{{ c.value }}</span>
+                                    <span v-else class="rm-card-back">?</span>
+                                </button>
+                            </div>
+                            <p v-if="!isMyTurn" class="rm-turn-wait">Esperá tu turno… juega <b>{{ turnName }}</b></p>
+                        </div>
+                        <div v-else class="rm-panel">
+                            <h2>¡Tablero completo! 🧠</h2>
+                            <p class="rv-count">Siguiente en <b>{{ remaining }}</b>s</p>
+                        </div>
+                    </template>
                 </section>
 
                 <!-- Sidebar -->
@@ -672,6 +709,17 @@ input:focus { border-color: var(--accent); }
 .rm-hang-misses b { font-family: var(--f-anton); color: var(--tp); }
 .rm-hang-misses b.danger { color: #ff5f5f; }
 .rm-turn-wait { color: var(--tm); font-size: 14px; text-align: center; margin: 0; }
+
+/* Memoria */
+.rm-memo { background: var(--card); border: 1px solid var(--hair); padding: 20px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
+.rm-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; max-width: 440px; }
+.rm-card { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: clamp(24px, 6vw, 34px); background: var(--card2); border: 1px solid var(--hair); cursor: pointer; transition: border-color .15s, background .15s, transform .1s; }
+.rm-card:hover:not(:disabled) { border-color: var(--accent); }
+.rm-card:active:not(:disabled) { transform: scale(.96); }
+.rm-card:disabled { cursor: default; }
+.rm-card.up { background: var(--bg); border-color: rgba(255,255,255,.2); }
+.rm-card.found { background: rgba(182,255,46,.14); border-color: rgba(182,255,46,.5); }
+.rm-card-back { font-family: var(--f-anton); font-size: 22px; color: var(--tm); }
 .rm-word { display: flex; flex-wrap: wrap; gap: 10px 12px; justify-content: center; font-family: var(--f-anton); font-size: clamp(30px, 7vw, 44px); }
 .rm-slot { min-width: 28px; text-align: center; text-transform: uppercase; color: var(--ts); line-height: 1.1; }
 .rm-slot.on { color: var(--lime); }

@@ -16,7 +16,7 @@ use Inertia\Inertia;
 class FamiliaController extends Controller
 {
     private const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-    private const GAMES = ['pictionary', 'trivia', 'tuttifrutti', 'hangman'];
+    private const GAMES = ['pictionary', 'trivia', 'tuttifrutti', 'hangman', 'memoria'];
 
     // ---------------------------------------------------------------- páginas
     public function index()
@@ -269,6 +269,7 @@ class FamiliaController extends Controller
             'trivia' => min((int) config('familia.trivia.rounds'), count(config('familia.trivia.questions'))),
             'tuttifrutti' => (int) config('familia.tuttifrutti.rounds'),
             'hangman' => (int) config('familia.hangman.rounds'),
+            'memoria' => (int) config('familia.memoria.rounds'),
             default => $count * (int) config('familia.pictionary.rounds_per_family'),
         };
         // game_score se reinicia cada partida; score (total de la tanda) solo al empezar la tanda.
@@ -629,6 +630,96 @@ class FamiliaController extends Controller
         });
     }
 
+    // ---------------------------------------------------------------- Memoria
+    public function flip(Request $request, string $code)
+    {
+        $data = $request->validate(['token' => 'required|string|max:64', 'card' => 'required|integer|min:0']);
+
+        return DB::transaction(function () use ($data, $code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room || $room->status !== 'playing' || $room->game !== 'memoria') {
+                return response()->json(['ok' => false]);
+            }
+            $state = $room->state ?? [];
+            if (($state['phase'] ?? null) !== 'play' || ! empty($state['resolve_at'])) {
+                return response()->json(['ok' => false]);   // esperando que se tapen las anteriores
+            }
+            $me = $this->getMember($room, $data['token']);
+            if (! $me) {
+                return response()->json(['message' => 'forbidden'], 403);
+            }
+            if (($state['turn'] ?? null) !== $me->id) {
+                return response()->json(['ok' => false, 'message' => 'No es tu turno.'], 403);
+            }
+
+            $cards = $state['cards'] ?? [];
+            $found = $state['found'] ?? [];
+            $flipped = $state['flipped'] ?? [];
+            $cardId = (int) $data['card'];
+            $card = collect($cards)->firstWhere('id', $cardId);
+            if (! $card || in_array($cardId, $found, true) || in_array($cardId, $flipped, true) || count($flipped) >= 2) {
+                return response()->json(['ok' => false]);
+            }
+
+            $flipped[] = $cardId;
+            if (count($flipped) === 1) {
+                $state['flipped'] = $flipped;
+                $room->update(['state' => $state]);
+                $this->emit(new RoomUpdated($room->fresh('members')));
+                return response()->json(['ok' => true]);
+            }
+
+            // Segunda carta → comparar
+            $first = collect($cards)->firstWhere('id', $flipped[0]);
+            if (($first['value'] ?? null) === $card['value']) {
+                $state['found'] = array_merge($found, $flipped);
+                $state['flipped'] = [];
+                $this->award($me, 1);   // par encontrado → sigue el mismo jugador
+                $room->update(['state' => $state]);
+                $room->load('members');
+                $this->emit(new ChatPosted($room->code, 'correct', "{$me->name} encontró un par 🎉 (+1)", $me->name, $me->id));
+                $this->emit(new RoomUpdated($room));
+                if (count($state['found']) >= count($cards)) {
+                    $this->finishPlay($room);   // se completó el tablero
+                }
+            } else {
+                $state['flipped'] = $flipped;   // ambas visibles un instante
+                $state['resolve_at'] = now()->addMilliseconds((int) config('familia.memoria.flip_ms'))->toIso8601String();
+                $room->update(['state' => $state]);
+                $this->emit(new RoomUpdated($room->fresh('members')));
+            }
+
+            return response()->json(['ok' => true]);
+        });
+    }
+
+    public function resolveFlip(Request $request, string $code)
+    {
+        $request->validate(['token' => 'required|string|max:64']);
+
+        return DB::transaction(function () use ($code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room || $room->status !== 'playing' || $room->game !== 'memoria') {
+                return response()->json(['ok' => false]);
+            }
+            $state = $room->state ?? [];
+            if (($state['phase'] ?? null) !== 'play' || empty($state['resolve_at'])) {
+                return response()->json(['ok' => false]);
+            }
+            if (\Illuminate\Support\Carbon::parse($state['resolve_at'])->gt(now()->addSecond())) {
+                return response()->json(['ok' => false]);   // todavía visibles
+            }
+            $members = $room->members()->get();
+            $state['flipped'] = [];
+            $state['turn'] = $this->nextHangmanTurn($members, $state['turn'] ?? null);   // no coincidió → pasa el turno
+            unset($state['resolve_at']);
+            $room->update(['state' => $state]);
+            $this->emit(new RoomUpdated($room->fresh('members')));
+
+            return response()->json(['ok' => true]);
+        });
+    }
+
     public function leave(Request $request, string $code)
     {
         $request->validate(['token' => 'required|string|max:64']);
@@ -691,7 +782,7 @@ class FamiliaController extends Controller
             $state['submissions'] = [];
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.tuttifrutti.round_seconds'));
             $sys = "Ronda {$next}/{$room->total_rounds} — letra «{$letter}»";
-        } else { // hangman
+        } elseif ($room->game === 'hangman') {
             $word = $this->pickOne(config('familia.hangman.words'), $used);
             $used[] = $word;
             $state['guessed'] = [];
@@ -700,6 +791,24 @@ class FamiliaController extends Controller
             $update['word'] = $word;   // secreta (no se expone en el snapshot)
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.hangman.round_seconds'));
             $sys = "Ronda {$next}/{$room->total_rounds} — Ahorcado: empieza {$members->first()->name}.";
+        } else { // memoria
+            $faces = config('familia.memoria.faces');
+            shuffle($faces);
+            $chosen = array_slice($faces, 0, (int) config('familia.memoria.pairs'));
+            $deck = [];
+            $id = 0;
+            foreach ($chosen as $face) {
+                $deck[] = ['id' => $id++, 'value' => $face];
+                $deck[] = ['id' => $id++, 'value' => $face];
+            }
+            shuffle($deck);
+            $state['cards'] = $deck;      // secreto: el snapshot solo revela lo destapado
+            $state['flipped'] = [];
+            $state['found'] = [];
+            $state['turn'] = $members->first()->id;
+            unset($state['resolve_at']);
+            $update['round_ends_at'] = now()->addSeconds((int) config('familia.memoria.round_seconds'));
+            $sys = "Ronda {$next}/{$room->total_rounds} — Memoria: empieza {$members->first()->name}.";
         }
 
         $state['used'] = $used;
@@ -743,8 +852,10 @@ class FamiliaController extends Controller
                     'pts' => $answers[$m->id]['pts'] ?? 0,
                 ])->values(),
             ];
-        } else { // hangman
+        } elseif ($room->game === 'hangman') {
             $reveal = ['word' => $room->word, 'solved' => (bool) ($state['solved'] ?? false)];
+        } else { // memoria
+            $reveal = ['done' => true];
         }
 
         $state['phase'] = 'reveal';
@@ -851,7 +962,7 @@ class FamiliaController extends Controller
 
     private function gameLabel(string $g): string
     {
-        return ['pictionary' => 'Dibuja y Adivina', 'trivia' => 'Trivia', 'tuttifrutti' => 'Tutti Frutti', 'hangman' => 'Ahorcado'][$g] ?? $g;
+        return ['pictionary' => 'Dibuja y Adivina', 'trivia' => 'Trivia', 'tuttifrutti' => 'Tutti Frutti', 'hangman' => 'Ahorcado', 'memoria' => 'Memoria'][$g] ?? $g;
     }
 
     /** Siguiente turno del Ahorcado (por slot, salteando a los desconectados). */

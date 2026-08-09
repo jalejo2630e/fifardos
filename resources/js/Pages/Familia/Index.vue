@@ -8,6 +8,7 @@ const GAMES = {
     trivia: { icon: '❓', name: 'Trivia' },
     tuttifrutti: { icon: '🔤', name: 'Tutti Frutti' },
     hangman: { icon: '🔠', name: 'Ahorcado' },
+    memoria: { icon: '🧠', name: 'Memoria' },
 };
 
 const name = ref('');
