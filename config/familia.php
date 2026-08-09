@@ -341,4 +341,36 @@ return [
             'Deporte' => ['futbol', 'basquet', 'tenis', 'voley', 'natacion', 'boxeo', 'ciclismo', 'golf', 'rugby', 'hockey', 'atletismo', 'esqui'],
         ],
     ],
+
+    // ------------------------------------------------------------ Moderación del chat
+    // Cantidad de avisos por lenguaje ofensivo antes de expulsar. Si el usuario
+    // reincide después de haber sido expulsado, se bloquea su IP en esa sala.
+    'profanity_warnings' => 3,
+
+    // Groserías/insultos a filtrar en el chat. Se comparan sin tildes, en minúscula
+    // y por palabra completa (o "pegadas", para evasiones tipo "p u t o"). Es editable.
+    'profanity' => [
+        'puta', 'puto', 'putas', 'putos', 'puton', 'putazo', 'putamadre', 'reputa', 'reputamadre',
+        'hijodeputa', 'hijadeputa', 'hdp', 'lpm', 'ctm', 'qlo',
+        'mierda', 'mierdas', 'mierdero',
+        'concha', 'conchudo', 'conchuda', 'conchatumadre', 'conchetumadre',
+        'pelotudo', 'pelotuda', 'pelotudos', 'pelotudas',
+        'forro', 'forra', 'forros', 'forras',
+        'carajo', 'cagar', 'cagada', 'cagadas', 'cagon', 'cagona', 'cagones', 'cagaste', 'cagando', 'cagate', 'cagador',
+        'verga', 'vergas', 'vergazo',
+        'pija', 'pijas', 'pijudo',
+        'culo', 'culero', 'culiado', 'culiao', 'culeado', 'culeao',
+        'coger', 'cojer', 'cogida',
+        'joder', 'jodete', 'jodido', 'jodida',
+        'cabron', 'cabrona', 'cabrones', 'cabronazo',
+        'gilipollas', 'gilipollez',
+        'maricon', 'maricona', 'marica', 'maricones',
+        'trolo', 'trola', 'trolos', 'trolas',
+        'pendejo', 'pendeja', 'pendejos', 'pendejas', 'pendejada',
+        'zorra', 'zorras',
+        'imbecil', 'imbeciles', 'estupido', 'estupida', 'idiota', 'idiotas',
+        'tarado', 'tarada', 'subnormal', 'retrasado', 'mogolico', 'mongolico',
+        'polla', 'pollas', 'cojones', 'gonorrea',
+        'malparido', 'malparida', 'chinga', 'chingada', 'chingar', 'chingas', 'pinche',
+    ],
 ];

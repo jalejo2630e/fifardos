@@ -109,8 +109,12 @@ Route::get('/torneos/{tournament:slug}/jugador/{player:username}', [App\Http\Con
     ->scopeBindings()
     ->name('players.public.profile');
 
+// Redirige las URLs antiguas /familia (indexadas/guardadas) a la nueva ruta /minijuegos.
+Route::redirect('/familia', '/minijuegos', 301);
+Route::redirect('/familia/{code}', '/minijuegos/{code}', 301);
+
 // --- Módulo Familia: minijuegos en tiempo real (público, sin cuenta) ---
-Route::prefix('familia')->group(function () {
+Route::prefix('minijuegos')->group(function () {
     Route::get('/', [FamiliaController::class, 'index'])->name('familia.index');
     Route::post('/', [FamiliaController::class, 'create'])->name('familia.create');
     Route::get('/{code}', [FamiliaController::class, 'room'])->whereAlphaNumeric('code')->name('familia.room');

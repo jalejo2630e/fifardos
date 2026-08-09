@@ -68,6 +68,7 @@ class FamiliaController extends Controller
             'family_room_id' => $room->id,
             'name' => trim($data['name']),
             'token' => $data['token'],
+            'ip_address' => $request->ip(),
             'slot' => 1,
             'is_host' => true,
             'last_seen_at' => now(),
@@ -83,15 +84,19 @@ class FamiliaController extends Controller
             'token' => 'required|string|max:64',
         ]);
 
-        return DB::transaction(function () use ($data, $code) {
+        return DB::transaction(function () use ($request, $data, $code) {
             $room = $this->findRoom($code, lock: true);
             if (! $room) {
                 return response()->json(['message' => 'Esa sala no existe.'], 404);
             }
 
+            if ($this->isBanned($room, $request->ip())) {
+                return response()->json(['message' => 'Fuiste bloqueado de esta sala por lenguaje ofensivo.'], 403);
+            }
+
             $existing = $room->members()->where('token', $data['token'])->first();
             if ($existing) {
-                $existing->update(['name' => trim($data['name']), 'last_seen_at' => now()]);
+                $existing->update(['name' => trim($data['name']), 'ip_address' => $request->ip(), 'last_seen_at' => now()]);
                 $this->emit(new RoomUpdated($room->fresh('members')));
                 return response()->json(['code' => $room->code, 'slot' => $existing->slot]);
             }
@@ -110,6 +115,7 @@ class FamiliaController extends Controller
                 'family_room_id' => $room->id,
                 'name' => trim($data['name']),
                 'token' => $data['token'],
+                'ip_address' => $request->ip(),
                 'slot' => $slot,
                 'is_host' => false,
                 'last_seen_at' => now(),
@@ -274,11 +280,16 @@ class FamiliaController extends Controller
         };
         // game_score se reinicia cada partida; score (total de la tanda) solo al empezar la tanda.
         $room->members()->update($resetScores ? ['score' => 0, 'game_score' => 0] : ['game_score' => 0]);
+        // Estado fresco, pero conservando la moderación (avisos/baneos) entre partidas.
+        $freshState = ['used' => []];
+        if (! empty($room->state['mod'])) {
+            $freshState['mod'] = $room->state['mod'];
+        }
         $room->update([
             'status' => 'playing',
             'round' => 0,
             'total_rounds' => $total,
-            'state' => ['used' => []],
+            'state' => $freshState,
         ]);
         $this->startNextRound($room);
     }
@@ -371,6 +382,11 @@ class FamiliaController extends Controller
             $me = $this->getMember($room, $data['token']);
             if (! $me || $me->id === $room->drawer_member_id) {
                 return response()->json(['message' => 'forbidden'], 403);
+            }
+
+            // Modera el mensaje: si tiene groserías, avisa/expulsa/banea y no lo publica.
+            if (! $this->moderateChat($room, $me, $data['text'])) {
+                return response()->json(['ok' => false, 'blocked' => true]);
             }
 
             $correct = $state['correct'] ?? [];
@@ -592,6 +608,10 @@ class FamiliaController extends Controller
             $me = $this->getMember($room, $data['token']);
             if (! $me) {
                 return response()->json(['message' => 'forbidden'], 403);
+            }
+            // Modera el intento: si tiene groserías, avisa/expulsa/banea y no lo publica.
+            if (! $this->moderateChat($room, $me, $data['text'])) {
+                return response()->json(['ok' => false, 'blocked' => true]);
             }
             $members = $room->members()->get();
             if (($state['turn'] ?? null) !== $me->id) {
@@ -1247,6 +1267,113 @@ class FamiliaController extends Controller
     {
         $m->increment('score', $pts);
         $m->increment('game_score', $pts);
+    }
+
+    // ---------------------------------------------------------------- moderación del chat
+    /** ¿El texto contiene alguna grosería de la lista configurada? */
+    private function hasProfanity(string $text): bool
+    {
+        $list = config('familia.profanity', []);
+        if (empty($list)) {
+            return false;
+        }
+        // Minúsculas, sin tildes/signos, espacios simples; colapsa repeticiones ("putooo" → "puto").
+        $norm = preg_replace('/(.)\1{2,}/', '$1', $this->normalize($text));
+        if ($norm === '') {
+            return false;
+        }
+        foreach ($list as $bad) {
+            $b = $this->normalize((string) $bad);
+            // Palabra completa: evita falsos positivos por subcadenas (p. ej. "escoger", "pijama").
+            if ($b !== '' && preg_match('/\b' . preg_quote($b, '/') . '\b/', $norm)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Modera un mensaje de chat. Devuelve true si es limpio (se puede publicar).
+     * Si contiene groserías, NO se publica y: registra un aviso; al llegar al límite
+     * expulsa al usuario; y si reincide después de haber sido expulsado, bloquea su IP
+     * en esa sala. En todos esos casos devuelve false.
+     */
+    private function moderateChat(FamilyRoom $room, FamilyMember $me, string $text): bool
+    {
+        if (! $this->hasProfanity($text)) {
+            return true;
+        }
+
+        $limit = max(1, (int) config('familia.profanity_warnings', 3));
+        $ip = request()->ip() ?: ($me->ip_address ?: 'desconocida');
+
+        $state = $room->state ?? [];
+        $mod = $state['mod'] ?? [];
+        $count = (int) ($mod['warnings'][$ip] ?? 0) + 1;
+        $mod['warnings'][$ip] = $count;
+        if ($count > $limit) {
+            $mod['banned'] = array_values(array_unique(array_merge($mod['banned'] ?? [], [$ip])));
+        }
+        $state['mod'] = $mod;
+        $room->update(['state' => $state]);
+
+        if ($count > $limit) {
+            // Ya había sido expulsado por groserías y reincidió → baneo de IP.
+            $this->emit(new ChatPosted($room->code, 'system',
+                "⛔ {$me->name} fue bloqueado de la sala por reincidir con lenguaje ofensivo."));
+            $this->removeByIp($room, $ip);
+            return false;
+        }
+
+        if ($count >= $limit) {
+            // Último aviso alcanzado → expulsión.
+            $this->emit(new ChatPosted($room->code, 'system',
+                "🚫 {$me->name} fue expulsado por lenguaje ofensivo (tras {$limit} avisos)."));
+            $this->removeMember($room, $me);
+            return false;
+        }
+
+        // Aviso previo a la expulsión.
+        $this->emit(new ChatPosted($room->code, 'system',
+            "⚠️ {$me->name}, cuidá el lenguaje. Aviso {$count} de {$limit}."));
+        return false;
+    }
+
+    /** ¿La IP está bloqueada en esta sala? */
+    private function isBanned(FamilyRoom $room, ?string $ip): bool
+    {
+        if (blank($ip)) {
+            return false;
+        }
+        return in_array($ip, $room->state['mod']['banned'] ?? [], true);
+    }
+
+    /** Saca a un participante de la sala de inmediato (sin la cuenta regresiva del anfitrión). */
+    private function removeMember(FamilyRoom $room, FamilyMember $m): void
+    {
+        $mid = $m->id;
+        $m->delete();
+        $state = $room->state ?? [];
+        if (($state['turn'] ?? null) === $mid) {
+            $state['turn'] = $this->nextHangmanTurn($room->members()->get(), $mid);
+            $room->update(['state' => $state]);
+        }
+        $this->emit(new RoomUpdated($room->fresh('members')));
+    }
+
+    /** Saca a todos los participantes presentes con esa IP (usado al banear). */
+    private function removeByIp(FamilyRoom $room, string $ip): void
+    {
+        $ids = $room->members()->where('ip_address', $ip)->pluck('id')->all();
+        if (! empty($ids)) {
+            $room->members()->whereIn('id', $ids)->delete();
+            $state = $room->state ?? [];
+            if (in_array($state['turn'] ?? null, $ids, true)) {
+                $state['turn'] = $this->nextHangmanTurn($room->members()->get(), (int) $state['turn']);
+                $room->update(['state' => $state]);
+            }
+        }
+        $this->emit(new RoomUpdated($room->fresh('members')));
     }
 
     private function findRoom(string $code, bool $lock = false): ?FamilyRoom

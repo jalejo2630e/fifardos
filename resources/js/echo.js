@@ -1,7 +1,7 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 
-// Instancia perezosa: solo abrimos el WebSocket cuando se entra a una sala de /familia
+// Instancia perezosa: solo abrimos el WebSocket cuando se entra a una sala de /minijuegos
 // (no en el resto del sitio). Usamos canales públicos, así que no hace falta auth.
 let echo = null;
 

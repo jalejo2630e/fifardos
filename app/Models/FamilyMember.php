@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class FamilyMember extends Model
 {
     protected $fillable = [
-        'family_room_id', 'name', 'token', 'slot', 'score', 'game_score', 'is_host', 'last_seen_at',
+        'family_room_id', 'name', 'token', 'ip_address', 'slot', 'score', 'game_score', 'is_host', 'last_seen_at',
     ];
 
     protected $casts = [

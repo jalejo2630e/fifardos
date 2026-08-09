@@ -30,8 +30,8 @@ async function createRoom() {
     busy.value = true;
     try {
         setName(n);
-        const { data } = await axios.post('/familia', { name: n, token: getToken(), game: game.value });
-        router.visit(`/familia/${data.code}`);
+        const { data } = await axios.post('/minijuegos', { name: n, token: getToken(), game: game.value });
+        router.visit(`/minijuegos/${data.code}`);
     } catch (e) {
         error.value = e.response?.data?.message || 'No se pudo crear la sala.';
         busy.value = false;
@@ -47,8 +47,8 @@ async function joinRoom() {
     busy.value = true;
     try {
         setName(n);
-        const { data } = await axios.post(`/familia/${code}/join`, { name: n, token: getToken() });
-        router.visit(`/familia/${data.code}`);
+        const { data } = await axios.post(`/minijuegos/${code}/join`, { name: n, token: getToken() });
+        router.visit(`/minijuegos/${data.code}`);
     } catch (e) {
         error.value = e.response?.data?.message || 'No se pudo unir a la sala.';
         busy.value = false;

@@ -107,15 +107,15 @@ function pos(ev) { const r = canvasRef.value.getBoundingClientRect(); const cx =
 function onDown(ev) { if (!isDrawer.value || phase.value !== 'play') return; ev.preventDefault(); drawing = true; const p = pos(ev); activeLocal = { color: currentColor.value, size: currentSize.value, points: [p] }; segments.push(activeLocal); dot(p, currentColor.value, currentSize.value); batch = [p]; batchBegin = true; }
 function onMove(ev) { if (!drawing) return; ev.preventDefault(); const p = pos(ev); const prev = activeLocal.points[activeLocal.points.length - 1]; line(prev, p, activeLocal.color, activeLocal.size); activeLocal.points.push(p); batch.push(p); }
 function onUp() { if (!drawing) return; drawing = false; flush(); activeLocal = null; }
-function flush() { if (!batch.length) return; const points = batch; const begin = batchBegin; batch = []; batchBegin = false; axios.post(`/familia/${props.code}/stroke`, { token, points, color: currentColor.value, size: currentSize.value, begin }).catch(() => {}); }
-function clearBoard() { clearCanvasLocal(); axios.post(`/familia/${props.code}/clear`, { token }).catch(() => {}); }
+function flush() { if (!batch.length) return; const points = batch; const begin = batchBegin; batch = []; batchBegin = false; axios.post(`/minijuegos/${props.code}/stroke`, { token, points, color: currentColor.value, size: currentSize.value, begin }).catch(() => {}); }
+function clearBoard() { clearCanvasLocal(); axios.post(`/minijuegos/${props.code}/clear`, { token }).catch(() => {}); }
 
 // ===================== Acciones por juego =====================
-function sendGuess() { const t = guessText.value.trim(); if (!t) return; guessText.value = ''; axios.post(`/familia/${props.code}/guess`, { token, text: t }).catch(() => {}); }
-function sendAnswer(i) { if (iAnswered.value || phase.value !== 'play') return; myAnswer.value = i; axios.post(`/familia/${props.code}/answer`, { token, index: i }).catch(() => { myAnswer.value = null; }); }
-function submitTf() { axios.post(`/familia/${props.code}/submit`, { token, answers: { ...tf } }).catch(() => {}); }
+function sendGuess() { const t = guessText.value.trim(); if (!t) return; guessText.value = ''; axios.post(`/minijuegos/${props.code}/guess`, { token, text: t }).catch(() => {}); }
+function sendAnswer(i) { if (iAnswered.value || phase.value !== 'play') return; myAnswer.value = i; axios.post(`/minijuegos/${props.code}/answer`, { token, index: i }).catch(() => { myAnswer.value = null; }); }
+function submitTf() { axios.post(`/minijuegos/${props.code}/submit`, { token, answers: { ...tf } }).catch(() => {}); }
 function onTfInput() { if (tfTimer) clearTimeout(tfTimer); tfTimer = setTimeout(submitTf, 600); }
-async function callBasta() { if (tfTimer) clearTimeout(tfTimer); await submitTf(); axios.post(`/familia/${props.code}/stop`, { token }).catch(() => {}); }
+async function callBasta() { if (tfTimer) clearTimeout(tfTimer); await submitTf(); axios.post(`/minijuegos/${props.code}/stop`, { token }).catch(() => {}); }
 
 // --- Validación (anti-trampa) ---
 function tfNorm(s) { return (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLowerCase(); }
@@ -127,7 +127,7 @@ function toggleVote(owner, cat) {
     const key = owner + ':' + cat;
     const willReject = !myRejects.value.includes(key);
     myRejects.value = willReject ? [...myRejects.value, key] : myRejects.value.filter((k) => k !== key);
-    axios.post(`/familia/${props.code}/vote`, { token, owner, cat, accept: !willReject }).catch(() => {});
+    axios.post(`/minijuegos/${props.code}/vote`, { token, owner, cat, accept: !willReject }).catch(() => {});
 }
 
 // --- Ahorcado ---
@@ -144,20 +144,20 @@ function guessLetter(k) {
     const lc = k.toLowerCase();
     if (letterUsed(k)) return;
     pendingKeys.add(lc);
-    axios.post(`/familia/${props.code}/letter`, { token, letter: lc }).catch(() => {});
+    axios.post(`/minijuegos/${props.code}/letter`, { token, letter: lc }).catch(() => {});
 }
 function solveWord() {
     if (!isMyTurn.value) return;
     const t = solveText.value.trim();
     if (!t) return;
     solveText.value = '';
-    axios.post(`/familia/${props.code}/solve`, { token, text: t }).catch(() => {});
+    axios.post(`/minijuegos/${props.code}/solve`, { token, text: t }).catch(() => {});
 }
 
 // --- Memoria ---
 function flipCard(id) {
     if (!isMyTurn.value) return;
-    axios.post(`/familia/${props.code}/flip`, { token, card: id }).catch(() => {});
+    axios.post(`/minijuegos/${props.code}/flip`, { token, card: id }).catch(() => {});
 }
 
 // --- Host: expulsar / cerrar ---
@@ -165,22 +165,22 @@ function goHome(msg) {
     if (leaving) return;
     leaving = true;
     if (msg) toast.info(msg);
-    router.visit('/familia');
+    router.visit('/minijuegos');
 }
 function onLeaveClick() {
     if (isHost.value) { confirmClose.value = true; } else { goHome(); }
 }
 function closeRoom() {
     confirmClose.value = false;
-    axios.post(`/familia/${props.code}/close`, { token }).catch(() => {});
+    axios.post(`/minijuegos/${props.code}/close`, { token }).catch(() => {});
     goHome();
 }
 function kickMember(id) {
     if (!isHost.value) return;
-    axios.post(`/familia/${props.code}/kick`, { token, member: id }).catch(() => {});
+    axios.post(`/minijuegos/${props.code}/kick`, { token, member: id }).catch(() => {});
 }
 function acceptKick() {
-    axios.post(`/familia/${props.code}/kick-finalize`, { token }).catch(() => {});
+    axios.post(`/minijuegos/${props.code}/kick-finalize`, { token }).catch(() => {});
     goHome('Saliste de la sala.');
 }
 
@@ -188,19 +188,19 @@ function acceptKick() {
 let channel = null, heartbeat = null, ticker = null, lastTimeoutAt = 0, lastResolveAt = 0, lastKickAt = 0, ro = null;
 
 async function identify() {
-    try { const { data } = await axios.post(`/familia/${props.code}/hello`, { token }); room.value = data.room; me.value = data.me; joinNeeded.value = !data.me; } catch (e) { /* noop */ }
+    try { const { data } = await axios.post(`/minijuegos/${props.code}/hello`, { token }); room.value = data.room; me.value = data.me; joinNeeded.value = !data.me; } catch (e) { /* noop */ }
 }
 async function joinHere() {
     joinError.value = '';
     const n = joinName.value.trim();
     if (!n) { joinError.value = 'Escribí tu nombre.'; return; }
-    try { setName(n); await axios.post(`/familia/${props.code}/join`, { name: n, token }); await identify(); }
+    try { setName(n); await axios.post(`/minijuegos/${props.code}/join`, { name: n, token }); await identify(); }
     catch (e) { joinError.value = e.response?.data?.message || 'No se pudo unir.'; }
 }
 function pushChat(e) { chat.value.push(e); if (chat.value.length > 120) chat.value.shift(); nextTick(() => { const b = document.getElementById('fam-chat'); if (b) b.scrollTop = b.scrollHeight; }); }
 async function startGame() {
     if (!pl.value.length) return;
-    try { await axios.post(`/familia/${props.code}/start`, { token, games: pl.value }); }
+    try { await axios.post(`/minijuegos/${props.code}/start`, { token, games: pl.value }); }
     catch (e) { alert(e.response?.data?.message || 'No se pudo empezar.'); }
 }
 function playlistIndex(key) { return pl.value.indexOf(key); }
@@ -208,12 +208,12 @@ function togglePlaylist(key) {
     if (!isHost.value) return;
     const idx = pl.value.indexOf(key);
     pl.value = idx >= 0 ? pl.value.filter((g) => g !== key) : [...pl.value, key];
-    axios.post(`/familia/${props.code}/playlist`, { token, games: pl.value }).catch(() => {});
+    axios.post(`/minijuegos/${props.code}/playlist`, { token, games: pl.value }).catch(() => {});
 }
 function copyCode() { navigator.clipboard?.writeText(props.code).then(() => { copied.value = true; setTimeout(() => (copied.value = false), 1500); }); }
 async function fetchWord() {
     if (game.value === 'pictionary' && phase.value === 'play' && isDrawer.value) {
-        try { const { data } = await axios.get(`/familia/${props.code}/word`, { params: { token } }); myWord.value = data.word; } catch { myWord.value = ''; }
+        try { const { data } = await axios.get(`/minijuegos/${props.code}/word`, { params: { token } }); myWord.value = data.word; } catch { myWord.value = ''; }
     } else { myWord.value = ''; }
 }
 
@@ -275,18 +275,18 @@ onMounted(async () => {
         if (status.value === 'playing' && room.value?.round_ends_at && remaining.value <= 0
             && (now.value - lastTimeoutAt > 1500)) {
             lastTimeoutAt = now.value;
-            axios.post(`/familia/${props.code}/timeout`, { token }).catch(() => {});
+            axios.post(`/minijuegos/${props.code}/timeout`, { token }).catch(() => {});
         }
         // Memoria: volver a tapar las cartas que no coincidieron (cualquier cliente lo dispara).
         const ra = gs.value.resolve_at;
         if (status.value === 'playing' && ra && now.value >= new Date(ra).getTime() && (now.value - lastResolveAt > 1200)) {
             lastResolveAt = now.value;
-            axios.post(`/familia/${props.code}/resolve`, { token }).catch(() => {});
+            axios.post(`/minijuegos/${props.code}/resolve`, { token }).catch(() => {});
         }
         // Expulsión: el anfitrión la concreta cuando vencen los 5s (si el objetivo no salió antes).
         if (isHost.value && kick.value && now.value >= new Date(kick.value.at).getTime() && (now.value - lastKickAt > 1500)) {
             lastKickAt = now.value;
-            axios.post(`/familia/${props.code}/kick-finalize`, { token }).catch(() => {});
+            axios.post(`/minijuegos/${props.code}/kick-finalize`, { token }).catch(() => {});
         }
     }, 250);
     flushTimer = setInterval(() => { if (batch.length) flush(); }, 80);
@@ -297,7 +297,7 @@ onBeforeUnmount(() => {
     if (ro) ro.disconnect();
     clearInterval(ticker); clearInterval(flushTimer); clearInterval(heartbeat); if (tfTimer) clearTimeout(tfTimer);
     leaveChannel(`family-room.${props.code}`);
-    try { navigator.sendBeacon?.(`/familia/${props.code}/leave`, new Blob([JSON.stringify({ token })], { type: 'application/json' })); } catch (e) { /* noop */ }
+    try { navigator.sendBeacon?.(`/minijuegos/${props.code}/leave`, new Blob([JSON.stringify({ token })], { type: 'application/json' })); } catch (e) { /* noop */ }
 });
 </script>
 
@@ -313,7 +313,7 @@ onBeforeUnmount(() => {
                 <input v-model="joinName" maxlength="24" placeholder="Tu nombre" @keyup.enter="joinHere" />
                 <button class="btn btn-solid" @click="joinHere">Entrar a jugar</button>
                 <p v-if="joinError" class="err">{{ joinError }}</p>
-                <Link href="/familia" class="muted-link">← Volver</Link>
+                <Link href="/minijuegos" class="muted-link">← Volver</Link>
             </div>
         </div>
 

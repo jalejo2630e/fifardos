@@ -202,7 +202,7 @@ onBeforeUnmount(() => {
                 <a href="#como">{{ $t('landing.navComoVa') }}</a>
                 <a href="#modos">{{ $t('landing.navModos') }}</a>
                 <a href="#jugar">{{ $t('landing.navGame') }}</a>
-                <a href="/familia">{{ $t('landing.navFamily') }}</a>
+                <a href="/minijuegos">{{ $t('landing.navFamily') }}</a>
                 <a href="#tabla">{{ $t('landing.navEnVivo') }}</a>
                 <a href="#faq">{{ $t('landing.navFaq') }}</a>
             </nav>
@@ -223,7 +223,7 @@ onBeforeUnmount(() => {
                     <a href="#como" @click="closeMenu">{{ $t('landing.navComoVa') }}</a>
                     <a href="#modos" @click="closeMenu">{{ $t('landing.navModos') }}</a>
                     <a href="#jugar" @click="closeMenu">{{ $t('landing.navGame') }}</a>
-                    <a href="/familia" @click="closeMenu">{{ $t('landing.navFamily') }}</a>
+                    <a href="/minijuegos" @click="closeMenu">{{ $t('landing.navFamily') }}</a>
                     <a href="#tabla" @click="closeMenu">{{ $t('landing.navEnVivo') }}</a>
                     <a href="#faq" @click="closeMenu">{{ $t('landing.navFaq') }}</a>
                     <div class="mm-actions">
