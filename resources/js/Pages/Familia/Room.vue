@@ -1,5 +1,5 @@
 <script setup>
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { getEcho, leaveChannel } from '@/echo';
 import { getToken, getName, setName } from '@/familia/session';
@@ -165,7 +165,7 @@ function goHome(msg) {
     if (leaving) return;
     leaving = true;
     if (msg) toast.info(msg);
-    router.visit('/minijuegos');
+    router.visit('/');
 }
 function onLeaveClick() {
     if (isHost.value) { confirmClose.value = true; } else { goHome(); }
