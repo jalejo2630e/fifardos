@@ -50,7 +50,7 @@ const { x: sx, y: sy, onMove, onEnter, onLeave } = useMouseSpotlight();
             </h1>
             <p class="text-sm sm:text-base text-elite-primary/60 max-w-lg mx-auto">
                 FIFARDOS organiza torneos de <strong class="text-elite-primary/80">cualquier deporte</strong>:
-                videojuego (EA Sports FC / FIFA, eFootball) o deporte real (fútbol, básquet, vóley, tenis y más).
+                videojuego de consola o deporte real (fútbol, básquet, vóley, tenis y más).
                 Tú defines las reglas; nosotros armamos el fixture, la tabla y las eliminatorias.
             </p>
         </section>

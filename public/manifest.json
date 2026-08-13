@@ -1,8 +1,8 @@
 {
     "id": "/",
-    "name": "FIFARDOS — Torneos de FIFA",
+    "name": "FIFARDOS — Torneos de fútbol",
     "short_name": "FIFARDOS",
-    "description": "Organiza y gestiona torneos de FIFA (EA Sports FC): grupos, resultados, tabla de posiciones en vivo, eliminatorias y goleadores.",
+    "description": "Organiza y gestiona torneos de fútbol (videojuego de consola o cancha real): grupos, resultados, tabla de posiciones en vivo, eliminatorias y goleadores.",
     "lang": "es",
     "dir": "ltr",
     "categories": ["sports", "games", "utilities"],

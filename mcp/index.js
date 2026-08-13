@@ -59,14 +59,14 @@ const TOOLS = [
     {
         name: "list_tournaments",
         description:
-            "Lista todos los torneos de FIFA: nombre, estado, número de jugadores, progreso de partidos y quién va líder. Úsalo para '¿qué torneos hay?', '¿cuál está en curso?', '¿quién va ganando?'.",
+            "Lista todos los torneos: nombre, estado, número de jugadores, progreso de partidos y quién va líder. Úsalo para '¿qué torneos hay?', '¿cuál está en curso?', '¿quién va ganando?'.",
         inputSchema: { type: "object", properties: {}, additionalProperties: false },
         run: () => api("GET", "/tournaments"),
     },
     {
         name: "create_tournament",
         description:
-            "Crea un torneo de FIFA nuevo con su lista de jugadores. Genera automáticamente el fixture de fase de grupos (todos contra todos) repartido entre las consolas. Úsalo cuando el usuario pida 'ármame/créame un torneo'.",
+            "Crea un torneo nuevo con su lista de jugadores. Genera automáticamente el fixture de fase de grupos (todos contra todos) repartido entre las consolas. Úsalo cuando el usuario pida 'ármame/créame un torneo'.",
         inputSchema: {
             type: "object",
             properties: {

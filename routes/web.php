@@ -36,7 +36,7 @@ Route::get('/', function () {
         ],
         'seo' => [
             'title' => 'FIFARDOS — Organiza torneos de fútbol con tus amigos',
-            'description' => 'Crea torneos de fútbol en segundos —de videojuego (EA Sports FC/FIFA, eFootball) o de fútbol real (fulbito, F5, F7, F11)—: grupos, resultados, tabla en vivo, eliminatorias automáticas y goleador. Gratis. Con integración MCP para conectar Claude, ChatGPT o Gemini y crear torneos desde el chat.',
+            'description' => 'Crea torneos de fútbol en segundos —de videojuego de consola o de fútbol real (fulbito, F5, F7, F11)—: grupos, resultados, tabla en vivo, eliminatorias automáticas y goleador. Gratis. Con integración MCP para conectar Claude, ChatGPT o Gemini y crear torneos desde el chat.',
             'type' => 'website',
             'jsonld' => [
                 [
@@ -47,7 +47,7 @@ Route::get('/', function () {
                             'name' => '¿Qué es FIFARDOS?',
                             'acceptedAnswer' => [
                                 '@type' => 'Answer',
-                                'text' => 'FIFARDOS es una plataforma web gratuita para organizar y gestionar torneos de fútbol entre amigos, ya sea de videojuego (EA Sports FC/FIFA, eFootball) o de fútbol real (fulbito, F5, F7, F11). Permite crear torneos con fase de grupos y eliminatorias, cargar los resultados de cada partido, ver la tabla de posiciones en tiempo real y seguir estadísticas como el goleador del torneo.',
+                                'text' => 'FIFARDOS es una plataforma web gratuita para organizar y gestionar torneos de fútbol entre amigos, ya sea de videojuego de consola o de fútbol real (fulbito, F5, F7, F11). Permite crear torneos con fase de grupos y eliminatorias, cargar los resultados de cada partido, ver la tabla de posiciones en tiempo real y seguir estadísticas como el goleador del torneo.',
                             ],
                         ],
                         [

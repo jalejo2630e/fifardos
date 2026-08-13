@@ -16,7 +16,7 @@
  */
 return [
     'fifa' => [
-        'name' => 'FIFA / Consola',
+        'name' => 'Videojuego / Consola',
         'icon' => '🎮',
         'type' => 'individual',
         'players_per_side' => 1,

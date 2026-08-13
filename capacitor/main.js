@@ -33,7 +33,7 @@ const App = {
             h('header', { class: 'border-b border-white/10' }, [
                 h('div', { class: 'max-w-4xl mx-auto px-4 py-6 text-center' }, [
                     h('h1', { class: 'text-3xl md:text-4xl font-elite-condensed font-black uppercase tracking-[0.2em] text-[#f97316]' }, 'FIFARDOS ELITE'),
-                    h('p', { class: 'text-white/40 text-sm mt-1' }, 'Liga competitiva de FIFA'),
+                    h('p', { class: 'text-white/40 text-sm mt-1' }, 'Torneos y ligas competitivas'),
                 ]),
             ]),
             h('main', { class: 'max-w-4xl mx-auto px-4 py-8' }, [
