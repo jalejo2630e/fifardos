@@ -4,6 +4,7 @@ Conecta FIFARDOS con asistentes de IA como **Claude**, **ChatGPT**, **GitHub Cop
 
 > «Ármame un torneo de fútbol llamado *Copa Sábado* con Diego, Julián, Javier y Sebas en 2 consolas»
 > «¿Cómo va la tabla del torneo 3?» · «¿Quién lleva más goles?»
+> «En la Copa Sábado, ¿qué partidos faltan?» · «Actualiza el marcador de Diego vs Javier: 1 a 2»
 
 ## Herramientas expuestas
 
@@ -14,6 +15,7 @@ Conecta FIFARDOS con asistentes de IA como **Claude**, **ChatGPT**, **GitHub Cop
 | `get_standings` | Tabla de posiciones de un torneo |
 | `get_top_scorer` | Máximo goleador de un torneo |
 | `get_matches` | Partidos (filtrable por `pending` / `finished`) |
+| `record_score` | **Registra/actualiza el marcador** de un partido y lo marca como jugado |
 | `get_player` | Datos y estadísticas de un jugador |
 | `search` | Búsqueda semántica de resúmenes de jugadores |
 
@@ -113,6 +115,6 @@ FIFARDOS_BASE_URL=https://fifardos.com FIFARDOS_TOKEN=1|tu_token node index.js
 ## Notas
 
 - La API respeta la autenticación de Sanctum: cada operación queda acotada al usuario dueño del token.
-- Todas las herramientas son de solo lectura excepto `create_tournament`.
+- Todas las herramientas son de solo lectura excepto `create_tournament` y `record_score` (escritura).
 - El esquema completo de la API REST está en `GET /api/agent/schema`.
 - El endpoint remoto y el puente local exponen exactamente las mismas herramientas.

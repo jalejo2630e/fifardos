@@ -142,6 +142,30 @@ const TOOLS = [
         },
     },
     {
+        name: "record_score",
+        description:
+            "Registra/actualiza el marcador de un partido y lo marca como jugado. En deportes de goles (FIFA, etc.) 'score1' es del competidor1 y 'score2' del competidor2 TAL COMO los devuelve get_matches. Úsalo para 'ponle a X 1 y a B 2' o 'actualiza el marcador de X vs B'. FLUJO: resuelve el torneo con list_tournaments y el 'match_id' (y qué lado es cada competidor) con get_matches; luego llama aquí.",
+        inputSchema: {
+            type: "object",
+            properties: {
+                tournament_id: { type: "integer", description: "ID del torneo" },
+                match_id: { type: "integer", description: "ID del partido (campo \"id\" de get_matches)" },
+                score1: { type: "integer", minimum: 0, description: "Goles del competidor1" },
+                score2: { type: "integer", minimum: 0, description: "Goles del competidor2" },
+                penalties1: { type: "integer", minimum: 0, description: "Penales del competidor1 (opcional)" },
+                penalties2: { type: "integer", minimum: 0, description: "Penales del competidor2 (opcional)" },
+            },
+            required: ["tournament_id", "match_id", "score1", "score2"],
+            additionalProperties: false,
+        },
+        run: (args) => {
+            const body = { score1: args.score1, score2: args.score2 };
+            if (args.penalties1 != null) body.penalties1 = args.penalties1;
+            if (args.penalties2 != null) body.penalties2 = args.penalties2;
+            return api("POST", `/tournaments/${args.tournament_id}/matches/${args.match_id}/score`, body);
+        },
+    },
+    {
         name: "get_player",
         description:
             "Datos y estadísticas de un jugador (partidos, victorias, goles, puntos, torneo). Úsalo para 'dame los datos de X jugador'.",

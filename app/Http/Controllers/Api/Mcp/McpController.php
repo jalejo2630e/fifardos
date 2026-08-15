@@ -181,6 +181,17 @@ class McpController extends Controller
                 (int) ($args['tournament_id'] ?? 0)
             )),
 
+            'record_score' => $this->data($agent->recordScore(
+                $req(array_filter([
+                    'score1' => $args['score1'] ?? null,
+                    'score2' => $args['score2'] ?? null,
+                    'penalties1' => $args['penalties1'] ?? null,
+                    'penalties2' => $args['penalties2'] ?? null,
+                ], fn ($v) => $v !== null)),
+                (int) ($args['tournament_id'] ?? 0),
+                (int) ($args['match_id'] ?? 0)
+            )),
+
             'get_player' => $this->data($agent->player($req([]), (int) ($args['player_id'] ?? 0))),
 
             'search' => $this->data($agent->search($req(['query' => $args['query'] ?? '']))),
@@ -262,6 +273,23 @@ class McpController extends Controller
                         'status' => ['type' => 'string', 'enum' => ['pending', 'finished'], 'description' => 'Filtrar por estado (opcional)'],
                     ],
                     'required' => ['tournament_id'],
+                    'additionalProperties' => false,
+                ],
+            ],
+            [
+                'name' => 'record_score',
+                'description' => "Registra/actualiza el marcador de un partido y lo marca como jugado. En deportes de goles (FIFA, etc.) 'score1' es del competidor1 y 'score2' del competidor2 TAL COMO los devuelve get_matches. Úsalo para 'ponle a X 1 y a B 2' o 'actualiza el marcador de X vs B'. FLUJO: primero resuelve el torneo con list_tournaments y el 'match_id' (y qué lado es cada competidor) con get_matches; luego llama aquí. Recalcula la tabla y cierra el torneo si ya se jugaron todos los partidos.",
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'tournament_id' => ['type' => 'integer', 'description' => 'ID del torneo'],
+                        'match_id' => ['type' => 'integer', 'description' => 'ID del partido (campo "id" de get_matches)'],
+                        'score1' => ['type' => 'integer', 'minimum' => 0, 'description' => 'Goles del competidor1'],
+                        'score2' => ['type' => 'integer', 'minimum' => 0, 'description' => 'Goles del competidor2'],
+                        'penalties1' => ['type' => 'integer', 'minimum' => 0, 'description' => 'Penales del competidor1 (opcional; solo si el deporte usa penales y hubo empate)'],
+                        'penalties2' => ['type' => 'integer', 'minimum' => 0, 'description' => 'Penales del competidor2 (opcional)'],
+                    ],
+                    'required' => ['tournament_id', 'match_id', 'score1', 'score2'],
                     'additionalProperties' => false,
                 ],
             ],
