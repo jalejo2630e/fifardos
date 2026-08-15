@@ -155,6 +155,32 @@ class FamiliaController extends Controller
         });
     }
 
+    public function setDifficulty(Request $request, string $code)
+    {
+        $data = $request->validate([
+            'token' => 'required|string|max:64',
+            'difficulty' => 'required|in:facil,normal,dificil',
+        ]);
+
+        return DB::transaction(function () use ($data, $code) {
+            $room = $this->findRoom($code, lock: true);
+            if (! $room) {
+                return response()->json(['message' => 'not found'], 404);
+            }
+            $me = $this->getMember($room, $data['token']);
+            if (! $me || ! $me->is_host) {
+                return response()->json(['message' => 'solo el anfitrión'], 403);
+            }
+            if ($room->status === 'playing') {
+                return response()->json(['message' => 'la partida está en curso'], 422);
+            }
+            $room->update(['trivia_difficulty' => $data['difficulty']]);
+            $this->emit(new RoomUpdated($room->fresh('members')));
+
+            return response()->json(['ok' => true]);
+        });
+    }
+
     // ---------------------------------------------------------------- presencia / identidad
     public function hello(Request $request, string $code)
     {
@@ -272,7 +298,7 @@ class FamiliaController extends Controller
     {
         $count = $room->members()->count();
         $total = match ($room->game) {
-            'trivia' => min((int) config('familia.trivia.rounds'), count(config('familia.trivia.questions'))),
+            'trivia' => min((int) config('familia.trivia.rounds'), count($this->triviaPool($room->trivia_difficulty))),
             'tuttifrutti' => (int) config('familia.tuttifrutti.rounds'),
             'hangman' => (int) config('familia.hangman.rounds'),
             'memoria' => (int) config('familia.memoria.rounds'),
@@ -875,7 +901,7 @@ class FamiliaController extends Controller
             $update['round_ends_at'] = now()->addSeconds((int) config('familia.pictionary.round_seconds'));
             $sys = "Ronda {$next}/{$room->total_rounds} — dibuja {$drawer->name}.";
         } elseif ($room->game === 'trivia') {
-            $questions = config('familia.trivia.questions');
+            $questions = $this->triviaPool($room->trivia_difficulty);
             $q = $this->pickTrivia($questions, $used);
             $used[] = $q['q'];
             $state['question'] = $q['q'];
@@ -1415,6 +1441,29 @@ class FamiliaController extends Controller
             $available = $pool;
         }
         return $available[array_rand($available)];
+    }
+
+    /**
+     * Preguntas de trivia filtradas por dificultad elegida en la sala:
+     *  - facil:   preguntas básicas (para chicos / familia)
+     *  - normal:  básicas + medias
+     *  - dificil: medias + difíciles (para adultos, sin las triviales)
+     * Cada pregunta trae opcionalmente 'd' => easy|medium|hard (sin 'd' = easy).
+     */
+    private function triviaPool(?string $difficulty): array
+    {
+        $all = config('familia.trivia.questions');
+        $level = fn (array $q): string => $q['d'] ?? 'easy';
+
+        $pool = match ($difficulty) {
+            'dificil' => array_filter($all, fn ($q) => in_array($level($q), ['medium', 'hard'], true)),
+            'normal' => array_filter($all, fn ($q) => in_array($level($q), ['easy', 'medium'], true)),
+            default => array_filter($all, fn ($q) => $level($q) === 'easy'),
+        };
+
+        $pool = array_values($pool);
+
+        return $pool ?: array_values($all);   // salvaguarda: nunca devolver vacío
     }
 
     private function pickTrivia(array $questions, array $used): array

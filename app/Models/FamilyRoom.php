@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class FamilyRoom extends Model
 {
     protected $fillable = [
-        'code', 'game', 'status', 'host_token', 'round', 'total_rounds',
+        'code', 'game', 'trivia_difficulty', 'status', 'host_token', 'round', 'total_rounds',
         'drawer_member_id', 'word', 'round_started_at', 'round_ends_at', 'state',
         'playlist', 'playlist_pos',
     ];
@@ -41,6 +41,7 @@ class FamilyRoom extends Model
         return [
             'code' => $this->code,
             'game' => $this->game,
+            'trivia_difficulty' => $this->trivia_difficulty ?? 'facil',
             'status' => $this->status,
             'round' => $this->round,
             'total_rounds' => $this->total_rounds,

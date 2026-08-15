@@ -31,6 +31,13 @@ const confirmClose = ref(false);   // modal de confirmación para cerrar la sala
 let leaving = false;               // evita redirigir dos veces
 // Tanda (playlist) de juegos elegida por el anfitrión, en orden
 const pl = ref(props.room.playlist && props.room.playlist.length ? [...props.room.playlist] : [props.room.game]);
+// Dificultad de la trivia (facil | normal | dificil), elegida por el anfitrión
+const difficulty = ref(props.room.trivia_difficulty || 'facil');
+const DIFFICULTIES = [
+    { key: 'facil', label: 'Fácil', hint: 'Para chicos y familia' },
+    { key: 'normal', label: 'Normal', hint: 'Mezcla equilibrada' },
+    { key: 'dificil', label: 'Difícil', hint: 'Para adultos' },
+];
 
 // Pictionary
 const myWord = ref('');
@@ -210,6 +217,12 @@ function togglePlaylist(key) {
     pl.value = idx >= 0 ? pl.value.filter((g) => g !== key) : [...pl.value, key];
     axios.post(`/minijuegos/${props.code}/playlist`, { token, games: pl.value }).catch(() => {});
 }
+const triviaInPlaylist = computed(() => pl.value.includes('trivia'));
+function setDifficulty(level) {
+    if (!isHost.value) return;
+    difficulty.value = level;
+    axios.post(`/minijuegos/${props.code}/difficulty`, { token, difficulty: level }).catch(() => {});
+}
 function copyCode() { navigator.clipboard?.writeText(props.code).then(() => { copied.value = true; setTimeout(() => (copied.value = false), 1500); }); }
 async function fetchWord() {
     if (game.value === 'pictionary' && phase.value === 'play' && isDrawer.value) {
@@ -233,6 +246,8 @@ watch(phase, (p) => {
 });
 // La tanda mostrada sigue lo que hay en el server (para todos los participantes).
 watch(() => room.value?.playlist, (v) => { pl.value = (v && v.length) ? [...v] : [room.value?.game].filter(Boolean); });
+// La dificultad de trivia también se refleja para todos.
+watch(() => room.value?.trivia_difficulty, (v) => { if (v) difficulty.value = v; });
 // El anfitrión cerró la sala → todos afuera.
 watch(() => room.value?.status, (s) => { if (s === 'closed') goHome('El anfitrión cerró la sala.'); });
 // Me sacaron (ya no figuro entre los participantes) → afuera.
@@ -345,6 +360,18 @@ onBeforeUnmount(() => {
                             </button>
                         </div>
                         <p class="rm-hint" v-if="isHost">Tocá los juegos en el orden que quieras (1, 2, 3). Podés elegir uno solo.</p>
+
+                        <div v-if="triviaInPlaylist" class="rm-diff">
+                            <span class="rm-diff-lbl">🧠 Dificultad de la trivia</span>
+                            <div class="rm-diff-opts">
+                                <button v-for="d in DIFFICULTIES" :key="d.key" type="button"
+                                        class="rm-diff-opt" :class="{ on: difficulty === d.key, lock: !isHost }"
+                                        :disabled="!isHost" @click="setDifficulty(d.key)">
+                                    <b>{{ d.label }}</b><small>{{ d.hint }}</small>
+                                </button>
+                            </div>
+                        </div>
+
                         <p class="rm-count">{{ members.length }} / {{ config.max_families }} participantes</p>
                         <button v-if="isHost" class="btn btn-solid" :disabled="!canStart || !pl.length" @click="startGame">
                             {{ !canStart ? 'Esperando participantes…' : (pl.length > 1 ? `Empezar tanda (${pl.length}) →` : 'Empezar a jugar →') }}
@@ -367,6 +394,16 @@ onBeforeUnmount(() => {
                                     <span class="rm-game-ic">{{ g.icon }}</span>
                                     <span class="rm-game-nm">{{ g.name }}</span>
                                 </button>
+                            </div>
+                            <div v-if="triviaInPlaylist" class="rm-diff">
+                                <span class="rm-diff-lbl">🧠 Dificultad de la trivia</span>
+                                <div class="rm-diff-opts">
+                                    <button v-for="d in DIFFICULTIES" :key="d.key" type="button"
+                                            class="rm-diff-opt" :class="{ on: difficulty === d.key }"
+                                            @click="setDifficulty(d.key)">
+                                        <b>{{ d.label }}</b><small>{{ d.hint }}</small>
+                                    </button>
+                                </div>
                             </div>
                             <button class="btn btn-solid" :disabled="!pl.length" @click="startGame">{{ pl.length > 1 ? `Jugar tanda (${pl.length}) →` : 'Jugar de nuevo →' }}</button>
                         </template>
@@ -662,6 +699,16 @@ input:focus { border-color: var(--accent); }
 .rm-game-ic { font-size: 30px; }
 .rm-game-nm { font-family: var(--f-barlow); font-weight: 800; text-transform: uppercase; font-size: 16px; }
 .rm-game-ds { font-size: 12px; color: var(--tm); }
+
+/* Selector de dificultad de la trivia */
+.rm-diff { width: 100%; max-width: 620px; margin: 4px 0 2px; }
+.rm-diff-lbl { display: block; font-family: var(--f-barlow); font-weight: 800; text-transform: uppercase; letter-spacing: .04em; font-size: 13px; color: var(--tm); margin-bottom: 8px; }
+.rm-diff-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.rm-diff-opt { background: var(--card2); border: 1px solid var(--hair); padding: 10px 8px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; transition: border-color .15s, background-color .15s; }
+.rm-diff-opt.on { border-color: var(--accent); background: rgba(255,95,0,.1); }
+.rm-diff-opt.lock { cursor: default; }
+.rm-diff-opt b { font-family: var(--f-barlow); font-weight: 800; text-transform: uppercase; font-size: 15px; }
+.rm-diff-opt small { font-size: 11px; color: var(--tm); }
 
 /* Pictionary */
 .rm-turn { text-align: center; padding: 10px; font-size: 16px; color: var(--ts); background: var(--card); border: 1px solid var(--hair); border-bottom: none; }
