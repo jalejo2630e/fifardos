@@ -3,6 +3,18 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+// Tolerancia a un error de configuración común: pegar la URL de conexión completa
+// (redis://usuario:clave@host:puerto) dentro de REDIS_HOST en vez de en REDIS_URL.
+// Si el host trae un esquema, lo tratamos como URL; Laravel la descompone en host,
+// puerto y credenciales limpios y evita el error "Unable to find the socket
+// transport redis" (phpredis intentaría abrir "redis://..." como socket).
+$redisHost = env('REDIS_HOST', '127.0.0.1');
+$redisUrl = env('REDIS_URL');
+if (! $redisUrl && is_string($redisHost) && str_contains($redisHost, '://')) {
+    $redisUrl = $redisHost;
+    $redisHost = '127.0.0.1';
+}
+
 return [
 
     /*
@@ -157,8 +169,8 @@ return [
         ],
 
         'default' => [
-            'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'url' => $redisUrl,
+            'host' => $redisHost,
             'username' => env('REDIS_USERNAME'),
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
@@ -170,8 +182,8 @@ return [
         ],
 
         'cache' => [
-            'url' => env('REDIS_URL'),
-            'host' => env('REDIS_HOST', '127.0.0.1'),
+            'url' => $redisUrl,
+            'host' => $redisHost,
             'username' => env('REDIS_USERNAME'),
             'password' => env('REDIS_PASSWORD'),
             'port' => env('REDIS_PORT', '6379'),
