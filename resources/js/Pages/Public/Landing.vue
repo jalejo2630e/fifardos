@@ -1,5 +1,5 @@
 <script setup>
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
@@ -15,7 +15,18 @@ const props = defineProps({
     prizes: Array,
     standings: Array,
     stats: { type: Object, default: () => ({}) },
+    captcha: { type: Object, default: () => ({ a: 0, b: 0 }) },
 });
+
+// ---- Formulario de contacto ----
+const contactForm = useForm({ name: '', email: '', message: '', captcha: '', website: '' });
+
+function submitContact() {
+    contactForm.post(route('contact.store'), {
+        preserveScroll: true,
+        onSuccess: () => contactForm.reset('name', 'email', 'message', 'captcha'),
+    });
+}
 
 // ---- Contenido (constantes del módulo) ----
 const tableRows = [
@@ -404,11 +415,68 @@ onBeforeUnmount(() => {
             </div>
         </section>
 
+        <!-- CONTACTO -->
+        <section id="contacto" class="sec sec-alt">
+            <div class="wrap wrap-narrow">
+                <div class="ct-grid">
+                    <div class="ct-intro" data-reveal>
+                        <span class="eyebrow">{{ $t('landing.contact.eyebrow') }}</span>
+                        <h2 class="ct-h2">{{ $t('landing.contact.h1') }}<br /><span class="accent">{{ $t('landing.contact.h2') }}</span></h2>
+                        <p class="ct-p">{{ $t('landing.contact.p') }}</p>
+                    </div>
+
+                    <form class="ct-form" data-reveal @submit.prevent="submitContact">
+                        <p v-if="contactForm.recentlySuccessful" class="ct-ok">{{ $t('landing.contact.ok') }}</p>
+
+                        <div class="ct-row">
+                            <label class="ct-lbl" for="ct-name">{{ $t('landing.contact.name') }}</label>
+                            <input id="ct-name" type="text" v-model="contactForm.name" required maxlength="120"
+                                   class="ct-inp" :class="{ err: contactForm.errors.name }"
+                                   :placeholder="$t('landing.contact.namePh')" />
+                            <p v-if="contactForm.errors.name" class="ct-msg">{{ contactForm.errors.name }}</p>
+                        </div>
+
+                        <div class="ct-row">
+                            <label class="ct-lbl" for="ct-email">{{ $t('landing.contact.email') }}</label>
+                            <input id="ct-email" type="email" v-model="contactForm.email" required maxlength="190"
+                                   class="ct-inp" :class="{ err: contactForm.errors.email }"
+                                   :placeholder="$t('landing.contact.emailPh')" />
+                            <p v-if="contactForm.errors.email" class="ct-msg">{{ contactForm.errors.email }}</p>
+                        </div>
+
+                        <div class="ct-row">
+                            <label class="ct-lbl" for="ct-message">{{ $t('landing.contact.message') }}</label>
+                            <textarea id="ct-message" v-model="contactForm.message" required rows="4" maxlength="4000"
+                                      class="ct-inp ct-area" :class="{ err: contactForm.errors.message }"
+                                      :placeholder="$t('landing.contact.messagePh')"></textarea>
+                            <p v-if="contactForm.errors.message" class="ct-msg">{{ contactForm.errors.message }}</p>
+                        </div>
+
+                        <!-- Honeypot anti-bots: invisible para humanos -->
+                        <input type="text" v-model="contactForm.website" class="ct-hp" tabindex="-1" autocomplete="off" aria-hidden="true" />
+
+                        <div class="ct-row">
+                            <label class="ct-lbl" for="ct-captcha">{{ $t('landing.contact.captcha', { a: captcha.a, b: captcha.b }) }}</label>
+                            <input id="ct-captcha" type="text" inputmode="numeric" v-model="contactForm.captcha" required autocomplete="off"
+                                   class="ct-inp" :class="{ err: contactForm.errors.captcha }"
+                                   :placeholder="$t('landing.contact.captchaPh')" />
+                            <p v-if="contactForm.errors.captcha" class="ct-msg">{{ contactForm.errors.captcha }}</p>
+                        </div>
+
+                        <button type="submit" class="btn btn-solid ct-btn" :disabled="contactForm.processing">
+                            {{ contactForm.processing ? $t('landing.contact.sending') : $t('landing.contact.send') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
         <!-- FOOTER -->
         <footer class="foot">
             <a href="#top" class="logo foot-logo"><img src="/brand/logo-horizontal-dark.png" alt="FIFARDOS" /></a>
             <p class="foot-note">{{ $t('landing.footNote') }}</p>
             <div class="foot-links">
+                <a href="#contacto">{{ $t('landing.contact.eyebrow') }}</a>
                 <button type="button" class="foot-mcp" @click="showMcp = true">
                     <span class="mcp-dot"></span> {{ $t('landing.footMcp') }}
                 </button>
@@ -647,6 +715,24 @@ Authorization: Bearer 1|tu_token
 .faq-q { font-family: var(--f-barlow); font-weight: 700; font-size: 22px; letter-spacing: .03em; text-transform: uppercase; }
 .faq-a { color: var(--tm); font-size: 16px; line-height: 1.55; }
 
+/* Contacto */
+.ct-grid { display: grid; grid-template-columns: .9fr 1.1fr; gap: 48px; align-items: start; }
+.ct-h2 { font-size: 46px; line-height: 44px; letter-spacing: -.5px; margin: 12px 0 16px; }
+.ct-p { color: var(--tm); font-size: 17px; line-height: 1.55; margin: 0; max-width: 380px; }
+.ct-form { display: flex; flex-direction: column; gap: 16px; }
+.ct-ok { background: rgba(182, 255, 46, .1); border: 1px solid var(--lime); color: var(--lime); font-size: 14px; font-weight: 600; padding: 12px 14px; margin: 0; }
+.ct-row { display: flex; flex-direction: column; gap: 6px; }
+.ct-lbl { font-family: var(--f-barlow); font-weight: 700; font-size: 14px; letter-spacing: .08em; text-transform: uppercase; color: var(--tm); }
+.ct-inp { background: var(--bg-base); border: 1px solid var(--bcard); color: var(--tp); font-family: var(--f-body); font-size: 15px; padding: 12px 14px; transition: border-color .18s ease; width: 100%; }
+.ct-inp::placeholder { color: var(--tdd); }
+.ct-inp:focus { outline: none; border-color: var(--accent); }
+.ct-inp.err { border-color: #ff5252; }
+.ct-area { resize: vertical; min-height: 108px; }
+.ct-msg { color: #ff7a7a; font-size: 13px; margin: 0; }
+.ct-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.ct-btn { margin-top: 4px; align-self: flex-start; }
+.ct-btn:disabled { opacity: .6; cursor: not-allowed; }
+
 /* CTA final */
 .cta { position: relative; padding: 100px 24px 110px; text-align: center; overflow: hidden; }
 .glow-cta { inset: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at 50% 120%, rgba(255, 95, 0, .22), transparent 60%); }
@@ -701,7 +787,9 @@ Authorization: Bearer 1|tu_token
     .hero-grid { padding: 56px 20px 32px; }
     .hero h1 { font-size: 46px; line-height: .95; }
     .cta h2 { font-size: 40px; }
-    .sec-head h2, .feat-h2, .br-h2, .faq-h2 { font-size: 34px; line-height: 1; }
+    .sec-head h2, .feat-h2, .br-h2, .faq-h2, .ct-h2 { font-size: 34px; line-height: 1; }
+    .ct-grid { grid-template-columns: 1fr; gap: 28px; }
+    .ct-btn { width: 100%; }
     .sec { padding: 60px 0; }
     .wrap { padding-left: 20px; padding-right: 20px; }
     .sec-head { flex-direction: column; align-items: flex-start; gap: 14px; }

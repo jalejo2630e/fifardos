@@ -88,6 +88,16 @@ const messages = {
             navGame: 'Jugar',
             navFamily: 'Minijuegos',
             menu: 'Menú',
+            contact: {
+                eyebrow: 'Contacto',
+                h1: '¿Dudas, ideas', h2: 'o alianzas?',
+                p: 'Escribinos y te respondemos. Sugerencias, bugs, prensa o lo que se te ocurra.',
+                name: 'Nombre', email: 'Email', message: 'Mensaje',
+                namePh: 'Tu nombre', emailPh: 'vos@correo.com', messagePh: 'Contanos…',
+                captcha: 'Verificación · ¿Cuánto es {a} + {b}?', captchaPh: 'Resultado',
+                send: 'Enviar mensaje', sending: 'Enviando…',
+                ok: '¡Listo! Tu mensaje fue enviado. Te respondemos pronto.',
+            },
         },
         football: {
             eyebrow: 'Partido 3D · 11 vs 11',
@@ -193,6 +203,16 @@ const messages = {
             navGame: 'Play',
             navFamily: 'Minigames',
             menu: 'Menu',
+            contact: {
+                eyebrow: 'Contact',
+                h1: 'Questions, ideas', h2: 'or partnerships?',
+                p: 'Drop us a line and we\'ll get back to you. Suggestions, bugs, press — anything.',
+                name: 'Name', email: 'Email', message: 'Message',
+                namePh: 'Your name', emailPh: 'you@email.com', messagePh: 'Tell us…',
+                captcha: 'Verification · What is {a} + {b}?', captchaPh: 'Result',
+                send: 'Send message', sending: 'Sending…',
+                ok: 'Done! Your message was sent. We\'ll reply soon.',
+            },
         },
         football: {
             eyebrow: '3D match · 11 vs 11',

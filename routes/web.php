@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\FamiliaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TournamentController;
@@ -25,6 +26,7 @@ Route::get('/', function () {
     return Inertia::render('Public/Landing', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),
+        'captcha' => \App\Support\HumanChallenge::make(),
         'tournament' => $tournament,
         'prizes' => $tournament?->prizes->sortBy('position')->values() ?? [],
         'standings' => $standings,
@@ -102,6 +104,11 @@ Route::get('/torneos/{tournamentId}/bracket', function (string $tournamentId) {
     $tournament = Tournament::findOrFail((int) $tournamentId);
     return redirect()->route('tournaments.public.bracket', $tournament, 301);
 })->whereNumber('tournamentId')->name('tournaments.public.bracket.legacy');
+
+// Formulario de contacto del landing (captcha anti-bots + límite de envíos).
+Route::post('/contacto', [ContactController::class, 'store'])
+    ->middleware(['human', 'throttle:5,1'])
+    ->name('contact.store');
 
 Route::get('/torneos/{tournament:slug}/bracket', [App\Http\Controllers\PublicBracketController::class, 'show'])->name('tournaments.public.bracket');
 
