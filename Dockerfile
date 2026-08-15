@@ -47,6 +47,8 @@ RUN apk add --no-cache \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" \
         pdo_mysql pdo_pgsql pdo_sqlite mbstring intl zip bcmath opcache pcntl gd \
+    && pecl install redis \
+    && docker-php-ext-enable redis \
     && apk del .build-deps
 
 WORKDIR /var/www/html

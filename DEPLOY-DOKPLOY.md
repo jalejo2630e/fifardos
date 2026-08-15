@@ -12,7 +12,7 @@ FIFARDOS se empaqueta en **un solo contenedor** (nginx + php-fpm + supervisor) q
 | `docker/php.ini` | Ajustes PHP + OPcache de producción |
 | `docker/supervisord.conf` | Orquesta php-fpm, nginx, `schedule:work` y `queue:work` |
 | `docker/entrypoint.sh` | Migraciones, cache de config/vistas, storage link |
-| `docker-compose.yml` | Opción de despliegue tipo *Compose* + volumen persistente |
+| `docker-compose.yml` | Opción de despliegue tipo *Compose* + servicio Redis + volumen persistente |
 | `.env.production.example` | Variables de entorno de referencia |
 
 ## Opción A — Aplicación (Dockerfile)
@@ -43,6 +43,12 @@ FIFARDOS se empaqueta en **un solo contenedor** (nginx + php-fpm + supervisor) q
   (así queda dentro del volumen `storage`).
 - **Email (recordatorios):** configura SMTP real (`MAIL_MAILER=smtp`, host, usuario, etc.).
 - `GEMINI_API_KEY` — para el chatbot y la búsqueda semántica.
+- **Redis** (`CACHE_STORE=redis`, `SESSION_DRIVER=redis`, `QUEUE_CONNECTION=redis`):
+  saca de la base de datos la caché, las sesiones y las colas — clave para el
+  tráfico en tiempo real de los minijuegos y para el throttling del MCP/agente.
+  Con **Compose** ya viene el servicio `redis` (usa `REDIS_HOST=redis`). Con
+  **Application** (solo Dockerfile) añade un Redis gestionado en Dokploy y apunta
+  `REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`. La imagen ya trae la extensión `phpredis`.
 
 ## Qué hace el arranque automáticamente
 
