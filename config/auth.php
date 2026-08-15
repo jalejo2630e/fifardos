@@ -42,6 +42,15 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Guard OAuth2 (Laravel Passport) para el endpoint MCP remoto: permite a
+        // los conectores de UI web (Claude.ai, ChatGPT) autenticarse vía OAuth 2.1
+        // (Authorization Code + PKCE). El endpoint /mcp acepta 'sanctum,api', así
+        // que los tokens Bearer de Sanctum siguen funcionando en paralelo.
+        'api' => [
+            'driver' => 'passport',
+            'provider' => 'users',
+        ],
     ],
 
     /*

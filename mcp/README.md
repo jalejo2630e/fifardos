@@ -67,7 +67,23 @@ curl -s https://fifardos.com/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-Debe devolver la lista de herramientas. La autenticación es por token Bearer de Sanctum; no usa OAuth.
+Debe devolver la lista de herramientas.
+
+### Autenticación: token Bearer **o** OAuth 2.1
+
+El endpoint `/mcp` acepta dos métodos en paralelo:
+
+1. **Token Bearer de Sanctum** (lo de arriba) — ideal para Claude Code/Desktop, la API de OpenAI y apps host (Cherry Studio, etc., por donde entra DeepSeek). Pega el token en el header `Authorization` y listo.
+2. **OAuth 2.1 (Authorization Code + PKCE)** — para los **conectores de UI web** de Claude.ai y ChatGPT, que no aceptan un header manual. Solo pega la URL `https://fifardos.com/mcp` como conector: el cliente descubre el servidor OAuth, se registra solito y te manda a iniciar sesión en FIFARDOS y aprobar el acceso. No hay que copiar ningún token.
+
+El descubrimiento OAuth vive en:
+
+```
+GET /.well-known/oauth-protected-resource      (RFC 9728)
+GET /.well-known/oauth-authorization-server     (RFC 8414)
+POST /oauth/register                            (registro dinámico, RFC 7591)
+GET /oauth/authorize · POST /oauth/token         (Passport)
+```
 
 ---
 

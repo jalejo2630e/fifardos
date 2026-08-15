@@ -37,11 +37,16 @@ return Application::configure(basePath: dirname(__DIR__))
         // aunque el cliente no envíe el header Accept: application/json.
         $exceptions->render(function (\Illuminate\Auth\AuthenticationException $e, \Illuminate\Http\Request $request) {
             if ($request->is('mcp')) {
+                // WWW-Authenticate con resource_metadata (RFC 9728): así los
+                // conectores de UI web descubren el servidor OAuth y arrancan el
+                // flujo de autorización (Authorization Code + PKCE) por su cuenta.
+                $metadata = rtrim(url('/'), '/').'/.well-known/oauth-protected-resource';
+
                 return response()->json([
                     'jsonrpc' => '2.0',
                     'id' => null,
-                    'error' => ['code' => -32001, 'message' => 'Unauthorized: token Bearer inválido o ausente.'],
-                ], 401);
+                    'error' => ['code' => -32001, 'message' => 'Unauthorized: se requiere token (Bearer de Sanctum u OAuth).'],
+                ], 401)->header('WWW-Authenticate', 'Bearer resource_metadata="'.$metadata.'"');
             }
         });
     })->create();

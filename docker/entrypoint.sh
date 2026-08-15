@@ -26,6 +26,15 @@ if [ -z "${APP_KEY}" ]; then
     echo "[entrypoint] ⚠  APP_KEY no está definida. Genera una con 'php artisan key:generate --show' y configúrala en Dokploy."
 fi
 
+# Claves OAuth de Passport (para el endpoint MCP vía OAuth con conectores web).
+# Se generan una vez en el volumen 'storage', así persisten entre despliegues.
+if [ ! -f storage/oauth-private.key ]; then
+    echo "[entrypoint] Generando claves de Passport (OAuth)…"
+    php artisan passport:keys --force || echo "[entrypoint] ⚠  No se pudieron generar las claves de Passport."
+    chown www-data:www-data storage/oauth-*.key 2>/dev/null || true
+    chmod 660 storage/oauth-*.key 2>/dev/null || true
+fi
+
 # SQLite: asegura el archivo (idealmente en un volumen persistente)
 if [ "${DB_CONNECTION}" = "sqlite" ]; then
     DB_FILE="${DB_DATABASE:-/var/www/html/database/database.sqlite}"

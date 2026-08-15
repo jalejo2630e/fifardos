@@ -53,7 +53,11 @@ FIFARDOS se empaqueta en **un solo contenedor** (nginx + php-fpm + supervisor) q
 ## Qué hace el arranque automáticamente
 
 - Recrea la estructura de `storage/` (por si el volumen viene vacío).
-- `php artisan migrate --force` (desactívalo con `AUTO_MIGRATE=false`).
+- Genera las **claves OAuth de Passport** (`storage/oauth-*.key`) si no existen —
+  necesarias para conectar el MCP por OAuth desde Claude.ai / ChatGPT. Persisten
+  en el volumen `storage`, así que monta ese volumen para no regenerarlas en cada deploy.
+- `php artisan migrate --force` (desactívalo con `AUTO_MIGRATE=false`) — incluye las
+  tablas `oauth_*` de Passport.
 - Cachea configuración y vistas. *(No cachea rutas: hay rutas con closures.)*
 - Levanta nginx + php-fpm + scheduler + queue vía supervisor.
 
