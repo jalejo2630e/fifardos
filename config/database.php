@@ -145,7 +145,10 @@ return [
 
     'redis' => [
 
-        'client' => env('REDIS_CLIENT', 'phpredis'),
+        // Predis (cliente PHP puro) por defecto: no requiere la extensión phpredis
+        // y maneja bien las URLs redis:// (evita "Unable to find the socket transport
+        // redis"). Podés cambiar a 'phpredis' si instalás la extensión en la imagen.
+        'client' => env('REDIS_CLIENT', 'predis'),
 
         'options' => [
             'cluster' => env('REDIS_CLUSTER', 'redis'),

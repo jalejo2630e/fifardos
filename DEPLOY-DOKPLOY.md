@@ -48,7 +48,9 @@ FIFARDOS se empaqueta en **un solo contenedor** (nginx + php-fpm + supervisor) q
   tráfico en tiempo real de los minijuegos y para el throttling del MCP/agente.
   Con **Compose** ya viene el servicio `redis` (usa `REDIS_HOST=redis`). Con
   **Application** (solo Dockerfile) añade un Redis gestionado en Dokploy y apunta
-  `REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`. La imagen ya trae la extensión `phpredis`.
+  `REDIS_HOST`/`REDIS_PORT`/`REDIS_PASSWORD`, o pon la URL completa en `REDIS_URL`
+  (`redis://usuario:clave@host:puerto`). Usa el cliente **`predis`** (PHP puro, sin
+  extensión), así que no necesitas compilar `phpredis` en la imagen.
 
 ## Qué hace el arranque automáticamente
 
