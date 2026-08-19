@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\GameMatch;
+use App\Models\MinigamePlay;
 use App\Models\Player;
 use App\Models\Tournament;
 use App\Models\User;
@@ -84,7 +85,65 @@ class ReportController extends Controller
             ->get()
             ->map(fn($r) => ['name' => $r->name, 'goals' => (int) $r->goals]);
 
+        // ---------------------------------------------------------------- Minijuegos
+        $gamesList = ['pictionary', 'trivia', 'tuttifrutti', 'hangman', 'memoria'];
+
+        // Jugadas y promedio de participantes por minijuego
+        $playsByGame = MinigamePlay::where('type', 'game')
+            ->selectRaw('game, COUNT(*) as plays, AVG(players) as avg_players')
+            ->groupBy('game')
+            ->get()
+            ->keyBy('game');
+
+        $minigamePlays = collect($gamesList)->map(fn ($g) => [
+            'game' => $g,
+            'plays' => (int) ($playsByGame[$g]->plays ?? 0),
+            'avgPlayers' => isset($playsByGame[$g]) && $playsByGame[$g]->plays > 0
+                ? round((float) $playsByGame[$g]->avg_players, 1)
+                : 0,
+        ])->sortByDesc('plays')->values()->all();
+
+        $totalGames = (int) MinigamePlay::where('type', 'game')->count();       // partidas jugadas
+        $totalLobbies = (int) MinigamePlay::where('type', 'lobby')->count();    // salas creadas
+
+        // Conversión lobby → partida (salas distintas que llegaron a jugar / salas creadas)
+        $roomsWithGame = (int) MinigamePlay::where('type', 'game')->distinct()->count('room_id');
+        $conversion = $totalLobbies > 0 ? round($roomsWithGame / $totalLobbies * 100, 1) : 0;
+
+        // Distribución de dificultad de la Trivia
+        $triviaDiffRaw = MinigamePlay::where('type', 'game')->where('game', 'trivia')
+            ->selectRaw('trivia_difficulty as d, COUNT(*) as c')
+            ->groupBy('trivia_difficulty')
+            ->pluck('c', 'd');
+        $triviaDifficulty = [
+            'facil' => (int) ($triviaDiffRaw['facil'] ?? 0),
+            'normal' => (int) ($triviaDiffRaw['normal'] ?? 0),
+            'dificil' => (int) ($triviaDiffRaw['dificil'] ?? 0),
+        ];
+
+        // Tendencia: partidas jugadas por día (últimos 14 días) — calculado en PHP (DB-agnóstico)
+        $sinceMg = now()->subDays(13)->startOfDay();
+        $rawPlays = MinigamePlay::where('type', 'game')->where('created_at', '>=', $sinceMg)->get(['created_at']);
+        $playsByDay = [];
+        for ($i = 13; $i >= 0; $i--) {
+            $playsByDay[now()->subDays($i)->format('Y-m-d')] = 0;
+        }
+        foreach ($rawPlays as $p) {
+            $day = Carbon::parse($p->created_at)->format('Y-m-d');
+            if (isset($playsByDay[$day])) $playsByDay[$day]++;
+        }
+        $minigamesByDay = array_map(fn ($day, $count) => ['day' => $day, 'count' => $count], array_keys($playsByDay), array_values($playsByDay));
+
         return Inertia::render('Admin/Reportes', [
+            'minigames' => [
+                'plays' => $minigamePlays,
+                'totalGames' => $totalGames,
+                'totalLobbies' => $totalLobbies,
+                'roomsWithGame' => $roomsWithGame,
+                'conversion' => $conversion,
+                'triviaDifficulty' => $triviaDifficulty,
+                'byDay' => $minigamesByDay,
+            ],
             'metrics' => [
                 'users' => $totalUsers,
                 'admins' => $totalAdmins,

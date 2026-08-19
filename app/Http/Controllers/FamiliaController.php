@@ -8,6 +8,7 @@ use App\Events\Familia\DrawStroke;
 use App\Events\Familia\RoomUpdated;
 use App\Models\FamilyMember;
 use App\Models\FamilyRoom;
+use App\Models\MinigamePlay;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -73,6 +74,8 @@ class FamiliaController extends Controller
             'is_host' => true,
             'last_seen_at' => now(),
         ]);
+
+        MinigamePlay::logLobby($room);   // bitácora histórica (para reportes)
 
         return response()->json(['code' => $room->code]);
     }
@@ -317,6 +320,7 @@ class FamiliaController extends Controller
             'total_rounds' => $total,
             'state' => $freshState,
         ]);
+        MinigamePlay::logGame($room, $count);   // bitácora histórica (para reportes)
         $this->startNextRound($room);
     }
 
