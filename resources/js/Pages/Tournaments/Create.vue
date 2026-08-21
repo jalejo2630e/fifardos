@@ -33,9 +33,7 @@ const { t } = useI18n({
             homeAndAwayDesc: 'Cada cruce se juega dos veces (local y visitante).',
             venuesLabel: 'Espacios disponibles',
             venuesHint: 'Canchas, consolas o mesas disponibles en paralelo',
-            minutesLabel: 'Minutos por partido',
-            minutesHint: 'Duración de cada partido',
-            minuteUnit: '{m} min',
+
             playersLabel: 'Jugadores',
             playersHint: 'Añade a los participantes del torneo',
             playerNamePlaceholder: 'Nombre del jugador',
@@ -56,7 +54,7 @@ const { t } = useI18n({
             estimateLeagueHomeAway: ' (ida y vuelta)',
             estimateKnockout: '{total} partidos ({group} de grupos{extra} + {knockout} de eliminatorias)',
             estimateKnockoutHomeAway: ' ida y vuelta',
-            estimateParallel: ' · {tv} {tvLabel} en paralelo · {m} min por partido.',
+            estimateParallel: ' · {tv} {tvLabel} en paralelo.',
             estimateTvSingular: 'espacio',
             estimateTvPlural: 'espacios',
             estimateDisclaimer: 'Estimado aproximado, sin contar descansos entre partidos.',
@@ -133,9 +131,7 @@ const { t } = useI18n({
             homeAndAwayDesc: 'Each matchup is played twice (home and away).',
             venuesLabel: 'Available spaces',
             venuesHint: 'Courts, consoles or tables available in parallel',
-            minutesLabel: 'Minutes per match',
-            minutesHint: 'Duration of each match',
-            minuteUnit: '{m} min',
+
             playersLabel: 'Players',
             playersHint: 'Add the tournament participants',
             playerNamePlaceholder: 'Player name',
@@ -156,7 +152,7 @@ const { t } = useI18n({
             estimateLeagueHomeAway: ' (home and away)',
             estimateKnockout: '{total} matches ({group} group{extra} + {knockout} knockout)',
             estimateKnockoutHomeAway: ' home and away',
-            estimateParallel: ' · {tv} {tvLabel} in parallel · {m} min per match.',
+            estimateParallel: ' · {tv} {tvLabel} in parallel.',
             estimateTvSingular: 'space',
             estimateTvPlural: 'spaces',
             estimateDisclaimer: 'Rough estimate, not counting breaks between matches.',
@@ -319,7 +315,7 @@ const estimate = computed(() => {
     }
     const total = group + knockout;
     const slots = Math.ceil(total / tv);
-    return { group, knockout, total, minutes: slots * m, tv, m };
+    return { group, knockout, total, minutes: slots * m, tv };
 });
 
 function fmtDuration(min) {
@@ -689,25 +685,7 @@ const stepCount = 4;
                                 </div>
                             </div>
 
-                            <!-- Minutos por partido -->
-                            <div class="pt-5 border-t border-white/5">
-                                <div class="text-center mb-3">
-                                    <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40">
-                                        {{ t('minutesLabel') }}
-                                    </label>
-                                    <p class="text-xs text-white/20 mt-1">{{ t('minutesHint') }}</p>
-                                </div>
-                                <div class="flex justify-center flex-wrap gap-2">
-                                    <button v-for="m in [5, 10, 15, 20, 30, 40, 60, 90]" :key="m" type="button"
-                                            @click="form.minutes_per_match = m"
-                                            class="px-4 py-2 rounded-xl font-condensed font-bold text-sm border transition-all"
-                                            :class="form.minutes_per_match === m
-                                                ? 'bg-elite-secondary/15 border-elite-secondary/40 text-elite-secondary'
-                                                : 'bg-white/5 border-white/5 text-white/50 hover:text-white hover:bg-white/10'">
-                                        {{ t('minuteUnit', { m }) }}
-                                    </button>
-                                </div>
-                            </div>
+
                         </div>
                     </div>
 
@@ -845,7 +823,7 @@ const stepCount = 4;
                                     <template v-else>
                                         {{ t('estimateKnockout', { total: estimate.total, group: estimate.group, extra: form.home_and_away ? t('estimateKnockoutHomeAway') : '', knockout: estimate.knockout }) }}
                                     </template>
-                                    {{ t('estimateParallel', { tv: estimate.tv, tvLabel: estimate.tv === 1 ? tvSingular : tvPlural, m: estimate.m }) }}
+                                    {{ t('estimateParallel', { tv: estimate.tv, tvLabel: estimate.tv === 1 ? tvSingular : tvPlural }) }}
                                 </p>
                                 <p class="text-[11px] text-white/20 mt-1">{{ t('estimateDisclaimer') }}</p>
                             </div>
