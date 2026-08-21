@@ -262,8 +262,8 @@ function selectSport(key) {
     form.rules = defaults;
 }
 
-// Reglas del deporte seleccionado, agrupadas para la UI
-const rulesForSport = computed(() => (form.sport ? props.rules[form.sport] || [] : []));
+// Reglas del deporte seleccionado, agrupadas para la UI (excluye tiempo por partido)
+const rulesForSport = computed(() => (form.sport ? (props.rules[form.sport] || []).filter(r => r.key !== 'tiempo_partido_min') : []));
 const rulesGroups = computed(() => {
     const groups = [];
     for (const def of rulesForSport.value) {

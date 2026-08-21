@@ -292,6 +292,9 @@ class TournamentController extends Controller
             if (!array_key_exists($def->key, $tournamentRules)) {
                 continue;
             }
+            if ($def->key === 'tiempo_partido_min') {
+                continue;
+            }
             $rulesList[] = [
                 'key' => $def->key,
                 'label' => $def->label,
