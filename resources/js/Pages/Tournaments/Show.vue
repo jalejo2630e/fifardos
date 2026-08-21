@@ -659,13 +659,6 @@ function getMatchGap(phaseIndex, totalPhases) {
                         <span>{{ tournament.consoles_count }} {{ venueLabel }}</span>
                         <span class="w-1 h-1 rounded-full bg-white/10" />
                         <span>{{ totalMatches }} {{ t('headerMatches') }}</span>
-                        <template v-if="tournament.mode !== 'virtual'">
-                            <span class="w-1 h-1 rounded-full bg-white/10" />
-                            <span class="inline-flex items-center gap-1 text-elite-secondary/80">
-                                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2"/></svg>
-                                ~{{ fmtDuration(estimatedMinutes) }}
-                            </span>
-                        </template>
                     </div>
                 </div>
                 <div class="flex gap-2">

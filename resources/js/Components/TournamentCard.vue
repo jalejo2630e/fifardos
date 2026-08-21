@@ -112,12 +112,6 @@ const animatedLeaderPts = useCountUp(leaderPts);
                         </svg>
                         {{ totalMatches }} partidos
                     </span>
-                    <span v-if="durationText && tournament.mode !== 'virtual'" class="flex items-center gap-1.5" title="Duración estimada">
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                            <circle cx="12" cy="12" r="9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
-                        </svg>
-                        ~{{ durationText }}
-                    </span>
                 </div>
                 <svg class="w-4 h-4 text-white/20 transition-all duration-200"
                      :style="{ color: color + '66' }"
