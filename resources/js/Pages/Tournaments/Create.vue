@@ -49,7 +49,7 @@ const { t } = useI18n({
             noTeams: 'Sin equipos',
             emptyTeams: 'No hay equipos aún. ¡Añade al menos 2!',
             membersCount: '{n} integrantes',
-            estimatedDuration: 'Duración estimada',
+            estimatedMatches: 'Partidos estimados',
             estimateLeague: '{total} partidos de liga{extra}',
             estimateLeagueHomeAway: ' (ida y vuelta)',
             estimateKnockout: '{total} partidos ({group} de grupos{extra} + {knockout} de eliminatorias)',
@@ -66,10 +66,6 @@ const { t } = useI18n({
             next: 'Siguiente',
             creating: 'Creando...',
             startTournament: 'Iniciar Torneo',
-            durationDash: '—',
-            durationMin: '{mm} min',
-            durationHour: '{h} h',
-            durationHourMin: '{h} h {mm} min',
             pickSportFirst: 'Elegí un deporte para continuar',
             teamPlayersHint: 'Los integrantes se registran pero la tabla y los partidos son por equipo.',
             modeLabel: '¿Cómo se juega?',
@@ -147,7 +143,7 @@ const { t } = useI18n({
             noTeams: 'No teams',
             emptyTeams: 'No teams yet. Add at least 2!',
             membersCount: '{n} members',
-            estimatedDuration: 'Estimated duration',
+            estimatedMatches: 'Estimated matches',
             estimateLeague: '{total} league matches{extra}',
             estimateLeagueHomeAway: ' (home and away)',
             estimateKnockout: '{total} matches ({group} group{extra} + {knockout} knockout)',
@@ -164,10 +160,6 @@ const { t } = useI18n({
             next: 'Next',
             creating: 'Creating...',
             startTournament: 'Start Tournament',
-            durationDash: '—',
-            durationMin: '{mm} min',
-            durationHour: '{h} h',
-            durationHourMin: '{h} h {mm} min',
             pickSportFirst: 'Pick a sport to continue',
             teamPlayersHint: 'Players are registered but the table and matches are per team.',
             modeLabel: 'How will it be played?',
@@ -226,7 +218,6 @@ const form = useForm({
     sport: '',
     mode: 'virtual',
     consoles_count: 1,
-    minutes_per_match: 6,
     format: 'groups_knockout',
     home_and_away: false,
     rules: {},
@@ -259,7 +250,6 @@ function L(label, labelEn) {
 
 function selectSport(key) {
     form.sport = key;
-    form.minutes_per_match = props.sports[key].minutes ?? 6;
     if (!modeTouched.value) {
         form.mode = key === 'fifa' ? 'virtual' : 'physical';
     }
@@ -297,11 +287,10 @@ const physical = computed(() => form.mode === 'physical');
 const tvSingular = computed(() => t(physical.value ? 'estimateTvSingularPhysical' : 'estimateTvSingularVirtual'));
 const tvPlural = computed(() => t(physical.value ? 'estimateTvPluralPhysical' : 'estimateTvPluralVirtual'));
 
-// Estimador de duración: round-robin + eliminatorias, en paralelo por espacio.
+// Estimador de partidos: round-robin + eliminatorias, en paralelo por espacio.
 const estimate = computed(() => {
     const n = isTeam.value ? form.teams.length : form.players.length;
     const tv = Math.max(1, form.consoles_count);
-    const m = Math.max(1, form.minutes_per_match);
     if (n < 2) return null;
     let group = (n * (n - 1)) / 2;
     if (form.home_and_away) group *= 2;
@@ -315,16 +304,8 @@ const estimate = computed(() => {
     }
     const total = group + knockout;
     const slots = Math.ceil(total / tv);
-    return { group, knockout, total, minutes: slots * m, tv };
+    return { group, knockout, total, tv };
 });
-
-function fmtDuration(min) {
-    if (!min || min <= 0) return t('durationDash');
-    const h = Math.floor(min / 60);
-    const mm = min % 60;
-    if (h === 0) return t('durationMin', { mm });
-    return mm === 0 ? t('durationHour', { h }) : t('durationHourMin', { h, mm });
-}
 
 const minReminder = computed(() => {
     const d = new Date();
@@ -805,16 +786,16 @@ const stepCount = 4;
 
                             <p v-if="!isTeam && form.errors.players" class="text-sm text-red-400 text-center">{{ form.errors.players }}</p>
 
-                            <!-- Simulador de duración -->
+                            <!-- Estimador de partidos -->
                             <div v-if="estimate" class="rounded-2xl border border-elite-secondary/25 bg-elite-secondary/[0.06] p-4 sm:p-5">
                                 <div class="flex items-center justify-between gap-3">
                                     <div class="flex items-center gap-2.5">
                                         <svg class="w-5 h-5 text-elite-secondary shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                             <circle cx="12" cy="12" r="9" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
                                         </svg>
-                                        <span class="font-condensed text-sm tracking-[0.1em] uppercase text-white/50">{{ t('estimatedDuration') }}</span>
+                                        <span class="font-condensed text-sm tracking-[0.1em] uppercase text-white/50">{{ t('estimatedMatches') }}</span>
                                     </div>
-                                    <span class="font-condensed font-bold text-2xl sm:text-3xl text-elite-secondary leading-none">≈ {{ fmtDuration(estimate.minutes) }}</span>
+                                    <span class="font-condensed font-bold text-2xl sm:text-3xl text-elite-secondary leading-none">{{ estimate.total }}</span>
                                 </div>
                                 <p class="text-xs text-white/30 mt-3 leading-relaxed">
                                     <template v-if="form.format === 'league'">

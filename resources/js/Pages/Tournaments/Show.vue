@@ -922,12 +922,12 @@ function getMatchGap(phaseIndex, totalPhases) {
                                                      class="flex items-center justify-center gap-3">
                                                     <div class="flex flex-col items-center">
                                                         <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ competitorShort(match, 1) }}</label>
-                                                        <input type="number" min="0" class="score-input text-lg w-20 text-center" v-model.number="set.a" />
+                                                        <input type="number" min="0" class="score-input text-center" v-model.number="set.a" />
                                                     </div>
                                                     <span class="text-white/20 font-condensed font-bold text-sm">—</span>
                                                     <div class="flex flex-col items-center">
                                                         <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ competitorShort(match, 2) }}</label>
-                                                        <input type="number" min="0" class="score-input text-lg w-20 text-center" v-model.number="set.b" />
+                                                        <input type="number" min="0" class="score-input text-center" v-model.number="set.b" />
                                                     </div>
                                                     <button @click="removeSet(si)"
                                                             class="text-white/20 hover:text-red-400 text-sm px-1 pb-1">✕</button>
@@ -939,15 +939,15 @@ function getMatchGap(phaseIndex, totalPhases) {
                                             </div>
 
                                             <!-- Score inputs -->
-                                            <div v-else class="flex items-center justify-center gap-3">
+                                            <div v-else class="flex items-center justify-center gap-2 sm:gap-3">
                                                 <div class="flex flex-col items-center">
                                                     <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ competitorShort(match, 1) }}</label>
-                                                    <input type="number" min="0" class="score-input text-lg w-20 text-center" v-model.number="formData.score1" />
+                                                    <input type="number" min="0" class="score-input text-center" v-model.number="formData.score1" />
                                                 </div>
                                                 <span class="text-white/20 font-condensed font-bold text-sm">—</span>
                                                 <div class="flex flex-col items-center">
                                                     <label class="text-[9px] text-white/30 font-condensed tracking-wider mb-1">{{ competitorShort(match, 2) }}</label>
-                                                    <input type="number" min="0" class="score-input text-lg w-20 text-center" v-model.number="formData.score2" />
+                                                    <input type="number" min="0" class="score-input text-center" v-model.number="formData.score2" />
                                                 </div>
                                             </div>
 

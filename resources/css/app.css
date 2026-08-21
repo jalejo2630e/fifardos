@@ -167,7 +167,7 @@
     }
 
     .ucl-match .score-input {
-        @apply min-w-[4.5rem] sm:min-w-[5.5rem] h-12 sm:h-14 text-center text-xl sm:text-2xl font-bold
+        @apply w-[4rem] sm:w-[5.5rem] h-11 sm:h-14 text-center text-lg sm:text-2xl font-bold
                rounded-xl bg-white/[0.08] border-0 shadow-ucl-input text-white
                outline-none transition-all duration-200;
     }
@@ -177,7 +177,7 @@
     }
 
     .bracket-match .score-input {
-        @apply min-w-[4.5rem] sm:min-w-[5.5rem] h-12 sm:h-14 text-center text-xl sm:text-2xl font-bold
+        @apply w-[4rem] sm:w-[5.5rem] h-11 sm:h-14 text-center text-lg sm:text-2xl font-bold
                rounded-xl bg-white/[0.08] border-0 shadow-ucl-input text-white
                outline-none transition-all duration-200;
     }
