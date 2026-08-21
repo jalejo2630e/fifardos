@@ -181,6 +181,20 @@ class SportRulesSeeder extends Seeder
                 self::b('bono_por_tries', 'Bono por 4 tries', 'Try bonus (4 tries)', false, $m),
                 self::b('bono_perdedor_cerca', 'Bono al perdedor por 7 o menos', 'Losing bonus (7 or less)', false, $m),
             ],
+            'nba2k' => [
+                self::n('cantidad_cuartos', 'Cantidad de cuartos', 'Number of quarters', 4, 2, 4, $g),
+                self::n('duracion_cuarto_min', 'Duración de cada cuarto (min)', 'Quarter length (min)', 3, 1, 10, $g),
+                self::n('prorroga_min', 'Prórroga (min)', 'Overtime (min)', 3, 1, 5, $d),
+                self::s('reloj_posesion_seg', 'Reloj de posesión (seg)', 'Shot clock (sec)', '24', ['14', '24', 'sin_reloj'], $g),
+                self::n('faltas_para_bonus', 'Faltas para bonus', 'Fouls to bonus', 5, 1, 10, $g),
+                self::n('faltas_para_expulsion', 'Faltas para expulsión', 'Fouls to disqualification', 6, 1, 10, $g),
+            ],
+            'fighting' => [
+                self::n('cantidad_rounds', 'Cantidad de rounds', 'Number of rounds', 3, 1, 5, $g),
+                self::n('duracion_round_seg', 'Duración de cada round (sec)', 'Round duration (sec)', 180, 60, 300, $g),
+                self::b('knockout_termina_round', 'Knockout termina el round', 'Knockout ends the round', true, $m, 'Si hay KO, termina el round inmediatamente', 'If KO, round ends immediately'),
+                self::s('sistema_puntuacion', 'Sistema de puntuación', 'Scoring system', 'judge', ['judge', 'knockout_only', 'mixed'], $g, 'Judge = puntos por rondas, Mixed = ambas formas', 'Judge = points per round, Mixed = both methods'),
+            ],
             'tennis_v' => [
                 self::s('sets_para_ganar', 'Sets para ganar', 'Sets to win', '2', ['2', '3'], 'sets'),
                 self::n('juegos_por_set', 'Juegos por set', 'Games per set', 6, 4, 6, 'sets'),
