@@ -15,8 +15,11 @@
  *   - minutes          : duración estimada de un partido
  */
 return [
+    // ═══════════════════════════════════════════════════════
+    // VIDEOJUEGOS / CONSOLA
+    // ═══════════════════════════════════════════════════════
     'fifa' => [
-        'name' => 'Videojuego / Consola',
+        'name' => 'FIFA / EA FC',
         'icon' => '🎮',
         'type' => 'individual',
         'players_per_side' => 1,
@@ -25,7 +28,71 @@ return [
         'points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
         'minutes' => 6,
         'uses_penalties' => true,
+        'mode' => 'virtual',
     ],
+    'nba2k' => [
+        'name' => 'NBA 2K',
+        'icon' => '🏀',
+        'type' => 'individual',
+        'players_per_side' => 1,
+        'scoring' => 'points',
+        'allows_draw' => true,
+        'points' => ['win' => 2, 'draw' => 1, 'loss' => 0],
+        'minutes' => 6,
+        'uses_penalties' => false,
+        'mode' => 'virtual',
+    ],
+    'pes' => [
+        'name' => 'eFootball / PES',
+        'icon' => '🕹️',
+        'type' => 'individual',
+        'players_per_side' => 1,
+        'scoring' => 'goals',
+        'allows_draw' => true,
+        'points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
+        'minutes' => 6,
+        'uses_penalties' => true,
+        'mode' => 'virtual',
+    ],
+    'rocketleague' => [
+        'name' => 'Rocket League',
+        'icon' => '🚀',
+        'type' => 'team',
+        'players_per_side' => 1,
+        'scoring' => 'goals',
+        'allows_draw' => true,
+        'points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
+        'minutes' => 5,
+        'uses_penalties' => false,
+        'mode' => 'virtual',
+    ],
+    'mario_strikers' => [
+        'name' => 'Mario Strikers',
+        'icon' => '🍄',
+        'type' => 'team',
+        'players_per_side' => 1,
+        'scoring' => 'goals',
+        'allows_draw' => true,
+        'points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
+        'minutes' => 5,
+        'uses_penalties' => false,
+        'mode' => 'virtual',
+    ],
+    'fighting' => [
+        'name' => 'Peleas (Street Fighter, Tekken)',
+        'icon' => '🥊',
+        'type' => 'individual',
+        'players_per_side' => 1,
+        'scoring' => 'points',
+        'allows_draw' => false,
+        'points' => ['win' => 2, 'draw' => 1, 'loss' => 0],
+        'minutes' => 5,
+        'uses_penalties' => false,
+        'mode' => 'virtual',
+    ],
+    // ═══════════════════════════════════════════════════════
+    // CAMPO FÍSICO
+    // ═══════════════════════════════════════════════════════
     'soccer' => [
         'name' => 'Fútbol 11',
         'icon' => '⚽',
@@ -36,6 +103,7 @@ return [
         'points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
         'minutes' => 90,
         'uses_penalties' => true,
+        'mode' => 'physical',
     ],
     'futsal' => [
         'name' => 'Fútbol 5 / Futsal',
@@ -47,6 +115,7 @@ return [
         'points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
         'minutes' => 40,
         'uses_penalties' => true,
+        'mode' => 'physical',
     ],
     'football6' => [
         'name' => 'Fútbol 6',
@@ -58,6 +127,7 @@ return [
         'points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
         'minutes' => 30,
         'uses_penalties' => true,
+        'mode' => 'physical',
     ],
     'football7' => [
         'name' => 'Fútbol 7',
@@ -69,6 +139,7 @@ return [
         'points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
         'minutes' => 30,
         'uses_penalties' => true,
+        'mode' => 'physical',
     ],
     'football8' => [
         'name' => 'Fútbol 8',
@@ -80,6 +151,7 @@ return [
         'points' => ['win' => 3, 'draw' => 1, 'loss' => 0],
         'minutes' => 40,
         'uses_penalties' => true,
+        'mode' => 'physical',
     ],
     'basketball' => [
         'name' => 'Básquet 5x5',
@@ -91,6 +163,7 @@ return [
         'points' => ['win' => 2, 'draw' => 1, 'loss' => 0],
         'minutes' => 40,
         'uses_penalties' => false,
+        'mode' => 'physical',
     ],
     'basketball3' => [
         'name' => 'Básquet 3x3',
@@ -102,6 +175,7 @@ return [
         'points' => ['win' => 2, 'draw' => 1, 'loss' => 0],
         'minutes' => 20,
         'uses_penalties' => false,
+        'mode' => 'physical',
     ],
     'volleyball' => [
         'name' => 'Vóley',
@@ -114,6 +188,7 @@ return [
         'points' => ['win' => 2, 'draw' => 1, 'loss' => 0],
         'minutes' => 60,
         'uses_penalties' => false,
+        'mode' => 'physical',
     ],
     'tennis' => [
         'name' => 'Tenis',
@@ -126,6 +201,7 @@ return [
         'points' => ['win' => 2, 'draw' => 1, 'loss' => 0],
         'minutes' => 90,
         'uses_penalties' => false,
+        'mode' => 'physical',
     ],
     'padel' => [
         'name' => 'Pádel',
@@ -138,6 +214,7 @@ return [
         'points' => ['win' => 2, 'draw' => 1, 'loss' => 0],
         'minutes' => 60,
         'uses_penalties' => false,
+        'mode' => 'physical',
     ],
     'table_tennis' => [
         'name' => 'Tenis de mesa',
@@ -150,6 +227,7 @@ return [
         'points' => ['win' => 2, 'draw' => 1, 'loss' => 0],
         'minutes' => 30,
         'uses_penalties' => false,
+        'mode' => 'physical',
     ],
     'pickleball' => [
         'name' => 'Pickleball',
@@ -162,6 +240,7 @@ return [
         'points' => ['win' => 2, 'draw' => 1, 'loss' => 0],
         'minutes' => 40,
         'uses_penalties' => false,
+        'mode' => 'physical',
     ],
     'handball' => [
         'name' => 'Handball',
@@ -173,6 +252,7 @@ return [
         'points' => ['win' => 2, 'draw' => 1, 'loss' => 0],
         'minutes' => 60,
         'uses_penalties' => false,
+        'mode' => 'physical',
     ],
     'rugby' => [
         'name' => 'Rugby',
@@ -184,5 +264,6 @@ return [
         'points' => ['win' => 4, 'draw' => 2, 'loss' => 0],
         'minutes' => 80,
         'uses_penalties' => false,
+        'mode' => 'physical',
     ],
 ];

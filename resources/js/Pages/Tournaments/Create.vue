@@ -68,12 +68,8 @@ const { t } = useI18n({
             startTournament: 'Iniciar Torneo',
             pickSportFirst: 'Elegí un deporte para continuar',
             teamPlayersHint: 'Los integrantes se registran pero la tabla y los partidos son por equipo.',
-            modeLabel: '¿Cómo se juega?',
-            modeHint: 'Elegí dónde se desarrolla el torneo',
-            modeVirtual: 'Virtual',
-            modeVirtualDesc: 'Consolas y videojuegos',
-            modePhysical: 'Campo físico',
-            modePhysicalDesc: 'Canchas y espacios reales',
+            sectionVirtual: 'Videojuegos / Consola',
+            sectionPhysical: 'Campo Fisico',
             rulesLabel: 'Reglas del torneo',
             rulesHint: 'Cada deporte tiene sus propias reglas. Ajustalas a tu torneo.',
             rulesGroupGeneral: 'Reglas generales',
@@ -162,12 +158,8 @@ const { t } = useI18n({
             startTournament: 'Start Tournament',
             pickSportFirst: 'Pick a sport to continue',
             teamPlayersHint: 'Players are registered but the table and matches are per team.',
-            modeLabel: 'How will it be played?',
-            modeHint: 'Choose where the tournament takes place',
-            modeVirtual: 'Virtual',
-            modeVirtualDesc: 'Consoles and video games',
-            modePhysical: 'On-site field',
-            modePhysicalDesc: 'Real courts and venues',
+            sectionVirtual: 'Videojuegos / Consola',
+            sectionPhysical: 'Campo Fisico',
             rulesLabel: 'Tournament rules',
             rulesHint: 'Each sport has its own rules. Adjust them for your tournament.',
             rulesGroupGeneral: 'General rules',
@@ -212,6 +204,8 @@ const props = defineProps({
 });
 
 const sportsList = computed(() => Object.values(props.sports));
+const virtualSports = computed(() => sportsList.value.filter(s => s.mode === 'virtual'));
+const physicalSports = computed(() => sportsList.value.filter(s => s.mode !== 'virtual'));
 
 const form = useForm({
     name: '',
@@ -231,12 +225,6 @@ const newPlayer = ref('');
 const newTeam = ref('');
 const newTeamMember = ref({});
 const step = ref(1);
-const modeTouched = ref(false);
-
-function setMode(m) {
-    form.mode = m;
-    modeTouched.value = true;
-}
 
 const currentSport = computed(() => (form.sport ? props.sports[form.sport] : null));
 const isTeam = computed(() => currentSport.value?.type === 'team');
@@ -250,8 +238,9 @@ function L(label, labelEn) {
 
 function selectSport(key) {
     form.sport = key;
-    if (!modeTouched.value) {
-        form.mode = key === 'fifa' ? 'virtual' : 'physical';
+    const sportData = props.sports[key];
+    if (sportData && sportData.mode) {
+        form.mode = sportData.mode;
     }
     form.players = [];
     form.teams = [];
@@ -451,57 +440,57 @@ const stepCount = 4;
                                 </label>
                                 <p class="text-xs text-white/20 mt-1">{{ t('sportHint') }}</p>
                             </div>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                <button v-for="sp in sportsList" :key="sp.key ?? sp.slug" type="button"
-                                        @click="selectSport(sp.key ?? sp.slug)"
-                                        class="p-3 rounded-xl border text-left transition-all group"
-                                        :class="form.sport === (sp.key ?? sp.slug)
-                                            ? 'bg-elite-secondary/15 border-elite-secondary/40'
-                                            : 'bg-white/5 border-white/5 hover:bg-white/10'">
-                                    <div class="text-2xl leading-none">{{ sp.icon }}</div>
-                                    <div class="mt-2 font-condensed font-bold text-xs sm:text-sm"
-                                         :class="form.sport === (sp.key ?? sp.slug) ? 'text-elite-secondary' : 'text-white/70'">
-                                        {{ sp.name }}
-                                    </div>
-                                    <div class="text-[10px] text-white/30 mt-0.5">
-                                        {{ sp.type === 'team' ? t('teamTag') : t('individualTag') }}
-                                        · {{ sp.players_per_side }}v{{ sp.players_per_side }}
-                                    </div>
-                                </button>
+                            <!-- Videojuegos / Consola -->
+                            <div v-if="virtualSports.length" class="mb-6">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="text-lg">🎮</span>
+                                    <h3 class="font-condensed text-xs tracking-[0.1em] uppercase text-elite-secondary">
+                                        {{ t('sectionVirtual') }}
+                                    </h3>
+                                </div>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    <button v-for="sp in virtualSports" :key="sp.key ?? sp.slug" type="button"
+                                            @click="selectSport(sp.key ?? sp.slug)"
+                                            class="p-3 rounded-xl border text-left transition-all group"
+                                            :class="form.sport === (sp.key ?? sp.slug)
+                                                ? 'bg-elite-secondary/15 border-elite-secondary/40'
+                                                : 'bg-white/5 border-white/5 hover:bg-white/10'">
+                                        <div class="text-2xl leading-none">{{ sp.icon }}</div>
+                                        <div class="mt-2 font-condensed font-bold text-xs sm:text-sm"
+                                             :class="form.sport === (sp.key ?? sp.slug) ? 'text-elite-secondary' : 'text-white/70'">
+                                            {{ sp.name }}
+                                        </div>
+                                        <div class="text-[10px] text-white/30 mt-0.5">
+                                            {{ sp.type === 'team' ? t('teamTag') : t('individualTag') }}
+                                        </div>
+                                    </button>
+                                </div>
                             </div>
 
-                            <!-- Modo de juego -->
-                            <div class="mt-8 pt-6 border-t border-white/5">
-                                <div class="text-center mb-3">
-                                    <label class="block font-condensed text-sm tracking-[0.1em] uppercase text-white/40">
-                                        {{ t('modeLabel') }}
-                                    </label>
-                                    <p class="text-xs text-white/20 mt-1">{{ t('modeHint') }}</p>
+                            <!-- Campo Fisico -->
+                            <div v-if="physicalSports.length">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="text-lg">⚽</span>
+                                    <h3 class="font-condensed text-xs tracking-[0.1em] uppercase text-elite-secondary">
+                                        {{ t('sectionPhysical') }}
+                                    </h3>
                                 </div>
-                                <div class="grid grid-cols-2 gap-2">
-                                    <button type="button" @click="setMode('virtual')"
-                                            class="p-4 rounded-xl border text-center transition-all"
-                                            :class="form.mode === 'virtual'
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    <button v-for="sp in physicalSports" :key="sp.key ?? sp.slug" type="button"
+                                            @click="selectSport(sp.key ?? sp.slug)"
+                                            class="p-3 rounded-xl border text-left transition-all group"
+                                            :class="form.sport === (sp.key ?? sp.slug)
                                                 ? 'bg-elite-secondary/15 border-elite-secondary/40'
                                                 : 'bg-white/5 border-white/5 hover:bg-white/10'">
-                                        <span class="block text-2xl leading-none">🎮</span>
-                                        <span class="block mt-2 font-condensed font-bold text-sm"
-                                              :class="form.mode === 'virtual' ? 'text-elite-secondary' : 'text-white/70'">
-                                            {{ t('modeVirtual') }}
-                                        </span>
-                                        <span class="block text-[11px] text-white/30 mt-0.5">{{ t('modeVirtualDesc') }}</span>
-                                    </button>
-                                    <button type="button" @click="setMode('physical')"
-                                            class="p-4 rounded-xl border text-center transition-all"
-                                            :class="form.mode === 'physical'
-                                                ? 'bg-elite-secondary/15 border-elite-secondary/40'
-                                                : 'bg-white/5 border-white/5 hover:bg-white/10'">
-                                        <span class="block text-2xl leading-none">🏟️</span>
-                                        <span class="block mt-2 font-condensed font-bold text-sm"
-                                              :class="form.mode === 'physical' ? 'text-elite-secondary' : 'text-white/70'">
-                                            {{ t('modePhysical') }}
-                                        </span>
-                                        <span class="block text-[11px] text-white/30 mt-0.5">{{ t('modePhysicalDesc') }}</span>
+                                        <div class="text-2xl leading-none">{{ sp.icon }}</div>
+                                        <div class="mt-2 font-condensed font-bold text-xs sm:text-sm"
+                                             :class="form.sport === (sp.key ?? sp.slug) ? 'text-elite-secondary' : 'text-white/70'">
+                                            {{ sp.name }}
+                                        </div>
+                                        <div class="text-[10px] text-white/30 mt-0.5">
+                                            {{ sp.type === 'team' ? t('teamTag') : t('individualTag') }}
+                                            · {{ sp.players_per_side }}v{{ sp.players_per_side }}
+                                        </div>
                                     </button>
                                 </div>
                             </div>
